@@ -187,6 +187,36 @@ tr:hover td{background:var(--bpi-caramel-20)}
 #toast{position:fixed;bottom:24px;right:24px;background:var(--bpi-bistre);color:#fff;padding:11px 18px;border-radius:var(--radius-md);font-size:.82rem;font-weight:600;font-family:var(--font-body);box-shadow:var(--shadow-lg);border-left:3px solid var(--bpi-harvest-gold);opacity:0;transform:translateY(8px);transition:all .2s;z-index:999;pointer-events:none}
 #toast.show{opacity:1;transform:translateY(0)}
 
+
+/* REVIEW PAGE */
+.review-class-card{background:var(--bpi-paper);border:1.5px solid var(--bpi-rule);border-radius:var(--radius-lg);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow-sm)}
+.review-card-header{display:flex;align-items:center;gap:12px;padding:14px 18px;cursor:pointer;user-select:none;border-bottom:1px solid transparent;transition:background 120ms}
+.review-card-header:hover{background:var(--bpi-bistre-05)}
+.review-card-header.expanded{border-bottom-color:var(--bpi-rule);background:var(--bpi-bistre-05)}
+.review-card-body{display:none;padding:16px 18px}
+.review-card-body.open{display:block}
+.status-chip{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.03em}
+.status-draft{background:#e8e3dd;color:#6b5744}
+.status-pending{background:#fff3cd;color:#8a5c00}
+.status-revisions{background:#ffe0dc;color:#8a2318}
+.status-approved{background:#d4edda;color:#1e5c27}
+.lp-status-bar{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--radius-md);margin-bottom:14px;font-size:.8rem}
+.lp-status-bar.draft{background:#f0ece7;border:1px solid var(--bpi-rule)}
+.lp-status-bar.pending{background:#fff8e1;border:1px solid #ffe082}
+.lp-status-bar.revisions{background:#fff0ee;border:1px solid #ffcdd2}
+.lp-status-bar.approved{background:#f0faf0;border:1px solid #a5d6a7}
+.due-badge{font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:12px}
+.due-ok{background:var(--bpi-gold-10);color:var(--bpi-bistre)}
+.due-soon{background:#fff3cd;color:#856404}
+.due-late{background:#ffe0dc;color:#a8392b}
+.holiday-day{background:repeating-linear-gradient(45deg,rgba(63,43,29,.03),rgba(63,43,29,.03) 4px,transparent 4px,transparent 10px);border:1.5px dashed var(--bpi-bistre-20)!important;opacity:.7}
+.holiday-banner{background:var(--bpi-bistre-05);border:1px solid var(--bpi-rule);border-radius:var(--radius-sm);text-align:center;padding:20px 10px;color:var(--bpi-ink-3);font-size:.78rem;font-style:italic}
+.admin-comment-wrap{margin-top:8px;padding:8px 10px;background:#fff8e1;border-left:3px solid var(--bpi-harvest-gold);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:.76rem;color:var(--bpi-ink-2)}
+.admin-comment-meta{font-size:.67rem;color:var(--bpi-ink-3);margin-bottom:3px;font-weight:600}
+.role-toggle{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:4px 10px;cursor:pointer;font-size:.74rem;color:#fff;font-family:var(--font-body);font-weight:600;margin-left:auto;transition:background 140ms}
+.role-toggle:hover{background:rgba(255,255,255,.18)}
+.role-dot{width:8px;height:8px;border-radius:50%;background:var(--bpi-caramel)}
+.role-dot.admin{background:#90caf9}
 @media print{#header,#sidebar,.no-print{display:none!important}#main{padding:0}body{background:#fff}}
 </style>
 </head>
@@ -210,6 +240,7 @@ tr:hover td{background:var(--bpi-caramel-20)}
   </div>
   <div style="flex:1"></div>
   <div class="school-addr">1401 Old Bainbridge Rd, Tallahassee FL 32303<br>#850-412-9390 &middot; 2025&ndash;2026</div>
+  <button class="role-toggle no-print" onclick="toggleRole()" id="role-toggle-btn"><div class="role-dot" id="role-dot"></div><span id="role-label">Teacher View</span></button>
 </div>
 
 <div id="layout">
@@ -234,8 +265,26 @@ tr:hover td{background:var(--bpi-caramel-20)}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>Classes</div>
   <div class="nav-item" onclick="nav('standards')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Standards</div>
+  <div class="nav-section">Review</div>
+  <div class="nav-item" onclick="nav('review')" id="nav-review">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Weekly Review</div>
 </div>
 
+<div id="page-review" class="page">
+  <div class="page-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    Weekly Lesson Plan Review
+  </div>
+  <div class="toolbar no-print" id="review-toolbar">
+    <div class="week-nav">
+      <button onclick="rvPrevWeek()">&#8592;</button>
+      <span class="week-label" id="rv-week-label"></span>
+      <button onclick="rvNextWeek()">&#8594;</button>
+    </div>
+    <div id="rv-due-display" style="font-size:.78rem;color:var(--bpi-ink-3)"></div>
+  </div>
+  <div id="review-content"></div>
+</div>
 <div id="main">
 
 <div id="page-dashboard" class="page active">
@@ -256,7 +305,10 @@ tr:hover td{background:var(--bpi-caramel-20)}
       <button onclick="lpNextWeek()">&#8594;</button>
     </div>
     <button class="btn btn-primary" onclick="openBlockModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Activity</button>
+    <button class="btn btn-secondary" onclick="openHolidayModal()" title="Mark a holiday day"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="15" x2="15" y2="15"/></svg>Holiday</button>
+    <div id="lp-status-bar-wrap"></div>
   </div>
+  <div id="lp-submit-bar" class="no-print"></div>
   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:6px" id="lp-day-headers"></div>
   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px" id="lp-grid"></div>
 </div>
@@ -340,7 +392,7 @@ const STANDARDS={
 '3rd':{'Reading – Literature':['Ask and answer questions to demonstrate understanding of a text','Recount stories and determine the central message, lesson or moral','Describe characters and how their actions contribute to the plot','Determine the meaning of words and phrases in a text','Compare and contrast themes, settings, and plots of stories'],'Reading – Informational':['Ask and answer questions to demonstrate understanding of informational text','Determine the main idea and explain how key details support it','Describe the relationship between historical events, scientific ideas, or concepts','Use text features to locate information'],'Foundational Skills':['Know and apply grade-level phonics and word analysis skills','Read with sufficient accuracy and fluency to support comprehension'],'Writing':['Write opinion pieces supporting a point of view with reasons','Write informative/explanatory texts examining a topic','Write narratives using effective technique and clear sequences','Use technology to produce and publish writing'],'Speaking & Listening':['Engage effectively in collaborative discussions','Determine the main idea and supporting details of a text read aloud','Report on a topic using appropriate facts and details'],'Language':['Explain the function of nouns, pronouns, verbs, adjectives, and adverbs','Form and use regular and irregular plural nouns','Use punctuation correctly','Determine the meaning of unknown words using context clues'],'Mathematics – Operations & Algebraic Thinking':['Interpret products of whole numbers','Interpret whole-number quotients of whole numbers','Use multiplication and division within 100 to solve word problems','Apply properties of operations to multiply and divide','Fluently multiply and divide within 100'],'Mathematics – Numbers in Base Ten':['Round whole numbers to the nearest 10 or 100','Fluently add and subtract within 1000','Multiply one-digit whole numbers by multiples of 10'],'Mathematics – Fractions':['Understand a fraction as a number on the number line','Explain equivalence of fractions','Compare two fractions with same numerator or denominator'],'Mathematics – Measurement & Data':['Tell and write time to the nearest minute','Measure and estimate liquid volumes and masses','Draw a scaled picture graph and bar graph','Measure areas by counting unit squares'],'Mathematics – Geometry':['Understand that shapes in different categories may share attributes','Partition shapes into parts with equal areas'],'Social Studies':['Demonstrate understanding of Social Studies concepts; Show interest','Complete Social Studies projects and tasks'],'Science':['Demonstrate understanding of Science concepts; Show interest','Complete Science projects and tasks'],'Social Skills & Work Habits':['Show enthusiasm for learning','Demonstrate appropriate self-control','Interact well with peers and adults; Respect others','Stay on task; Work independently']}
 };
 
-let DB={teachers:[],students:[],classes:[],lessonBlocks:[],assignments:[],nextId:1};
+let DB={teachers:[],students:[],classes:[],lessonBlocks:[],assignments:[],lessonWeeks:{},role:'teacher',nextId:1};
 function newId(){return String(DB.nextId++);}
 
 function seedData(){
@@ -377,12 +429,42 @@ function seedData(){
   DB.assignments.push({id:newId(),classId:cls1.id,title:'Counting to 100',date:'2026-01-09',trimester:3,subject:'Math',totalPoints:10,standardRefs:[{grade:'K',section:'Mathematics – Counting & Cardinality',stdIndex:0}],grades:sk([10,10,9,9],10)});
 }
 
+// Seed demo lesson week statuses after seedData()
+function seedLessonWeekData(){
+  const ws='2026-01-05';
+  // Ms. Henry's K class — submitted, pending review
+  const cls1=DB.classes.find(c=>c.name.includes('Kindergarten'));
+  if(cls1){
+    const lw=getLW(cls1.id,ws);
+    lw.status='pending';
+  }
+  // Mr. Jackson's blended class — approved, with a sample comment
+  const cls2=DB.classes.find(c=>c.name.includes('Blended'));
+  if(cls2){
+    const lw=getLW(cls2.id,ws);
+    lw.status='approved';
+    // Add a sample admin comment to the first block
+    const firstBlock=DB.lessonBlocks.find(b=>b.classId===cls2.id&&b.weekStart===ws);
+    if(firstBlock){
+      lw.comments[firstBlock.id]=[{text:'Great use of standards-based activities this week. Make sure the Teacher Table rotation is documented for each group.',author:'Admin',ts:'Jan 6, 9:15 AM'}];
+    }
+  }
+  // Ms. Williams' 3rd grade — revisions requested
+  const cls3=DB.classes.find(c=>c.name.includes('3rd Grade'));
+  if(cls3){
+    const lw=getLW(cls3.id,ws);
+    lw.status='revisions';
+  }
+  // Pre-K stays as draft (not submitted)
+}
+
 function nav(page){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+page+"'"))n.classList.add('active');});
-  ({dashboard:renderDashboard,lessonplan:renderLessonPlan,gradebook:renderGradebook,reports:initReportCards,students:renderStudents,teachers:renderTeachers,classes:renderClasses,standards:renderStandards})[page]?.();
+  if(page==='review'){rvCurrentWeek=new Date(lpCurrentWeek);}
+  ({dashboard:renderDashboard,lessonplan:renderLessonPlan,gradebook:renderGradebook,reports:initReportCards,students:renderStudents,teachers:renderTeachers,classes:renderClasses,standards:renderStandards,review:renderReviewPage})[page]?.();
 }
 
 function getCtxClass(){return document.getElementById('ctx-class').value||(DB.classes[0]?.id||'');}
@@ -451,18 +533,25 @@ function renderLessonPlan(){
   const blocks=DB.lessonBlocks.filter(b=>b.classId===classId&&b.weekStart===wsStr);
   const subOrder=['Circle Time','Phonics/Handwriting','Reading/Language Arts','Math','Project Based Learning'];
   const classId2=classId;
+  const lw=getLW(classId,wsStr);
   document.getElementById('lp-grid').innerHTML=DAYS.map((_,dayIdx)=>{
     const dayDate=new Date(lpCurrentWeek);dayDate.setDate(dayDate.getDate()+dayIdx);const dayDateStr=dayDate.toISOString().split('T')[0];
+    if(lw.holidays.includes(dayIdx)){
+      return`<div class="lp-day holiday-day"><div class="holiday-banner">🏖 Holiday / No School</div></div>`;
+    }
     const db=blocks.filter(b=>b.dayIndex===dayIdx);
     const bHtml=subOrder.map(subj=>db.filter(b=>b.subject===subj).map(b=>{
       const linkedAsns=DB.assignments.filter(a=>a.classId===classId2&&a.blockId===b.id);
       const asnChips=linkedAsns.map(a=>`<div class="lp-asn-chip" onclick="openGradeEntryModal('${a.id}');event.stopPropagation()" title="Open grade entry">
         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>
         ${escH(a.title)}</div>`).join('');
+      const blockComments=(lw.comments[b.id]||[]);
+      const commentBadge=blockComments.length?`<span style="font-size:.62rem;background:var(--bpi-harvest-gold);color:#fff;border-radius:10px;padding:1px 5px;margin-left:4px;font-weight:700">${blockComments.length}</span>`:'';
+      const adminCommentArea=DB.role==='admin'?`<button class="btn btn-sm" style="font-size:.63rem;padding:2px 6px;margin-top:4px;background:var(--bpi-gold-10);border:1px solid var(--bpi-gold-20);color:var(--bpi-bistre);width:100%" onclick="openAdminCommentModal('${b.id}','${classId2}','${wsStr}');event.stopPropagation()">＋ Comment${commentBadge}</button>`:(blockComments.length?`<div style="margin-top:4px">${blockComments.map(c=>`<div class="admin-comment-wrap"><div class="admin-comment-meta">${c.author} &middot; ${c.ts}</div>${escH(c.text)}</div>`).join('')}</div>`:'');
       return`<div class="lp-block ${SUBJ_CLS[b.subject]||''}">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:4px">
           <div onclick="editBlockModal('${b.id}');event.stopPropagation()" style="flex:1;cursor:pointer">
-            <div class="b-title">${b.subject}</div>
+            <div class="b-title">${b.subject}${commentBadge&&DB.role!=='admin'?commentBadge:''}</div>
             <div class="b-content">${escH(b.title)}</div>
             ${b.standardRefs.length?`<div class="b-stds">${b.standardRefs.map(r=>`<span class="chip chip-std" style="font-size:.62rem">${r.grade}</span>`).join('')}</div>`:''}
           </div>
@@ -471,10 +560,12 @@ function renderLessonPlan(){
           </button>
         </div>
         ${asnChips?`<div style="margin-top:5px">${asnChips}</div>`:''}
+        ${adminCommentArea}
       </div>`;
     }).join('')).join('');
     return`<div class="lp-day" onclick="openBlockModal(${dayIdx})" title="Click to add">${bHtml||`<div style="color:var(--bpi-bistre-20);font-size:.73rem;text-align:center;margin-top:36px;font-style:italic">Click to add</div>`}</div>`;
   }).join('');
+  renderLPStatusBar();
 }
 
 function buildStdCheckboxes(classId,existingRefs){
@@ -621,6 +712,239 @@ function saveBlock(existingId){
     toast('Activity saved');
   }
 }
+
+// ═══════════════════════════════════════════════════════════════
+// LESSON PLAN REVIEW / FEEDBACK SYSTEM
+// ═══════════════════════════════════════════════════════════════
+
+// DB.lessonWeeks keyed by "classId||weekStart"
+// {status:'draft'|'pending'|'revisions'|'approved', comments:{blockId:[{text,author,ts}]}, holidays:[0,1,2,3,4]}
+// DB.role: 'teacher' | 'admin'
+
+function lwKey(classId,wsStr){return classId+'||'+wsStr;}
+function getLW(classId,wsStr){
+  const k=lwKey(classId,wsStr);
+  if(!DB.lessonWeeks[k])DB.lessonWeeks[k]={status:'draft',comments:{},holidays:[]};
+  return DB.lessonWeeks[k];
+}
+
+// Due date = 2 weeks before the week starts (submitted 2 weeks in advance)
+function lpDueDate(wsStr){
+  const d=new Date(wsStr);d.setDate(d.getDate()-14);return d;
+}
+function lpDueDateStr(wsStr){return lpDueDate(wsStr).toISOString().split('T')[0];}
+function dueDateStatus(wsStr){
+  const due=lpDueDate(wsStr);const now=new Date();now.setHours(0,0,0,0);
+  const diff=Math.round((due-now)/(1000*60*60*24));
+  if(diff<0)return{label:'Overdue',cls:'due-late'};
+  if(diff<=3)return{label:'Due in '+diff+'d',cls:'due-soon'};
+  return{label:'Due '+due.toLocaleDateString('en-US',{month:'short',day:'numeric'}),cls:'due-ok'};
+}
+
+const STATUS_META={
+  draft:{label:'Draft',cls:'status-draft',icon:'✏️'},
+  pending:{label:'Pending Review',cls:'status-pending',icon:'⏳'},
+  revisions:{label:'Revisions Requested',cls:'status-revisions',icon:'↩️'},
+  approved:{label:'Approved',cls:'status-approved',icon:'✅'}
+};
+
+function toggleRole(){
+  DB.role=DB.role==='admin'?'teacher':'admin';
+  document.getElementById('role-label').textContent=DB.role==='admin'?'Admin View':'Teacher View';
+  document.getElementById('role-dot').className='role-dot'+(DB.role==='admin'?' admin':'');
+  // refresh current page
+  const active=document.querySelector('.page.active');
+  if(active){const pid=active.id.replace('page-','');nav(pid);}
+}
+
+// ── Status bar + submit button on lesson plan page ───────────────────────────
+function renderLPStatusBar(){
+  const classId=getCtxClass();const wsStr=lpCurrentWeek.toISOString().split('T')[0];
+  if(!classId)return;
+  const lw=getLW(classId,wsStr);
+  const sm=STATUS_META[lw.status]||STATUS_META.draft;
+  const due=dueDateStatus(wsStr);
+  const wrap=document.getElementById('lp-status-bar-wrap');
+  if(wrap)wrap.innerHTML=`<span class="status-chip ${sm.cls}">${sm.icon} ${sm.label}</span><span class="due-badge ${due.cls}" style="margin-left:6px">${due.label}</span>`;
+
+  const bar=document.getElementById('lp-submit-bar');
+  if(!bar)return;
+
+  // Admin view on LP page
+  if(DB.role==='admin'){
+    if(lw.status==='pending'){
+      bar.innerHTML=`<div class="lp-status-bar pending" style="justify-content:space-between"><span>📋 <strong>Pending your review</strong> — add comments to individual activities, then approve or request revisions.</span><div style="display:flex;gap:8px"><button class="btn btn-sm" style="background:var(--intent-danger);color:#fff" onclick="setLPStatus('revisions')">Request Revisions</button><button class="btn btn-sm" style="background:var(--intent-success);color:#fff" onclick="setLPStatus('approved')">Approve Plan</button></div></div>`;
+    } else if(lw.status==='approved'){
+      bar.innerHTML=`<div class="lp-status-bar approved"><span>✅ <strong>Approved.</strong> This lesson plan has been approved.</span><button class="btn btn-sm btn-secondary" style="margin-left:auto" onclick="setLPStatus('revisions')">Reopen for Revisions</button></div>`;
+    } else if(lw.status==='revisions'){
+      bar.innerHTML=`<div class="lp-status-bar revisions"><span>↩️ <strong>Revisions requested.</strong> Waiting for teacher to resubmit.</span></div>`;
+    } else {
+      bar.innerHTML=`<div class="lp-status-bar draft"><span>✏️ <strong>Draft</strong> — teacher has not yet submitted this plan for review.</span></div>`;
+    }
+    return;
+  }
+
+  // Teacher view
+  if(lw.status==='draft'||lw.status==='revisions'){
+    const msg=lw.status==='revisions'?'↩️ <strong>Revisions requested.</strong> Update your plan and resubmit for review.':'✏️ <strong>Draft.</strong> When your plan is ready, submit it for review.';
+    bar.innerHTML=`<div class="lp-status-bar ${lw.status}" style="justify-content:space-between"><span>${msg}</span><button class="btn btn-primary btn-sm" onclick="setLPStatus('pending')">Submit for Review</button></div>`;
+  } else if(lw.status==='pending'){
+    bar.innerHTML=`<div class="lp-status-bar pending"><span>⏳ <strong>Pending Review</strong> — your plan has been submitted and is awaiting admin review.</span><button class="btn btn-sm btn-secondary" style="margin-left:auto" onclick="setLPStatus('draft')">Withdraw</button></div>`;
+  } else if(lw.status==='approved'){
+    bar.innerHTML=`<div class="lp-status-bar approved"><span>✅ <strong>Approved!</strong> This lesson plan has been reviewed and approved.</span></div>`;
+  }
+}
+
+function setLPStatus(status){
+  const classId=getCtxClass();const wsStr=lpCurrentWeek.toISOString().split('T')[0];
+  const lw=getLW(classId,wsStr);lw.status=status;
+  renderLPStatusBar();renderLessonPlan();
+  const labels={pending:'Submitted for review!',approved:'Plan approved!',revisions:'Revisions requested.',draft:'Plan withdrawn.'};
+  toast(labels[status]||'Status updated');
+}
+
+// ── Holiday modal ────────────────────────────────────────────────────────────
+function openHolidayModal(){
+  const classId=getCtxClass();const wsStr=lpCurrentWeek.toISOString().split('T')[0];
+  const lw=getLW(classId,wsStr);
+  const checks=DAYS.map((d,i)=>{
+    const date=new Date(lpCurrentWeek);date.setDate(date.getDate()+i);
+    const checked=lw.holidays.includes(i)?'checked':'';
+    return`<label style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bpi-rule);cursor:pointer;font-size:.84rem">
+      <input type="checkbox" data-day="${i}" ${checked}> ${d} <span style="color:var(--bpi-ink-3);font-size:.74rem">${date.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>
+    </label>`;
+  }).join('');
+  showModal(`<div class="modal-title">Mark Holiday / No School Days</div>
+    <div style="color:var(--bpi-ink-3);font-size:.8rem;margin-bottom:14px">Marked days will show as holidays on the lesson plan and will not count toward the review.</div>
+    ${checks}
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveHolidays('${classId}','${wsStr}')">Save</button></div>`);
+}
+function saveHolidays(classId,wsStr){
+  const lw=getLW(classId,wsStr);
+  lw.holidays=[];
+  document.querySelectorAll('[data-day]:checked').forEach(cb=>lw.holidays.push(parseInt(cb.dataset.day)));
+  closeModal();renderLessonPlan();toast('Holidays updated');
+}
+
+// ── Admin comment on a block ─────────────────────────────────────────────────
+function openAdminCommentModal(blockId,classId,wsStr){
+  const lw=getLW(classId,wsStr);
+  const existing=(lw.comments[blockId]||[]);
+  const block=DB.lessonBlocks.find(b=>b.id===blockId);
+  const existingHtml=existing.map(c=>`<div class="admin-comment-wrap"><div class="admin-comment-meta">${c.author} &middot; ${c.ts}</div>${escH(c.text)}</div>`).join('');
+  showModal(`<div class="modal-title">Comment on Activity</div>
+    <div style="font-size:.82rem;font-weight:600;color:var(--bpi-bistre);margin-bottom:10px">${escH(block?.title||'Activity')}</div>
+    ${existingHtml}
+    <div style="margin-top:${existing.length?'12px':'0'}">
+      <label style="font-size:.78rem;font-weight:600;margin-bottom:6px;display:block">Add Comment</label>
+      <textarea id="admin-comment-text" rows="3" placeholder="Note for the teacher about this activity…" style="width:100%;font-family:var(--font-body);padding:8px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);font-size:.84rem;resize:vertical"></textarea>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveAdminComment('${blockId}','${classId}','${wsStr}')">Post Comment</button></div>`);
+}
+function saveAdminComment(blockId,classId,wsStr){
+  const text=document.getElementById('admin-comment-text')?.value.trim();
+  if(!text){toast('Enter a comment');return;}
+  const lw=getLW(classId,wsStr);
+  if(!lw.comments[blockId])lw.comments[blockId]=[];
+  const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  lw.comments[blockId].push({text,author:'Admin',ts:now});
+  closeModal();renderLessonPlan();toast('Comment posted');
+}
+
+// ── Review page ──────────────────────────────────────────────────────────────
+let rvCurrentWeek=new Date();
+// snap to Monday
+(function(){const d=rvCurrentWeek.getDay();rvCurrentWeek.setDate(rvCurrentWeek.getDate()-d+(d===0?-6:1));rvCurrentWeek.setHours(0,0,0,0);})();
+
+function rvPrevWeek(){rvCurrentWeek=new Date(rvCurrentWeek);rvCurrentWeek.setDate(rvCurrentWeek.getDate()-7);renderReviewPage();}
+function rvNextWeek(){rvCurrentWeek=new Date(rvCurrentWeek);rvCurrentWeek.setDate(rvCurrentWeek.getDate()+7);renderReviewPage();}
+
+function renderReviewPage(){
+  const wsStr=rvCurrentWeek.toISOString().split('T')[0];
+  const endDate=new Date(rvCurrentWeek);endDate.setDate(endDate.getDate()+4);
+  const due=dueDateStatus(wsStr);
+  document.getElementById('rv-week-label').textContent=`Week of ${fmtShort(rvCurrentWeek)}–${fmtShort(endDate)} ${rvCurrentWeek.getFullYear()}`;
+  document.getElementById('rv-due-display').innerHTML=`<span class="due-badge ${due.cls}">Due: ${lpDueDateStr(wsStr)}</span>`;
+
+  let html='';
+  DB.classes.forEach(cls=>{
+    const teacher=DB.teachers.find(t=>t.id===cls.teacherId);
+    const lw=getLW(cls.id,wsStr);
+    const sm=STATUS_META[lw.status]||STATUS_META.draft;
+    const blocks=DB.lessonBlocks.filter(b=>b.classId===cls.id&&b.weekStart===wsStr);
+    const totalBlocks=blocks.length;
+    const commentCount=Object.values(lw.comments).reduce((s,a)=>s+a.length,0);
+    const subOrder=['Circle Time','Phonics/Handwriting','Reading/Language Arts','Math','Project Based Learning'];
+
+    // Build day columns for expanded view
+    const dayColsHtml=DAYS.map((_,dayIdx)=>{
+      if(lw.holidays.includes(dayIdx)){
+        const date=new Date(rvCurrentWeek);date.setDate(date.getDate()+dayIdx);
+        return`<div><div class="lp-col-header" style="font-size:.72rem">${DAYS[dayIdx]}<br><span style="font-weight:400;opacity:.7">${fmtShort(date)}</span></div><div style="background:var(--bpi-bistre-05);border:1.5px dashed var(--bpi-rule);border-radius:var(--radius-md);padding:20px 8px;text-align:center;margin-top:4px"><span style="font-size:.74rem;color:var(--bpi-ink-3);font-style:italic">🏖 Holiday</span></div></div>`;
+      }
+      const dayBlocks=blocks.filter(b=>b.dayIndex===dayIdx);
+      const date=new Date(rvCurrentWeek);date.setDate(date.getDate()+dayIdx);
+      const blocksHtml=subOrder.map(subj=>dayBlocks.filter(b=>b.subject===subj).map(b=>{
+        const comments=(lw.comments[b.id]||[]);
+        const commentBadge=comments.length?`<span style="font-size:.64rem;background:var(--bpi-harvest-gold);color:#fff;border-radius:10px;padding:1px 5px;margin-left:4px">${comments.length}</span>`:'';
+        const commentsHtml=comments.map(c=>`<div class="admin-comment-wrap"><div class="admin-comment-meta">${c.author} &middot; ${c.ts}</div>${escH(c.text)}</div>`).join('');
+        const stdTags=b.standardRefs.map(r=>`<span class="chip chip-std" style="font-size:.6rem">${r.grade}</span>`).join('');
+        const adminBtn=DB.role==='admin'?`<button class="btn btn-sm" style="font-size:.64rem;padding:2px 7px;margin-top:5px;background:var(--bpi-gold-10);border:1px solid var(--bpi-gold-20);color:var(--bpi-bistre)" onclick="openAdminCommentModal('${b.id}','${cls.id}','${wsStr}');event.stopPropagation()">＋ Comment${commentBadge}</button>`:`${commentBadge?'<span style='font-size:.64rem;color:var(--bpi-ink-3)'>'+comments.length+' comment(s)</span>':''}`;
+        return`<div style="background:var(--bpi-paper);border:1px solid var(--bpi-rule);border-radius:var(--radius-sm);padding:7px 9px;margin-bottom:5px;font-size:.74rem">
+          <div style="font-weight:700;font-size:.72rem;color:var(--bpi-brown-sugar);text-transform:uppercase;letter-spacing:.05em">${b.subject}</div>
+          <div style="font-weight:600;margin:2px 0">${escH(b.title)}</div>
+          ${b.content?`<div style="font-size:.7rem;color:var(--bpi-ink-3);margin:2px 0">${escH(b.content.substring(0,80))}${b.content.length>80?'…':''}</div>`:''}
+          ${stdTags?`<div style="margin-top:3px">${stdTags}</div>`:''}
+          ${commentsHtml}
+          <div>${adminBtn}</div>
+        </div>`;
+      }).join('')).join('');
+      return`<div><div class="lp-col-header" style="font-size:.72rem">${DAYS[dayIdx]}<br><span style="font-weight:400;opacity:.7">${fmtShort(date)}</span></div><div style="margin-top:4px">${blocksHtml||'<div style="font-size:.72rem;color:var(--bpi-bistre-20);font-style:italic;padding:8px 4px">No activities</div>'}</div></div>`;
+    }).join('');
+
+    const adminActions=DB.role==='admin'&&lw.status==='pending'?`
+      <div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bpi-rule)">
+        <button class="btn btn-sm" style="background:var(--intent-danger);color:#fff" onclick="setLPStatusFor('${cls.id}','${wsStr}','revisions')">Request Revisions</button>
+        <button class="btn btn-sm" style="background:var(--intent-success);color:#fff" onclick="setLPStatusFor('${cls.id}','${wsStr}','approved')">Approve Plan</button>
+      </div>`:'';
+
+    html+=`<div class="review-class-card">
+      <div class="review-card-header" onclick="toggleReviewCard('rv-body-${cls.id}',this)">
+        <div style="flex:1">
+          <div style="font-family:var(--font-display);font-weight:700;font-size:.95rem;color:var(--bpi-bistre)">${escH(cls.name)}</div>
+          <div style="font-size:.74rem;color:var(--bpi-ink-3);margin-top:2px">${escH(teacher?.name||'No teacher')} &middot; ${totalBlocks} activit${totalBlocks===1?'y':'ies'}${commentCount?' &middot; '+commentCount+' comment'+(commentCount>1?'s':''):''}</div>
+        </div>
+        <span class="status-chip ${sm.cls}">${sm.icon} ${sm.label}</span>
+        <svg style="margin-left:8px;transition:transform 200ms" class="rv-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="review-card-body" id="rv-body-${cls.id}">
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
+          ${dayColsHtml}
+        </div>
+        ${adminActions}
+      </div>
+    </div>`;
+  });
+
+  if(!html)html='<div class="card"><div class="empty-state">No classes found.</div></div>';
+  document.getElementById('review-content').innerHTML=html;
+}
+
+function toggleReviewCard(bodyId,header){
+  const body=document.getElementById(bodyId);
+  if(!body)return;
+  const open=body.classList.toggle('open');
+  header.classList.toggle('expanded',open);
+  const chev=header.querySelector('.rv-chevron');
+  if(chev)chev.style.transform=open?'rotate(180deg)':'';
+}
+
+function setLPStatusFor(classId,wsStr,status){
+  const lw=getLW(classId,wsStr);lw.status=status;
+  renderReviewPage();
+  toast(status==='approved'?'Plan approved!':'Revisions requested.');
+}
+
 function deleteBlock(id){DB.lessonBlocks=DB.lessonBlocks.filter(b=>b.id!==id);closeModal();renderLessonPlan();toast('Removed');}
 
 function renderGradebook(){
@@ -1038,7 +1362,7 @@ function showModal(html,size){document.getElementById('modal-container').innerHT
 function closeModal(){document.getElementById('modal-container').innerHTML='';}
 let _tt;function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2500);}
 
-seedData();
+seedData();seedLessonWeekData();
 populateContextSelects();
 renderDashboard();
 </script>
