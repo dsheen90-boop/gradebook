@@ -366,14 +366,15 @@ function seedData(){
     ab(cls2.id,d,'Project Based Learning','Habitats & Ecosystems '+(d===2?'Intro':d===3?'Lesson 1':'Lesson 2'),'Black History Practice: 10:30AM\nHabitats and Ecosystems Unit');
   }
   const cls2S=DB.students.filter(s=>cls2.studentIds.includes(s.id));
-  const sg=(arr)=>Object.fromEntries(cls2S.map((s,i)=>[s.id,{letter:arr[i]?.[0]||'B',score:arr[i]?.[1]||3}]));
-  DB.assignments.push({id:newId(),classId:cls2.id,title:'Parts of a Story Quiz',date:'2026-01-09',trimester:3,subject:'Reading/Language Arts',standardRefs:[{grade:'2nd',section:'Reading – Literature & Informational',stdIndex:4},{grade:'1st',section:'Reading – Literature',stdIndex:2}],grades:sg([['B+',3],['A',4],['B',3],['C+',2],['A',4],['B+',3],['B+',3],['A',4],['C+',2],['B+',3]])});
-  DB.assignments.push({id:newId(),classId:cls2.id,title:'2-Digit Subtraction Assessment',date:'2026-01-10',trimester:3,subject:'Math',standardRefs:[{grade:'2nd',section:'Mathematics – Numbers in Base Ten',stdIndex:4},{grade:'1st',section:'Mathematics – Number & Operations in Base Ten',stdIndex:3}],grades:sg([['A',4],['A',4],['B+',3],['B',3],['A',4],['A',4],['B+',3],['A',4],['B',3],['A',4]])});
-  DB.assignments.push({id:newId(),classId:cls2.id,title:'Gratitude Essay',date:'2026-01-12',trimester:3,subject:'Reading/Language Arts',standardRefs:[{grade:'2nd',section:'Writing',stdIndex:2},{grade:'1st',section:'Writing',stdIndex:2}],grades:sg([['B+',3],['B+',3],['C+',2],['C',2],['B+',3],['B+',3],['C+',2],['B+',3],['C',2],['B+',3]])});
+  // Demo grades: earned points out of totalPoints
+  const sg=(arr,tp)=>Object.fromEntries(cls2S.map((s,i)=>[s.id,{earned:arr[i]!=null?arr[i]:Math.round(tp*0.75)}]));
+  DB.assignments.push({id:newId(),classId:cls2.id,title:'Parts of a Story Quiz',date:'2026-01-09',trimester:3,subject:'Reading/Language Arts',totalPoints:20,standardRefs:[{grade:'2nd',section:'Reading – Literature & Informational',stdIndex:4},{grade:'1st',section:'Reading – Literature',stdIndex:2}],grades:sg([17,20,16,13,20,17,17,20,13,17],20)});
+  DB.assignments.push({id:newId(),classId:cls2.id,title:'2-Digit Subtraction Assessment',date:'2026-01-10',trimester:3,subject:'Math',totalPoints:25,standardRefs:[{grade:'2nd',section:'Mathematics – Numbers in Base Ten',stdIndex:4},{grade:'1st',section:'Mathematics – Number & Operations in Base Ten',stdIndex:3}],grades:sg([25,25,22,20,25,25,22,25,20,25],25)});
+  DB.assignments.push({id:newId(),classId:cls2.id,title:'Gratitude Essay',date:'2026-01-12',trimester:3,subject:'Reading/Language Arts',totalPoints:30,standardRefs:[{grade:'2nd',section:'Writing',stdIndex:2},{grade:'1st',section:'Writing',stdIndex:2}],grades:sg([24,24,19,18,24,24,19,24,18,24],30)});
   const cls1S=DB.students.filter(s=>cls1.studentIds.includes(s.id));
-  const sk=(arr)=>Object.fromEntries(cls1S.map((s,i)=>[s.id,{letter:arr[i]?.[0]||'B',score:arr[i]?.[1]||3}]));
-  DB.assignments.push({id:newId(),classId:cls1.id,title:'Letter Recognition Check',date:'2026-01-08',trimester:3,subject:'Reading/Language Arts',standardRefs:[{grade:'K',section:'Foundational Skills',stdIndex:2}],grades:sk([['A',4],['B+',3],['B',3],['C+',2]])});
-  DB.assignments.push({id:newId(),classId:cls1.id,title:'Counting to 100',date:'2026-01-09',trimester:3,subject:'Math',standardRefs:[{grade:'K',section:'Mathematics – Counting & Cardinality',stdIndex:0}],grades:sk([['A',4],['A',4],['B+',3],['B+',3]])});
+  const sk=(arr,tp)=>Object.fromEntries(cls1S.map((s,i)=>[s.id,{earned:arr[i]!=null?arr[i]:Math.round(tp*0.75)}]));
+  DB.assignments.push({id:newId(),classId:cls1.id,title:'Letter Recognition Check',date:'2026-01-08',trimester:3,subject:'Reading/Language Arts',totalPoints:10,standardRefs:[{grade:'K',section:'Foundational Skills',stdIndex:2}],grades:sk([10,9,8,7],10)});
+  DB.assignments.push({id:newId(),classId:cls1.id,title:'Counting to 100',date:'2026-01-09',trimester:3,subject:'Math',totalPoints:10,standardRefs:[{grade:'K',section:'Mathematics – Counting & Cardinality',stdIndex:0}],grades:sk([10,10,9,9],10)});
 }
 
 function nav(page){
@@ -411,9 +412,10 @@ function renderDashboard(){
     <div class="stat-card"><div class="stat-val">${DB.classes.length}</div><div class="gold-rule-bar"></div><div class="stat-label">Classes</div></div>
     <div class="stat-card"><div class="stat-val">${DB.teachers.length}</div><div class="gold-rule-bar"></div><div class="stat-label">Teachers</div></div>`;
   const aHtml=assignments.length?assignments.slice(-6).reverse().map(a=>{
-    const sc=students.map(s=>a.grades?.[s.id]?.score).filter(Boolean);
-    const avg=sc.length?(sc.reduce((x,y)=>x+y,0)/sc.length).toFixed(1):null;
-    return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bpi-rule)"><div style="flex:1"><div style="font-weight:600;font-size:.84rem">${a.title}</div><div style="font-size:.72rem;color:var(--bpi-ink-3)">${a.subject} &middot; ${a.date}</div></div>${avg?renderScoreBadge(Math.round(parseFloat(avg))):''}</div>`;
+    const sc=students.map(s=>a.grades?.[s.id]).filter(g=>g&&g.earned!=null&&g.status!=='M'&&g.status!=='E');
+    const pct=sc.length&&a.totalPoints?Math.round(sc.reduce((x,g)=>x+g.earned,0)/sc.length/a.totalPoints*100):null;
+    const avgDisp=pct!=null?`<span style="font-weight:700;font-size:.82rem;color:${pct>=80?'var(--intent-success)':pct>=65?'var(--intent-warning)':'var(--intent-danger)'}">${pct}%</span>`:'';
+    return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bpi-rule)"><div style="flex:1"><div style="font-weight:600;font-size:.84rem">${a.title}</div><div style="font-size:.72rem;color:var(--bpi-ink-3)">${a.subject} &middot; ${a.date}${a.totalPoints?' &middot; '+a.totalPoints+' pts':''}</div></div>${avgDisp}</div>`;
   }).join(''):'<div class="empty-state">No assignments yet</div>';
   document.getElementById('dash-assignments').innerHTML=aHtml;
   if(cls){
@@ -496,12 +498,48 @@ function buildStdCheckboxes(classId,existingRefs){
 
 function openBlockModal(dayIdx){
   const classId=getCtxClass();if(!DB.classes.find(c=>c.id===classId)){toast('Select a class first');return;}
+  const dayDate=new Date(lpCurrentWeek);dayDate.setDate(dayDate.getDate()+(dayIdx||0));const dayDateStr=dayDate.toISOString().split('T')[0];
+  const trimester=getCtxTrimester();
   showModal(`<div class="modal-title">Add Lesson Activity</div>
-    <div class="form-row cols-2"><div><label>Day</label><select id="blk-day">${DAYS.map((d,i)=>`<option value="${i}" ${i===(dayIdx||0)?'selected':''}>${d}</option>`).join('')}</select></div><div><label>Subject Block</label><select id="blk-subject">${SUBJECTS.map(s=>`<option>${s}</option>`).join('')}</select></div></div>
+    <div class="form-row cols-2"><div><label>Day</label><select id="blk-day">${DAYS.map((d,i)=>`<option value="${i}" ${i===(dayIdx||0)?'selected':''}>${d}</option>`).join('')}</select></div><div><label>Subject Block</label><select id="blk-subject" onchange="refreshBlkStds()">${SUBJECTS.map(s=>`<option>${s}</option>`).join('')}</select></div></div>
     <div class="form-row"><div><label>Activity Title</label><input type="text" id="blk-title" placeholder="e.g. Parts of a Story Day 1"></div></div>
     <div class="form-row"><div><label>Content / Notes</label><textarea id="blk-content" rows="3" placeholder="Whole Group → Centers → Teacher Table…"></textarea></div></div>
-    <div style="margin-top:8px"><label style="margin-bottom:8px">Tag Standards <span style="font-weight:400;color:var(--bpi-ink-3);font-size:.7rem">(auto-links to gradebook)</span></label><div style="max-height:220px;overflow-y:auto;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);padding:10px">${buildStdCheckboxes(classId,[])}</div></div>
+    <div style="margin-top:8px"><label style="margin-bottom:8px">Tag Standards <span style="font-weight:400;color:var(--bpi-ink-3);font-size:.7rem">(auto-links to gradebook)</span></label><div style="max-height:160px;overflow-y:auto;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);padding:10px" id="blk-std-wrap">${buildStdCheckboxes(classId,[])}</div></div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bpi-rule)">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;font-size:.84rem">
+        <input type="checkbox" id="blk-is-graded" onchange="toggleGradedSection()">
+        This activity is a graded assignment
+      </label>
+      <div id="blk-graded-section" style="display:none;margin-top:12px;padding:12px;background:var(--bpi-gold-10);border:1px solid var(--bpi-gold-20);border-radius:var(--radius-md)">
+        <div style="font-size:.72rem;font-weight:700;color:var(--bpi-bistre);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Assignment Details</div>
+        <div class="form-row cols-2">
+          <div><label>Assignment Title <span style="font-weight:400;font-size:.72rem;color:var(--bpi-ink-3)">(defaults to activity title)</span></label><input type="text" id="blk-asn-title" placeholder="Leave blank to use activity title"></div>
+          <div><label>Total Points</label><input type="number" id="blk-asn-points" value="100" min="1" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"></div>
+        </div>
+        <div class="form-row cols-2">
+          <div><label>Due Date</label><input type="date" id="blk-asn-date" value="${dayDateStr}"></div>
+          <div><label>Trimester</label><select id="blk-asn-trimester" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"><option value="1" ${trimester===1?'selected':''}>T1</option><option value="2" ${trimester===2?'selected':''}>T2</option><option value="3" ${trimester===3?'selected':''}>T3</option></select></div>
+        </div>
+      </div>
+    </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveBlock()">Save Activity</button></div>`);
+}
+function toggleGradedSection(){
+  const show=document.getElementById('blk-is-graded')?.checked;
+  const sec=document.getElementById('blk-graded-section');
+  if(sec)sec.style.display=show?'block':'none';
+  // pre-fill assignment title from activity title if empty
+  if(show){
+    const asnTitle=document.getElementById('blk-asn-title');
+    const blkTitle=document.getElementById('blk-title')?.value||'';
+    if(asnTitle&&!asnTitle.value)asnTitle.value=blkTitle;
+  }
+}
+function refreshBlkStds(){
+  const classId=getCtxClass();
+  const subject=document.getElementById('blk-subject')?.value||'';
+  const wrap=document.getElementById('blk-std-wrap');
+  if(wrap)wrap.innerHTML=buildStdCheckboxesFiltered(classId,[],subject);
 }
 
 function editBlockModal(blockId){
@@ -520,8 +558,23 @@ function saveBlock(existingId){
   const title=document.getElementById('blk-title').value.trim();const content=document.getElementById('blk-content').value.trim();
   if(!title){alert('Please enter a title');return;}
   const stdRefs=[];document.querySelectorAll('.std-ref-cb:checked').forEach(cb=>{const[grade,section,stdi]=cb.dataset.key.split('||');stdRefs.push({grade,section,stdIndex:parseInt(stdi)});});
+  let blockId=existingId;
   if(existingId){const b=DB.lessonBlocks.find(x=>x.id===existingId);Object.assign(b,{dayIndex:day,subject,title,content,standardRefs:stdRefs});}
-  else DB.lessonBlocks.push({id:newId(),classId,weekStart:wsStr,dayIndex:day,subject,title,content,standardRefs:stdRefs});
+  else{blockId=newId();DB.lessonBlocks.push({id:blockId,classId,weekStart:wsStr,dayIndex:day,subject,title,content,standardRefs:stdRefs});}
+  // If graded checkbox is checked, also create assignment
+  const isGraded=document.getElementById('blk-is-graded')?.checked;
+  if(isGraded&&!existingId){
+    const asnRawTitle=document.getElementById('blk-asn-title')?.value.trim();
+    const asnTitle=asnRawTitle||title;
+    const totalPoints=parseInt(document.getElementById('blk-asn-points')?.value)||100;
+    const date=document.getElementById('blk-asn-date')?.value||wsStr;
+    const trimester=parseInt(document.getElementById('blk-asn-trimester')?.value)||getCtxTrimester();
+    const a={id:newId(),classId,title:asnTitle,date,subject,trimester,standardRefs:stdRefs,grades:{},totalPoints,blockId};
+    DB.assignments.push(a);
+    closeModal();renderLessonPlan();toast('Activity + assignment created!');
+    openGradeEntryModal(a.id);
+    return;
+  }
   closeModal();renderLessonPlan();toast('Activity saved');
 }
 function deleteBlock(id){DB.lessonBlocks=DB.lessonBlocks.filter(b=>b.id!==id);closeModal();renderLessonPlan();toast('Removed');}
@@ -539,21 +592,26 @@ function renderGradebook(){
   if(subjFilter)assignments=assignments.filter(a=>a.subject===subjFilter);
   if(stdQ)assignments=assignments.filter(a=>a.standardRefs.some(r=>{const std=STANDARDS[r.grade]?.[r.section]?.[r.stdIndex]||'';return std.toLowerCase().includes(stdQ)||r.section.toLowerCase().includes(stdQ)||r.grade.toLowerCase().includes(stdQ);}));
   if(!assignments.length){document.getElementById('gradebook-content').innerHTML=`<div class="card"><div class="alert alert-info">No assignments match filters for T${trimester}.</div></div>`;return;}
-  let html='<div class="card" style="overflow-x:auto"><table><thead><tr><th>Student</th><th>Grade</th>';
-  assignments.forEach(a=>{html+=`<th style="max-width:110px;font-size:.69rem;cursor:pointer" title="${a.date}" onclick="openGradeEntryModal('${a.id}')">${a.title}<br><span style="font-weight:400;opacity:.7">${a.date}</span></th>`;});
-  html+='<th>Avg</th><th></th></tr></thead><tbody>';
+  let html='<div class="card" style="overflow-x:auto"><table><thead><tr><th>Student</th><th>Lvl</th>';
+  assignments.forEach(a=>{html+=`<th style="max-width:110px;font-size:.69rem;cursor:pointer" title="${a.date}" onclick="openGradeEntryModal('${a.id}')">${a.title}<br><span style="font-weight:400;opacity:.7">${a.totalPoints?a.totalPoints+' pts · ':''} ${a.date}</span></th>`;});
+  html+='<th>Overall %</th><th></th></tr></thead><tbody>';
   students.forEach(s=>{
     html+=`<tr><td style="cursor:pointer" onclick="openStudentDetail('${s.id}','${classId}')"><strong style="color:var(--bpi-brown-sugar)">${s.name}</strong></td><td><span class="chip chip-grade">${s.grade}</span></td>`;
-    let tot=0,cnt=0;
+    let earnedTot=0,possibleTot=0;
     assignments.forEach(a=>{
       const g=a.grades?.[s.id];
       if(g&&g.status==='M'){html+=`<td style="text-align:center"><span class="chip" style="background:var(--intent-warning);color:#fff;font-size:.7rem">M</span></td>`;}
       else if(g&&g.status==='E'){html+=`<td style="text-align:center"><span class="chip" style="background:var(--intent-info);color:#fff;font-size:.7rem">E</span></td>`;}
-      else if(g&&g.score){tot+=g.score;cnt++;html+=`<td style="text-align:center">${renderScoreBadge(g.score)}<br><span style="font-size:.68rem;color:var(--bpi-ink-3)">${g.letter||''}</span></td>`;}
-      else html+='<td style="text-align:center;color:var(--bpi-bistre-20)">–</td>';
+      else if(g&&g.earned!=null&&a.totalPoints){
+        earnedTot+=g.earned;possibleTot+=a.totalPoints;
+        const pct=Math.round(g.earned/a.totalPoints*100);
+        const col=pct>=80?'var(--intent-success)':pct>=65?'var(--intent-warning)':'var(--intent-danger)';
+        html+=`<td style="text-align:center"><span style="font-weight:700;font-size:.82rem;color:${col}">${g.earned}/${a.totalPoints}</span><br><span style="font-size:.67rem;color:var(--bpi-ink-3)">${pct}%</span></td>`;
+      } else html+='<td style="text-align:center;color:var(--bpi-bistre-20)">–</td>';
     });
-    const avg=cnt?(tot/cnt).toFixed(1):'–';
-    html+=`<td style="text-align:center;font-weight:700">${avg!=='–'?renderScoreBadge(Math.round(parseFloat(avg))):'–'}</td>`;
+    const overallPct=possibleTot?Math.round(earnedTot/possibleTot*100):null;
+    const oCol=overallPct!=null?(overallPct>=80?'var(--intent-success)':overallPct>=65?'var(--intent-warning)':'var(--intent-danger)'):'var(--bpi-bistre-20)';
+    html+=`<td style="text-align:center;font-weight:700;color:${oCol}">${overallPct!=null?overallPct+'%':'–'}</td>`;
     html+=`<td><button class="btn btn-secondary btn-sm" onclick="openStudentDetail('${s.id}','${classId}')">Detail</button></td></tr>`;
   });
   html+='</tbody></table></div>';
@@ -573,31 +631,35 @@ function openStudentDetail(studentId,classId){
   const cls=DB.classes.find(c=>c.id===classId);
   const allAssignments=DB.assignments.filter(a=>a.classId===classId).sort((a,b)=>a.date.localeCompare(b.date));
   if(!allAssignments.length){toast('No assignments yet');return;}
-  let tot=0,cnt=0,missing=0,excused=0;
+  let earnedTot=0,possibleTot=0,missing=0,excused=0;
   const rows=allAssignments.map(a=>{
     const g=a.grades?.[studentId];
     let statusCell='<span style="color:var(--bpi-bistre-20);font-size:.8rem">–</span>';
-    let letterCell='<span style="color:var(--bpi-bistre-20)">–</span>';
     let scoreCell='<span style="color:var(--bpi-bistre-20)">–</span>';
     if(g){
       if(g.status==='M'){statusCell='<span class="chip" style="background:var(--intent-warning);color:#fff">Missing</span>';missing++;}
       else if(g.status==='E'){statusCell='<span class="chip" style="background:var(--intent-info);color:#fff">Excused</span>';excused++;}
       else{statusCell='<span class="chip" style="background:var(--intent-success);color:#fff">Graded</span>';}
-      if(g.letter)letterCell=`<strong>${g.letter}</strong>`;
-      if(g.score){scoreCell=renderScoreBadge(g.score);tot+=g.score;cnt++;}
+      if(g.earned!=null&&a.totalPoints){
+        const pct=Math.round(g.earned/a.totalPoints*100);
+        const col=pct>=80?'var(--intent-success)':pct>=65?'var(--intent-warning)':'var(--intent-danger)';
+        scoreCell=`<span style="font-weight:700;color:${col}">${g.earned}/${a.totalPoints}</span><br><span style="font-size:.7rem;color:var(--bpi-ink-3)">${pct}%</span>`;
+        earnedTot+=g.earned;possibleTot+=a.totalPoints;
+      }
     }
     const stdTags=a.standardRefs.slice(0,2).map(r=>{const s=STANDARDS[r.grade]?.[r.section]?.[r.stdIndex];return s?`<span class="chip chip-grade" style="font-size:.6rem">${r.grade}</span>`:''}).join('');
-    return `<tr><td><strong>${a.title}</strong><div style="font-size:.7rem;color:var(--bpi-ink-3)">${a.subject}</div>${stdTags}</td><td style="font-size:.78rem">${a.date}</td><td style="font-size:.75rem">T${a.trimester}</td><td style="text-align:center">${statusCell}</td><td style="text-align:center">${letterCell}</td><td style="text-align:center">${scoreCell}</td></tr>`;
+    return `<tr><td><strong>${a.title}</strong><div style="font-size:.7rem;color:var(--bpi-ink-3)">${a.subject}${a.totalPoints?' · '+a.totalPoints+' pts':''}</div>${stdTags}</td><td style="font-size:.78rem">${a.date}</td><td style="font-size:.75rem">T${a.trimester}</td><td style="text-align:center">${statusCell}</td><td style="text-align:center">${scoreCell}</td></tr>`;
   }).join('');
-  const avg=cnt?(tot/cnt).toFixed(1):'–';
+  const overallPct=possibleTot?Math.round(earnedTot/possibleTot*100):null;
+  const oCol=overallPct!=null?(overallPct>=80?'var(--intent-success)':overallPct>=65?'var(--intent-warning)':'var(--intent-danger)'):'var(--bpi-bistre-20)';
   const html=`<div class="modal-title">${student.name} <span class="chip chip-grade" style="margin-left:6px">${student.grade}</span></div>
     <div style="display:flex;gap:12px;margin-bottom:14px">
       <div class="stat-card" style="flex:1;padding:10px 14px"><div class="stat-val" style="font-size:1.4rem">${allAssignments.length}</div><div class="stat-label">Assignments</div></div>
-      <div class="stat-card" style="flex:1;padding:10px 14px"><div class="stat-val" style="font-size:1.4rem">${avg!=='–'?avg+'<span style=\'font-size:.8rem\'>/4</span>':avg}</div><div class="stat-label">Avg Score</div></div>
+      <div class="stat-card" style="flex:1;padding:10px 14px"><div class="stat-val" style="font-size:1.4rem;color:${oCol}">${overallPct!=null?overallPct+'%':'–'}</div><div class="stat-label">Overall</div></div>
       <div class="stat-card" style="flex:1;padding:10px 14px"><div class="stat-val" style="font-size:1.4rem;color:var(--intent-warning)">${missing}</div><div class="stat-label">Missing</div></div>
       <div class="stat-card" style="flex:1;padding:10px 14px"><div class="stat-val" style="font-size:1.4rem;color:var(--intent-info)">${excused}</div><div class="stat-label">Excused</div></div>
     </div>
-    <div style="overflow-x:auto"><table><thead><tr><th>Assignment</th><th>Date</th><th>Tri</th><th>Status</th><th>Letter</th><th>Score</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Assignment</th><th>Date</th><th>Tri</th><th>Status</th><th>Score</th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Close</button><button class="btn btn-primary" onclick="closeModal();openStudentStdModal('${studentId}','${classId}')">View Standards</button></div>`;
   showModal(html,'large');
 }
@@ -649,12 +711,13 @@ function openAssignmentModal(){
   const stdHtml=suggestedHtml+buildStdCheckboxesFiltered(classId,[],defaultSubject);
   showModal(`<div class="modal-title">New Assignment</div>
     <div class="form-row cols-2"><div><label>Title</label><input type="text" id="asn-title" placeholder="e.g. Parts of a Story Quiz"></div><div><label>Date</label><input type="date" id="asn-date" value="${new Date().toISOString().split('T')[0]}"></div></div>
-    <div class="form-row cols-2">
+    <div class="form-row cols-3">
       <div><label>Subject</label><select id="asn-subject" onchange="refreshAsnStandards()">
         <option>Reading/Language Arts</option><option>Math</option><option>Phonics/Handwriting</option>
         <option>Science</option><option>Social Studies</option><option>Project Based Learning</option><option>Social Skills</option>
       </select></div>
       <div><label>Trimester</label><select id="asn-trimester"><option value="1">T1</option><option value="2">T2</option><option value="3" selected>T3</option></select></div>
+      <div><label>Total Points</label><input type="number" id="asn-points" value="100" min="1" placeholder="100" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"></div>
     </div>
     <input type="hidden" id="asn-block-id" value="">
     <div><label style="margin-bottom:8px">Standards Assessed <span style="font-weight:400;color:var(--bpi-ink-3);font-size:.7rem">(filtered by subject)</span></label>
@@ -675,7 +738,8 @@ function saveAssignment(){
   if(!title){alert('Enter a title');return;}
   const stdRefs=[];document.querySelectorAll('.std-ref-cb:checked').forEach(cb=>{const[grade,section,stdi]=cb.dataset.key.split('||');if(!stdRefs.find(r=>r.grade===grade&&r.section===section&&r.stdIndex===parseInt(stdi)))stdRefs.push({grade,section,stdIndex:parseInt(stdi)});});
   const blockId=document.getElementById('asn-block-id')?.value||null;
-  const a={id:newId(),classId,title,date,subject,trimester,standardRefs:stdRefs,grades:{},blockId:blockId||undefined};
+  const totalPoints=parseInt(document.getElementById('asn-points')?.value)||100;
+  const a={id:newId(),classId,title,date,subject,trimester,standardRefs:stdRefs,grades:{},totalPoints,blockId:blockId||undefined};
   DB.assignments.push(a);closeModal();openGradeEntryModal(a.id);
   if(blockId&&document.getElementById('page-lessonplan')?.classList.contains('active'))renderLessonPlan();
 }
@@ -702,12 +766,13 @@ function openAssignmentFromBlock(blockId,dateStr){
     <div class="alert alert-info" style="margin-bottom:12px">Linked to: <strong>${escH(block.title)}</strong> &middot; ${escH(block.subject)}</div>
     <input type="hidden" id="asn-block-id" value="${blockId}">
     <div class="form-row cols-2"><div><label>Title</label><input type="text" id="asn-title" placeholder="e.g. ${escH(block.title)} Quiz" value="${escH(block.title)}"></div><div><label>Date</label><input type="date" id="asn-date" value="${dateStr}"></div></div>
-    <div class="form-row cols-2">
+    <div class="form-row cols-3">
       <div><label>Subject</label><select id="asn-subject" onchange="refreshAsnStandards()">
         <option>Reading/Language Arts</option><option>Math</option><option>Phonics/Handwriting</option>
         <option>Science</option><option>Social Studies</option><option>Project Based Learning</option><option>Social Skills</option>
       </select></div>
       <div><label>Trimester</label><select id="asn-trimester"><option value="1" ${trimester===1?'selected':''}>T1</option><option value="2" ${trimester===2?'selected':''}>T2</option><option value="3" ${trimester===3?'selected':''}>T3</option></select></div>
+      <div><label>Total Points</label><input type="number" id="asn-points" value="100" min="1" placeholder="100" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"></div>
     </div>
     <div><label style="margin-bottom:8px">Standards Assessed</label>
       <div id="asn-std-container" style="max-height:240px;overflow-y:auto;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);padding:10px">${stdHtml}</div>
@@ -719,60 +784,85 @@ function openAssignmentFromBlock(blockId,dateStr){
 function deleteAssignment(id){if(!confirm('Delete assignment?'))return;DB.assignments=DB.assignments.filter(a=>a.id!==id);renderGradebook();toast('Deleted');}
 
 function openGradeEntryModal(assignmentId){
-  const a=DB.assignments.find(x=>x.id===assignmentId);const cls=DB.classes.find(c=>c.id===a.classId);const students=DB.students.filter(s=>cls.studentIds.includes(s.id));
+  const a=DB.assignments.find(x=>x.id===assignmentId);
+  const cls=DB.classes.find(c=>c.id===a.classId);
+  const students=DB.students.filter(s=>cls.studentIds.includes(s.id));
+  const tp=a.totalPoints||100;
   const rows=students.map(s=>{
     const g=a.grades[s.id]||{};
     const isMissing=g.status==='M';const isExcused=g.status==='E';
-    return`<tr>
-      <td>${s.name} <span class="chip chip-grade">${s.grade}</span></td>
-      <td><input type="text" class="grade-input" id="gl_${s.id}" value="${g.letter||''}"
-        placeholder="A B C D F"
-        maxlength="2"
-        style="width:60px;text-align:center;text-transform:uppercase;font-weight:700;font-size:.9rem;padding:4px 6px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-sm);font-family:var(--font-body)"
-        oninput="validateLetterInput(this)"></td>
-      <td><select class="score-input" id="gs_${s.id}" style="font-family:var(--font-body);font-size:.8rem;padding:4px 8px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-sm)">
-        <option value="">–</option>
-        <option value="4" ${g.score===4?'selected':''}>4 – Exemplary</option>
-        <option value="3" ${g.score===3?'selected':''}>3 – Proficient</option>
-        <option value="2" ${g.score===2?'selected':''}>2 – Developing</option>
-        <option value="1" ${g.score===1?'selected':''}>1 – Emerging</option>
-      </select></td>
+    const earned=g.earned!=null?g.earned:'';
+    const pct=earned!==''?Math.round(earned/tp*100):'';
+    return`<tr id="grow_${s.id}">
+      <td><strong>${s.name}</strong> <span class="chip chip-grade">${s.grade}</span></td>
+      <td style="text-align:center">
+        <div style="display:flex;align-items:center;gap:4px;justify-content:center">
+          <input type="number" id="ge_pts_${s.id}" value="${earned}"
+            min="0" max="${tp}" step="0.5" placeholder="—"
+            style="width:64px;text-align:center;font-weight:700;font-size:.92rem;padding:4px 6px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-sm);font-family:var(--font-body)"
+            oninput="updatePctPreview('${s.id}',${tp})"
+            ${isMissing||isExcused?'disabled':''}>
+          <span style="color:var(--bpi-ink-3);font-size:.8rem">/ ${tp}</span>
+        </div>
+        <div id="gpct_${s.id}" style="font-size:.7rem;font-weight:600;margin-top:2px;color:${pct>=80?'var(--intent-success)':pct>=65?'var(--intent-warning)':'var(--intent-danger)'}">${pct!==''?pct+'%':''}</div>
+      </td>
       <td style="text-align:center">
         <label style="display:inline-flex;align-items:center;gap:3px;font-size:.75rem;cursor:pointer;margin-right:8px">
-          <input type="checkbox" id="gm_${s.id}" ${isMissing?'checked':''} onchange="if(this.checked){document.getElementById('ge_${s.id}').checked=false;document.getElementById('gl_${s.id}').value='';document.getElementById('gs_${s.id}').value=''}"> M
+          <input type="checkbox" id="gm_${s.id}" ${isMissing?'checked':''}
+            onchange="toggleME('${s.id}','M',${tp})"> M
         </label>
         <label style="display:inline-flex;align-items:center;gap:3px;font-size:.75rem;cursor:pointer">
-          <input type="checkbox" id="ge_${s.id}" ${isExcused?'checked':''} onchange="if(this.checked){document.getElementById('gm_${s.id}').checked=false;document.getElementById('gl_${s.id}').value='';document.getElementById('gs_${s.id}').value=''}"> E
+          <input type="checkbox" id="gx_${s.id}" ${isExcused?'checked':''}
+            onchange="toggleME('${s.id}','E',${tp})"> E
         </label>
       </td>
     </tr>`;
   }).join('');
-  showModal(`<div class="modal-title">Enter Grades: ${a.title}</div>
-    <div class="alert alert-info" style="margin-bottom:12px">Type letter grade (A/B/C/D/F). Mark <strong>M</strong> = Missing or <strong>E</strong> = Excused as needed.</div>
-    <table><thead><tr><th>Student</th><th>Letter</th><th>Standards Score</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>
+  showModal(`<div class="modal-title">Enter Grades — ${escH(a.title)}</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;background:var(--bpi-bistre-05);border:1px solid var(--bpi-rule);border-radius:var(--radius-md);padding:10px 14px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--bpi-brown-sugar)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span style="font-size:.8rem;color:var(--bpi-ink-2)">Total points: <strong>${tp}</strong> &nbsp;·&nbsp; Enter earned points per student. <strong>M</strong> = Missing &nbsp; <strong>E</strong> = Excused</span>
+    </div>
+    <table><thead><tr><th>Student</th><th style="text-align:center">Points Earned</th><th style="text-align:center">Status</th></tr></thead><tbody>${rows}</tbody></table>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveGrades('${assignmentId}')">Save Grades</button></div>`,'large');
 }
-function validateLetterInput(el){
-  const val=el.value.toUpperCase().replace(/[^ABCDF]/g,'');
-  el.value=val;
+function updatePctPreview(sid,tp){
+  const val=parseFloat(document.getElementById('ge_pts_'+sid)?.value);
+  const el=document.getElementById('gpct_'+sid);if(!el)return;
+  if(isNaN(val)){el.textContent='';return;}
+  const pct=Math.round(val/tp*100);
+  el.textContent=pct+'%';
+  el.style.color=pct>=80?'var(--intent-success)':pct>=65?'var(--intent-warning)':'var(--intent-danger)';
+}
+function toggleME(sid,type,tp){
+  const mEl=document.getElementById('gm_'+sid);
+  const xEl=document.getElementById('gx_'+sid);
+  const ptsEl=document.getElementById('ge_pts_'+sid);
+  const pctEl=document.getElementById('gpct_'+sid);
+  if(type==='M'&&mEl?.checked){if(xEl)xEl.checked=false;}
+  if(type==='E'&&xEl?.checked){if(mEl)mEl.checked=false;}
+  const disabled=mEl?.checked||xEl?.checked;
+  if(ptsEl){ptsEl.disabled=disabled;if(disabled){ptsEl.value='';if(pctEl)pctEl.textContent='';}}
 }
 function saveGrades(aid){
-  const a=DB.assignments.find(x=>x.id===aid);const cls=DB.classes.find(c=>c.id===a.classId);
+  const a=DB.assignments.find(x=>x.id===aid);
+  const cls=DB.classes.find(c=>c.id===a.classId);
+  const tp=a.totalPoints||100;
   DB.students.filter(s=>cls.studentIds.includes(s.id)).forEach(s=>{
-    const missing=document.getElementById(`gm_${s.id}`)?.checked;
-    const excused=document.getElementById(`ge_${s.id}`)?.checked;
-    const letter=(document.getElementById(`gl_${s.id}`)?.value||'').toUpperCase().replace(/[^ABCDF]/g,'');
-    const score=document.getElementById(`gs_${s.id}`)?.value;
-    if(missing){a.grades[s.id]={status:'M',letter:'',score:null};}
-    else if(excused){a.grades[s.id]={status:'E',letter:'',score:null};}
-    else if(letter||score){a.grades[s.id]={status:'',letter:letter||'',score:score?parseInt(score):null};}
+    const missing=document.getElementById('gm_'+s.id)?.checked;
+    const excused=document.getElementById('gx_'+s.id)?.checked;
+    const raw=document.getElementById('ge_pts_'+s.id)?.value;
+    const earned=raw!==''&&raw!=null?parseFloat(raw):null;
+    if(missing){a.grades[s.id]={status:'M',earned:null};}
+    else if(excused){a.grades[s.id]={status:'E',earned:null};}
+    else if(earned!=null){a.grades[s.id]={status:'',earned};}
   });
   closeModal();renderGradebook();toast('Grades saved!');
 }
 
 function openStudentStdModal(studentId,classId){
   const student=DB.students.find(s=>s.id===studentId);const assignments=DB.assignments.filter(a=>a.classId===classId);const grade=student.grade;const secs=STANDARDS[grade];if(!secs){toast('No standards for this grade');return;}
-  const perf={};assignments.forEach(a=>{const g=a.grades?.[student.id];if(!g||!g.score||g.status==='M'||g.status==='E')return;a.standardRefs.filter(r=>r.grade===grade).forEach(r=>{const k=`${r.section}||${r.stdIndex}`;(perf[k]=perf[k]||[]).push(g.score);});});
+  const perf={};assignments.forEach(a=>{const g=a.grades?.[student.id];if(!g||g.status==='M'||g.status==='E'||g.earned==null||!a.totalPoints)return;const pct=g.earned/a.totalPoints;const score=pct>=0.9?4:pct>=0.75?3:pct>=0.6?2:1;a.standardRefs.filter(r=>r.grade===grade).forEach(r=>{const k=`${r.section}||${r.stdIndex}`;(perf[k]=perf[k]||[]).push(score);});});
   let html=`<div class="modal-title">${student.name} &middot; Standards (${grade})</div>`;
   Object.keys(secs).forEach(section=>{
     html+=`<div class="rc-section-header" style="margin:10px 0 0">${section}</div>`;
@@ -801,7 +891,7 @@ function renderReportCards(){
 }
 function buildReportCard(student,teacher,assignments,trimester){
   const grade=student.grade;const secs=STANDARDS[grade];if(!secs)return`<div class="card"><div class="alert alert-info">No standards for grade ${grade}</div></div>`;
-  const stdScores={};assignments.forEach(a=>{const g=a.grades?.[student.id];if(!g||!g.score||g.status==='M'||g.status==='E')return;a.standardRefs.filter(r=>r.grade===grade).forEach(r=>{const k=`${r.section}||${r.stdIndex}`;(stdScores[k]=stdScores[k]||[]).push(g.score);});});
+  const stdScores={};assignments.forEach(a=>{const g=a.grades?.[student.id];if(!g||g.status==='M'||g.status==='E'||g.earned==null||!a.totalPoints)return;const pct=g.earned/a.totalPoints;const score=pct>=0.9?4:pct>=0.75?3:pct>=0.6?2:1;a.standardRefs.filter(r=>r.grade===grade).forEach(r=>{const k=`${r.section}||${r.stdIndex}`;(stdScores[k]=stdScores[k]||[]).push(score);});});
   const getScore=(sec,si)=>{const sc=stdScores[`${sec}||${si}`];return sc?.length?sc.reduce((a,b)=>a+b,0)/sc.length:null;};
   const mock=(s,d)=>s?Math.max(1,Math.min(4,Math.round(s+d))):null;
   let sectionsHtml='';
