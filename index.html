@@ -17,8 +17,8 @@
   --bpi-cream:#FAF6F0; --bpi-ivory:#F2ECE1; --bpi-paper:#FFFFFF;
   --bpi-ink:#221509; --bpi-ink-2:#5a4838; --bpi-ink-3:#8a7565;
   --bpi-rule:#e3d8ca; --bpi-rule-strong:#c6b49e;
-  --intent-success:#3f7a3a; --intent-warning:#c47a1b;
-  --intent-danger:#a8392b; --intent-info:#3a6a86;
+  --intent-success:#5C3317; --intent-warning:#A5704C;
+  --intent-danger:#C49A6C; --intent-info:#7A9E7E;
   --font-display:"Caudex",Georgia,serif;
   --font-body:"Plus Jakarta Sans",system-ui,sans-serif;
   --shadow-sm:0 1px 2px rgba(63,43,29,.08),0 1px 1px rgba(63,43,29,.04);
@@ -114,8 +114,8 @@ tr:hover td{background:var(--bpi-caramel-20)}
 
 /* SCORE BADGES */
 .badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:var(--radius-sm);font-size:.78rem;font-weight:800;font-family:var(--font-body)}
-.badge-4{background:#1b4d18;color:#fff}.badge-3{background:var(--intent-success);color:#fff}
-.badge-2{background:var(--bpi-harvest-gold);color:var(--bpi-bistre)}.badge-1{background:var(--intent-danger);color:#fff}
+.badge-4{background:#3B1F0A;color:#fff}.badge-3{background:#6B3A1F;color:#fff}
+.badge-2{background:#C49A6C;color:#fff}.badge-1{background:#E8D5C0;color:#5C3317}
 
 /* CHIPS */
 .chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:.69rem;font-weight:700;letter-spacing:.03em;font-family:var(--font-body)}
@@ -260,6 +260,11 @@ tr:hover td{background:var(--bpi-caramel-20)}
 .lp-attach-chip:hover{background:#c7d7fc}
 .lp-attach-chip.file{background:#e8f5e9;color:#2e7d32}
 .lp-attach-chip.file:hover{background:#c8e6c9}
+
+/* ── Group tags ─────────────────────────────────────────────────────────── */
+.chip-group-high{background:#3B1F0A;color:#fff;font-size:.62rem;padding:1px 6px;border-radius:10px;font-weight:700}
+.chip-group-middle{background:#A5704C;color:#fff;font-size:.62rem;padding:1px 6px;border-radius:10px;font-weight:700}
+.chip-group-low{background:#E8D5C0;color:#5C3317;font-size:.62rem;padding:1px 6px;border-radius:10px;font-weight:700}
 </style>
 </head>
 <body>
@@ -565,7 +570,7 @@ function renderDashboard(){
   const aHtml=assignments.length?assignments.slice(-6).reverse().map(a=>{
     const sc=students.map(s=>a.grades?.[s.id]).filter(g=>g&&g.earned!=null&&g.status!=='M'&&g.status!=='E');
     const pct=sc.length&&a.totalPoints?Math.round(sc.reduce((x,g)=>x+g.earned,0)/sc.length/a.totalPoints*100):null;
-    const avgDisp=pct!=null?`<span style="font-weight:700;font-size:.82rem;color:${pct>=80?'var(--intent-success)':pct>=65?'var(--intent-warning)':'var(--intent-danger)'}">${pct}%</span>`:'';
+    const avgDisp=pct!=null?`<span style="font-weight:700;font-size:.82rem;color:${pct>=85?'#5C3317':pct>=75?'#6B3A1F':pct>=65?'#A5704C':'#C49A6C'}">${pct}%</span>`:'';
     return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bpi-rule)"><div style="flex:1"><div style="font-weight:600;font-size:.84rem">${a.title}</div><div style="font-size:.72rem;color:var(--bpi-ink-3)">${a.subject} &middot; ${a.date}${a.totalPoints?' &middot; '+a.totalPoints+' pts':''}</div></div>${avgDisp}</div>`;
   }).join(''):'<div class="empty-state">No assignments yet</div>';
   document.getElementById('dash-assignments').innerHTML=aHtml;
@@ -723,11 +728,13 @@ function addAsnSubform(defaultDate,defaultTrimester){
       <span style="font-size:.72rem;font-weight:700;color:var(--bpi-bistre);text-transform:uppercase;letter-spacing:.07em">Assignment ${existing+1}</span>
       <button type="button" onclick="removeAsnSubform(this)" style="background:none;border:none;cursor:pointer;color:var(--bpi-ink-3);font-size:1rem;line-height:1;padding:0 2px" title="Remove">&times;</button>
     </div>
-    <div class="form-row cols-2" style="margin-bottom:8px">
+    <div class="form-row cols-3" style="margin-bottom:8px">
       <div><label style="font-size:.74rem">Title <span style="font-weight:400;color:var(--bpi-ink-3)">(blank = activity title)</span></label>
         <input type="text" class="blk-asn-title" data-idx="${idx}" placeholder="${escH(actTitle)||'Same as activity'}" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"></div>
       <div><label style="font-size:.74rem">Total Points</label>
         <input type="number" class="blk-asn-points" data-idx="${idx}" value="100" min="1" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"></div>
+      <div><label style="font-size:.74rem">Group</label>
+        <select class="blk-asn-group" data-idx="${idx}" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"><option value="">All Students</option><option value="high">High</option><option value="middle">Middle</option><option value="low">Low</option></select></div>
     </div>
     <div class="form-row cols-2">
       <div><label style="font-size:.74rem">Due Date</label>
@@ -871,7 +878,7 @@ function saveBlock(existingId){
     const totalPoints=parseInt(item.querySelector('.blk-asn-points')?.value)||100;
     const date=item.querySelector('.blk-asn-date')?.value||wsStr;
     const trimester=parseInt(item.querySelector('.blk-asn-trimester')?.value)||getCtxTrimester();
-    newAssignments.push({id:newId(),classId,title:asnTitle,date,subject,trimester,standardRefs:stdRefs,grades:{},totalPoints,blockId});
+    const asnGroup=item.querySelector('.blk-asn-group')?.value||'';newAssignments.push({id:newId(),classId,title:asnTitle,date,subject,trimester,standardRefs:stdRefs,grades:{},totalPoints,blockId,group:asnGroup});
   });
   newAssignments.forEach(a=>DB.assignments.push(a));
   closeModal();renderLessonPlan();
@@ -1031,23 +1038,37 @@ function openAdminCommentModal(blockId,classId,wsStr){
   const lw=getLW(classId,wsStr);
   const existing=(lw.comments[blockId]||[]);
   const block=DB.lessonBlocks.find(b=>b.id===blockId);
-  const existingHtml=existing.map(c=>`<div class="admin-comment-wrap"><div class="admin-comment-meta">${c.author} &middot; ${c.ts}</div>${escH(c.text)}</div>`).join('');
+  const existingHtml=existing.map(c=>{const attachHtml=(c.attachments||[]).map(a=>{const href=a.type==='file'?a.dataUrl:a.url;const dl=a.type==='file'?`download="${escH(a.name)}"`:'target="_blank" rel="noopener"';return`<a class="lp-attach-chip ${a.type==='file'?'file':''}" href="${escH(href)}" ${dl} style="margin-top:4px;display:inline-flex">${a.type==='file'?'📎':'🔗'} ${escH(a.name)}</a>`;}).join('');return`<div class="admin-comment-wrap"><div class="admin-comment-meta">${c.author} &middot; ${c.ts}</div>${escH(c.text)}${attachHtml?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">${attachHtml}</div>`:''}</div>`;}).join('');
   showModal(`<div class="modal-title">Comment on Activity</div>
     <div style="font-size:.82rem;font-weight:600;color:var(--bpi-bistre);margin-bottom:10px">${escH(block?.title||'Activity')}</div>
     ${existingHtml}
     <div style="margin-top:${existing.length?'12px':'0'}">
       <label style="font-size:.78rem;font-weight:600;margin-bottom:6px;display:block">Add Comment</label>
       <textarea id="admin-comment-text" rows="3" placeholder="Note for the teacher about this activity…" style="width:100%;font-family:var(--font-body);padding:8px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);font-size:.84rem;resize:vertical"></textarea>
+      <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
+        <label class="btn btn-secondary btn-sm" style="cursor:pointer">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Attach File
+          <input type="file" multiple style="display:none" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" onchange="commentAddFiles(event)">
+        </label>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="commentAddLink()">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          Add Link
+        </button>
+        <span id="comment-attach-count" style="font-size:.74rem;color:var(--bpi-ink-3)"></span>
+      </div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveAdminComment('${blockId}','${classId}','${wsStr}')">Post Comment</button></div>`);
+  _commentAttachments=[];
 }
 function saveAdminComment(blockId,classId,wsStr){
   const text=document.getElementById('admin-comment-text')?.value.trim();
-  if(!text){toast('Enter a comment');return;}
+  if(!text&&!_commentAttachments.length){toast('Enter a comment or add an attachment');return;}
   const lw=getLW(classId,wsStr);
   if(!lw.comments[blockId])lw.comments[blockId]=[];
   const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-  lw.comments[blockId].push({text,author:'Admin',ts:now});
+  lw.comments[blockId].push({text:text||'',author:'Admin',ts:now,attachments:JSON.parse(JSON.stringify(_commentAttachments))});
+  _commentAttachments=[];
   closeModal();renderLessonPlan();toast('Comment posted');
 }
 
@@ -1173,12 +1194,12 @@ function renderGradebook(){
       else if(g&&g.earned!=null&&a.totalPoints){
         earnedTot+=g.earned;possibleTot+=a.totalPoints;
         const pct=Math.round(g.earned/a.totalPoints*100);
-        const col=pct>=80?'var(--intent-success)':pct>=65?'var(--intent-warning)':'var(--intent-danger)';
+        const col=pct>=85?'#5C3317':pct>=75?'#6B3A1F':pct>=65?'#A5704C':'#C49A6C';
         html+=`<td style="text-align:center"><span style="font-weight:700;font-size:.82rem;color:${col}">${g.earned}/${a.totalPoints}</span><br><span style="font-size:.67rem;color:var(--bpi-ink-3)">${pct}%</span></td>`;
       } else html+='<td style="text-align:center;color:var(--bpi-bistre-20)">–</td>';
     });
     const overallPct=possibleTot?Math.round(earnedTot/possibleTot*100):null;
-    const oCol=overallPct!=null?(overallPct>=80?'var(--intent-success)':overallPct>=65?'var(--intent-warning)':'var(--intent-danger)'):'var(--bpi-bistre-20)';
+    const oCol=overallPct!=null?(overallPct>=85?'#5C3317':overallPct>=75?'#6B3A1F':overallPct>=65?'#A5704C':'#C49A6C'):'var(--bpi-bistre-20)';
     html+=`<td style="text-align:center;font-weight:700;color:${oCol}">${overallPct!=null?overallPct+'%':'–'}</td>`;
     html+=`<td><button class="btn btn-secondary btn-sm" onclick="openStudentDetail('${s.id}','${classId}')">Detail</button></td></tr>`;
   });
@@ -1210,7 +1231,7 @@ function openStudentDetail(studentId,classId){
       else{statusCell='<span class="chip" style="background:var(--intent-success);color:#fff">Graded</span>';}
       if(g.earned!=null&&a.totalPoints){
         const pct=Math.round(g.earned/a.totalPoints*100);
-        const col=pct>=80?'var(--intent-success)':pct>=65?'var(--intent-warning)':'var(--intent-danger)';
+        const col=pct>=85?'#5C3317':pct>=75?'#6B3A1F':pct>=65?'#A5704C':'#C49A6C';
         scoreCell=`<span style="font-weight:700;color:${col}">${g.earned}/${a.totalPoints}</span><br><span style="font-size:.7rem;color:var(--bpi-ink-3)">${pct}%</span>`;
         earnedTot+=g.earned;possibleTot+=a.totalPoints;
       }
@@ -1219,7 +1240,7 @@ function openStudentDetail(studentId,classId){
     return `<tr><td><strong>${a.title}</strong><div style="font-size:.7rem;color:var(--bpi-ink-3)">${a.subject}${a.totalPoints?' · '+a.totalPoints+' pts':''}</div>${stdTags}</td><td style="font-size:.78rem">${a.date}</td><td style="font-size:.75rem">T${a.trimester}</td><td style="text-align:center">${statusCell}</td><td style="text-align:center">${scoreCell}</td></tr>`;
   }).join('');
   const overallPct=possibleTot?Math.round(earnedTot/possibleTot*100):null;
-  const oCol=overallPct!=null?(overallPct>=80?'var(--intent-success)':overallPct>=65?'var(--intent-warning)':'var(--intent-danger)'):'var(--bpi-bistre-20)';
+  const oCol=overallPct!=null?(overallPct>=85?'#5C3317':overallPct>=75?'#6B3A1F':overallPct>=65?'#A5704C':'#C49A6C'):'var(--bpi-bistre-20)';
   const html=`<div class="modal-title">${student.name} <span class="chip chip-grade" style="margin-left:6px">${student.grade}</span></div>
     <div style="display:flex;gap:12px;margin-bottom:14px">
       <div class="stat-card" style="flex:1;padding:10px 14px"><div class="stat-val" style="font-size:1.4rem">${allAssignments.length}</div><div class="stat-label">Assignments</div></div>
@@ -1354,7 +1375,7 @@ function deleteAssignment(id){if(!confirm('Delete assignment?'))return;DB.assign
 function openGradeEntryModal(assignmentId){
   const a=DB.assignments.find(x=>x.id===assignmentId);
   const cls=DB.classes.find(c=>c.id===a.classId);
-  const students=DB.students.filter(s=>cls.studentIds.includes(s.id));
+  const students=DB.students.filter(s=>cls.studentIds.includes(s.id)&&(!a.group||s.group===a.group||!s.group));
   const tp=a.totalPoints||100;
   const rows=students.map(s=>{
     const g=a.grades[s.id]||{};
@@ -1362,7 +1383,7 @@ function openGradeEntryModal(assignmentId){
     const earned=g.earned!=null?g.earned:'';
     const pct=earned!==''?Math.round(earned/tp*100):'';
     return`<tr id="grow_${s.id}">
-      <td><strong>${s.name}</strong> <span class="chip chip-grade">${s.grade}</span></td>
+      <td><strong>${s.name}</strong> <span class="chip chip-grade">${s.grade}</span>${s.group?` <span class="chip-group-${s.group}">${s.group.charAt(0).toUpperCase()+s.group.slice(1)}</span>`:''}</td>
       <td style="text-align:center">
         <div style="display:flex;align-items:center;gap:4px;justify-content:center">
           <input type="number" id="ge_pts_${s.id}" value="${earned}"
@@ -1372,7 +1393,7 @@ function openGradeEntryModal(assignmentId){
             ${isMissing||isExcused?'disabled':''}>
           <span style="color:var(--bpi-ink-3);font-size:.8rem">/ ${tp}</span>
         </div>
-        <div id="gpct_${s.id}" style="font-size:.7rem;font-weight:600;margin-top:2px;color:${pct>=80?'var(--intent-success)':pct>=65?'var(--intent-warning)':'var(--intent-danger)'}">${pct!==''?pct+'%':''}</div>
+        <div id="gpct_${s.id}" style="font-size:.7rem;font-weight:600;margin-top:2px;color:${pct>=85?'#5C3317':pct>=75?'#6B3A1F':pct>=65?'#A5704C':'#C49A6C'}">${pct!==''?pct+'%':''}</div>
       </td>
       <td style="text-align:center">
         <label style="display:inline-flex;align-items:center;gap:3px;font-size:.75rem;cursor:pointer;margin-right:8px">
@@ -1386,7 +1407,7 @@ function openGradeEntryModal(assignmentId){
       </td>
     </tr>`;
   }).join('');
-  showModal(`<div class="modal-title">Enter Grades — ${escH(a.title)}</div>
+  const grpLabel=a.group?` <span class="chip-group-${a.group}" style="font-size:.7rem;vertical-align:middle">${a.group.charAt(0).toUpperCase()+a.group.slice(1)}</span>`:'';showModal(`<div class="modal-title">Enter Grades — ${escH(a.title)}${grpLabel}</div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;background:var(--bpi-bistre-05);border:1px solid var(--bpi-rule);border-radius:var(--radius-md);padding:10px 14px">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--bpi-brown-sugar)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <span style="font-size:.8rem;color:var(--bpi-ink-2)">Total points: <strong>${tp}</strong> &nbsp;·&nbsp; Enter earned points per student. <strong>M</strong> = Missing &nbsp; <strong>E</strong> = Excused</span>
@@ -1400,7 +1421,7 @@ function updatePctPreview(sid,tp){
   if(isNaN(val)){el.textContent='';return;}
   const pct=Math.round(val/tp*100);
   el.textContent=pct+'%';
-  el.style.color=pct>=80?'var(--intent-success)':pct>=65?'var(--intent-warning)':'var(--intent-danger)';
+  el.style.color=pct>=85?'#5C3317':pct>=75?'#6B3A1F':pct>=65?'#A5704C':'#C49A6C';
 }
 function toggleME(sid,type,tp){
   const mEl=document.getElementById('gm_'+sid);
@@ -1430,7 +1451,7 @@ function saveGrades(aid){
 
 function openStudentStdModal(studentId,classId){
   const student=DB.students.find(s=>s.id===studentId);const assignments=DB.assignments.filter(a=>a.classId===classId);const grade=student.grade;const secs=STANDARDS[grade];if(!secs){toast('No standards for this grade');return;}
-  const perf={};assignments.forEach(a=>{const g=a.grades?.[student.id];if(!g||g.status==='M'||g.status==='E'||g.earned==null||!a.totalPoints)return;const pct=g.earned/a.totalPoints;const score=pct>=0.9?4:pct>=0.75?3:pct>=0.6?2:1;a.standardRefs.filter(r=>r.grade===grade).forEach(r=>{const k=`${r.section}||${r.stdIndex}`;(perf[k]=perf[k]||[]).push(score);});});
+  const perf={};assignments.forEach(a=>{const g=a.grades?.[student.id];if(!g||g.status==='M'||g.status==='E'||g.earned==null||!a.totalPoints)return;const pct=g.earned/a.totalPoints;const score=pct>=0.85?4:pct>=0.75?3:pct>=0.65?2:1;a.standardRefs.filter(r=>r.grade===grade).forEach(r=>{const k=`${r.section}||${r.stdIndex}`;(perf[k]=perf[k]||[]).push(score);});});
   let html=`<div class="modal-title">${student.name} &middot; Standards (${grade})</div>`;
   Object.keys(secs).forEach(section=>{
     html+=`<div class="rc-section-header" style="margin:10px 0 0">${section}</div>`;
@@ -1459,7 +1480,7 @@ function renderReportCards(){
 }
 function buildReportCard(student,teacher,assignments,trimester){
   const grade=student.grade;const secs=STANDARDS[grade];if(!secs)return`<div class="card"><div class="alert alert-info">No standards for grade ${grade}</div></div>`;
-  const stdScores={};assignments.forEach(a=>{const g=a.grades?.[student.id];if(!g||g.status==='M'||g.status==='E'||g.earned==null||!a.totalPoints)return;const pct=g.earned/a.totalPoints;const score=pct>=0.9?4:pct>=0.75?3:pct>=0.6?2:1;a.standardRefs.filter(r=>r.grade===grade).forEach(r=>{const k=`${r.section}||${r.stdIndex}`;(stdScores[k]=stdScores[k]||[]).push(score);});});
+  const stdScores={};assignments.forEach(a=>{if(a.group&&student.group&&a.group!==student.group)return;const g=a.grades?.[student.id];if(!g||g.status==='M'||g.status==='E'||g.earned==null||!a.totalPoints)return;const pct=g.earned/a.totalPoints;const score=pct>=0.85?4:pct>=0.75?3:pct>=0.65?2:1;a.standardRefs.filter(r=>r.grade===grade).forEach(r=>{const k=`${r.section}||${r.stdIndex}`;(stdScores[k]=stdScores[k]||[]).push(score);});});
   const getScore=(sec,si)=>{const sc=stdScores[`${sec}||${si}`];return sc?.length?sc.reduce((a,b)=>a+b,0)/sc.length:null;};
   const mock=(s,d)=>s?Math.max(1,Math.min(4,Math.round(s+d))):null;
   let sectionsHtml='';
@@ -1489,20 +1510,20 @@ function generateComment(name,avg,trimester){
 function renderStudents(){
   const q=(document.getElementById('student-search')?.value||'').toLowerCase();const gf=document.getElementById('student-grade-filter')?.value||'';
   let students=DB.students;if(q)students=students.filter(s=>s.name.toLowerCase().includes(q)||s.grade.toLowerCase().includes(q));if(gf)students=students.filter(s=>s.grade===gf);
-  document.getElementById('students-tbody').innerHTML=students.map(s=>{const enrolled=DB.classes.filter(c=>c.studentIds.includes(s.id)).map(c=>c.name).join(', ')||'—';return`<tr><td><strong>${s.name}</strong></td><td><span class="chip chip-grade">${s.grade}</span></td><td style="font-size:.8rem;color:var(--bpi-ink-2)">${enrolled}</td><td><button class="btn btn-secondary btn-sm" onclick="openStudentModal('${s.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}')">Delete</button></td></tr>`;}).join('')||'<tr><td colspan="4" class="empty-state">No students match</td></tr>';
+  document.getElementById('students-tbody').innerHTML=students.map(s=>{const enrolled=DB.classes.filter(c=>c.studentIds.includes(s.id)).map(c=>c.name).join(', ')||'—';const grpChip=s.group?`<span class="chip-group-${s.group}">${s.group.charAt(0).toUpperCase()+s.group.slice(1)}</span>`:'';return`<tr><td><strong>${s.name}</strong> ${grpChip}</td><td><span class="chip chip-grade">${s.grade}</span></td><td style="font-size:.8rem;color:var(--bpi-ink-2)">${enrolled}</td><td><button class="btn btn-secondary btn-sm" onclick="openStudentModal('${s.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}')">Delete</button></td></tr>`;}).join('')||'<tr><td colspan="4" class="empty-state">No students match</td></tr>';
 }
 function openStudentModal(id){
   const s=id?DB.students.find(x=>x.id===id):null;
   showModal(`<div class="modal-title">${s?'Edit':'Add'} Student</div>
     <div class="form-row"><div><label>Full Name</label><input type="text" id="st-name" value="${s?escH(s.name):''}"></div></div>
-    <div class="form-row cols-2"><div><label>Grade Level</label><select id="st-grade">${GRADES.map(g=>`<option ${s&&s.grade===g?'selected':''}>${g}</option>`).join('')}</select></div><div><label>Enroll In Class</label><select id="st-class" multiple style="height:90px">${DB.classes.map(c=>`<option value="${c.id}" ${s&&c.studentIds.includes(s.id)?'selected':''}>${c.name}</option>`).join('')}</select></div></div>
+    <div class="form-row cols-3"><div><label>Grade Level</label><select id="st-grade">${GRADES.map(g=>`<option ${s&&s.grade===g?'selected':''}>${g}</option>`).join('')}</select></div><div><label>Group Tag</label><select id="st-group"><option value="">None</option><option value="high" ${s&&s.group==='high'?'selected':''}>High</option><option value="middle" ${s&&s.group==='middle'?'selected':''}>Middle</option><option value="low" ${s&&s.group==='low'?'selected':''}>Low</option></select></div><div><label>Enroll In Class</label><select id="st-class" multiple style="height:90px">${DB.classes.map(c=>`<option value="${c.id}" ${s&&c.studentIds.includes(s.id)?'selected':''}>${c.name}</option>`).join('')}</select></div></div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveStudent('${id||''}')">Save</button></div>`);
 }
 function saveStudent(id){
-  const name=document.getElementById('st-name').value.trim();const grade=document.getElementById('st-grade').value;const selCls=[...document.getElementById('st-class').selectedOptions].map(o=>o.value);
+  const name=document.getElementById('st-name').value.trim();const grade=document.getElementById('st-grade').value;const group=document.getElementById('st-group')?.value||'';const selCls=[...document.getElementById('st-class').selectedOptions].map(o=>o.value);
   if(!name){alert('Enter a name');return;}
-  if(id){const s=DB.students.find(x=>x.id===id);s.name=name;s.grade=grade;DB.classes.forEach(c=>{if(selCls.includes(c.id)){if(!c.studentIds.includes(id))c.studentIds.push(id);}else c.studentIds=c.studentIds.filter(sid=>sid!==id);});}
-  else{const ns={id:newId(),name,grade};DB.students.push(ns);selCls.forEach(cid=>{const c=DB.classes.find(x=>x.id===cid);if(c)c.studentIds.push(ns.id);});}
+  if(id){const s=DB.students.find(x=>x.id===id);s.name=name;s.grade=grade;s.group=group;DB.classes.forEach(c=>{if(selCls.includes(c.id)){if(!c.studentIds.includes(id))c.studentIds.push(id);}else c.studentIds=c.studentIds.filter(sid=>sid!==id);});}
+  else{const ns={id:newId(),name,grade,group};DB.students.push(ns);selCls.forEach(cid=>{const c=DB.classes.find(x=>x.id===cid);if(c)c.studentIds.push(ns.id);});}
   closeModal();renderStudents();populateContextSelects();toast('Student saved');
 }
 function deleteStudent(id){if(!confirm('Delete student?'))return;DB.students=DB.students.filter(s=>s.id!==id);DB.classes.forEach(c=>{c.studentIds=c.studentIds.filter(sid=>sid!==id);});renderStudents();toast('Deleted');}
@@ -1582,13 +1603,13 @@ function renderStandards(){
   assignments.forEach(a=>{
     a.standardRefs.filter(r=>r.grade===stdActiveGrade).forEach(r=>{
       if(!stdData[r.section]||stdData[r.section][r.stdIndex]===undefined)return;
-      stdData[r.section][r.stdIndex].covered=true;
+      stdData[r.section][r.stdIndex].count=(stdData[r.section][r.stdIndex].count||0)+1;stdData[r.section][r.stdIndex].covered=stdData[r.section][r.stdIndex].count>=3;
       // Collect per-student scores for this assignment
       students.forEach(s=>{
         const g=a.grades?.[s.id];
         if(!g||g.status==='M'||g.status==='E'||g.earned==null||!a.totalPoints)return;
         const pct=g.earned/a.totalPoints;
-        const score=pct>=0.9?4:pct>=0.75?3:pct>=0.6?2:1;
+        const score=pct>=0.85?4:pct>=0.75?3:pct>=0.65?2:1;
         stdData[r.section][r.stdIndex].scores.push(score);
       });
     });
@@ -1609,10 +1630,11 @@ function renderStandards(){
     const covTotal=Object.values(stdData).reduce((t,sec)=>t+Object.values(sec).filter(d=>d.covered).length,0);
     const allTotal=Object.values(stdData).reduce((t,sec)=>t+Object.keys(sec).length,0);
     legend.innerHTML=`
-      <span style="font-weight:700;color:var(--bpi-bistre)">${stdActiveGrade} · ${covTotal}/${allTotal} standards covered</span>
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:var(--intent-success);display:inline-block"></span>Covered</span>
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:var(--bpi-bistre-20);display:inline-block"></span>Not yet covered</span>
-      ${classId?`<span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:var(--intent-danger);display:inline-block"></span>Needs improvement (avg &lt;3)</span>`:''}
+      <span style="font-weight:700;color:var(--bpi-bistre)">${stdActiveGrade} · ${covTotal}/${allTotal} standards fully covered (3+ assignments)</span>
+      <span style="display:flex;align-items:center;gap:4px">⬤⬤⬤ Fully covered</span>
+      <span style="display:flex;align-items:center;gap:4px">⬤⬤○ Partially covered</span>
+      <span style="display:flex;align-items:center;gap:4px">○○○ Not yet covered</span>
+      ${classId?`<span style="display:flex;align-items:center;gap:4px;color:#A5704C">▲ Needs improvement (avg &lt;3)</span>`:''}
     `;
   }
 
@@ -1629,7 +1651,7 @@ function renderStandards(){
     const secData=stdData[section]||{};
     const covCount=Object.values(secData).filter(d=>d.covered).length;
     const pct=stds.length?Math.round(covCount/stds.length*100):0;
-    const barColor=pct===100?'var(--intent-success)':pct>0?'var(--bpi-harvest-gold)':'var(--bpi-bistre-20)';
+    const barColor=pct===100?'#5C3317':pct>0?'#A5704C':'var(--bpi-bistre-20)';
 
     html+=`<div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
@@ -1645,16 +1667,18 @@ function renderStandards(){
         const avgRound=avg?Math.round(avg*10)/10:null;
         const hl=re?std.replace(re,m=>`<mark style="background:var(--bpi-gold-10);border-radius:2px;padding:0 2px">${m}</mark>`):std;
 
-        // Coverage dot
-        const dot=data.covered
-          ?`<svg width="10" height="10" viewBox="0 0 24 24" fill="var(--intent-success)" stroke="none"><circle cx="12" cy="12" r="12"/></svg>`
-          :`<svg width="10" height="10" viewBox="0 0 24 24" fill="var(--bpi-bistre-20)" stroke="none"><circle cx="12" cy="12" r="12"/></svg>`;
+        // 3 coverage circles (1 per assignment, max 3)
+        const cnt=Math.min(data.count||0,3);
+        const circSvg=(filled)=>filled
+          ?`<svg width="9" height="9" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#5C3317"/></svg>`
+          :`<svg width="9" height="9" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="#C49A6C" stroke-width="2.5"/></svg>`;
+        const dot=`<span style="display:inline-flex;gap:2px;align-items:center">${circSvg(cnt>=1)}${circSvg(cnt>=2)}${circSvg(cnt>=3)}</span>`;
 
         // Proficiency badge (only if class selected and scores exist)
         let profBadge='';
         if(classId&&data.covered){
           if(avgRound){
-            const col=avg>=3.5?'var(--intent-success)':avg>=2.5?'var(--bpi-harvest-gold)':avg>=1.5?'var(--intent-warning)':'var(--intent-danger)';
+            const col=avg>=3.5?'#3B1F0A':avg>=2.5?'#6B3A1F':avg>=1.5?'#A5704C':'#C49A6C';
             const label=avg>=3.5?'Strong':avg>=2.5?'Proficient':avg>=1.5?'Developing':'Needs Work';
             profBadge=`<span style="font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:10px;background:${col}22;color:${col};border:1px solid ${col}55;white-space:nowrap">${avgRound} · ${label}</span>`;
           } else {
@@ -1862,6 +1886,36 @@ function blkAddFiles(event){
 
 function blkGetAttachments(){
   return JSON.parse(JSON.stringify(_blkAttachments));
+}
+
+// ── Comment Attachments ──────────────────────────────────────────────────────
+let _commentAttachments=[];
+function commentAddFiles(event){
+  const files=Array.from(event.target.files);
+  const maxMB=10;
+  let loaded=0;
+  files.forEach(file=>{
+    if(file.size>maxMB*1024*1024){toast(file.name+' too large (max 10 MB)');return;}
+    const reader=new FileReader();
+    reader.onload=e=>{
+      _commentAttachments.push({type:'file',name:file.name,dataUrl:e.target.result});
+      loaded++;
+      const ct=document.getElementById('comment-attach-count');
+      if(ct)ct.textContent=_commentAttachments.length+' file'+(  _commentAttachments.length!==1?'s':'') +' attached';
+    };
+    reader.readAsDataURL(file);
+  });
+  event.target.value='';
+}
+function commentAddLink(){
+  const url=prompt('Enter URL:','https://');
+  if(!url||url==='https://')return;
+  let name=prompt('Label for this link:',url.replace(/^https?:\/\//,'').split('/')[0]);
+  if(name===null)return;
+  if(!name.trim())name=url;
+  _commentAttachments.push({type:'link',name:name.trim(),url:url.trim()});
+  const ct=document.getElementById('comment-attach-count');
+  if(ct)ct.textContent=_commentAttachments.length+' attachment'+(_commentAttachments.length!==1?'s':'');
 }
 </script>
 </body>
