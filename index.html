@@ -1385,15 +1385,20 @@ function openGradeEntryModal(assignmentId){
     return`<tr id="grow_${s.id}">
       <td><strong>${s.name}</strong> <span class="chip chip-grade">${s.grade}</span>${s.group?` <span class="chip-group-${s.group}">${s.group.charAt(0).toUpperCase()+s.group.slice(1)}</span>`:''}</td>
       <td style="text-align:center">
-        <div style="display:flex;align-items:center;gap:4px;justify-content:center">
-          <input type="number" id="ge_pts_${s.id}" value="${earned}"
-            min="0" max="${tp}" step="0.5" placeholder="—"
-            style="width:64px;text-align:center;font-weight:700;font-size:.92rem;padding:4px 6px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-sm);font-family:var(--font-body)"
-            oninput="updatePctPreview('${s.id}',${tp})"
-            ${isMissing||isExcused?'disabled':''}>
-          <span style="color:var(--bpi-ink-3);font-size:.8rem">/ ${tp}</span>
+        <div style="display:flex;align-items:center;gap:6px;justify-content:center">
+          <div>
+            <div style="display:flex;align-items:center;gap:4px;justify-content:center">
+              <input type="number" id="ge_pts_${s.id}" value="${earned}"
+                min="0" max="${tp}" step="0.5" placeholder="—"
+                style="width:64px;text-align:center;font-weight:700;font-size:.92rem;padding:4px 6px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-sm);font-family:var(--font-body)"
+                oninput="updatePctPreview('${s.id}',${tp})"
+                ${isMissing||isExcused?'disabled':''}>
+              <span style="color:var(--bpi-ink-3);font-size:.8rem">/ ${tp}</span>
+            </div>
+            <div id="gpct_${s.id}" style="font-size:.7rem;font-weight:600;margin-top:2px;color:${pct>=85?'#5C3317':pct>=75?'#6B3A1F':pct>=65?'#A5704C':'#C49A6C'}">${pct!==''?pct+'%':''}</div>
+          </div>
+          <div id="gscore_${s.id}" style="flex-shrink:0">${pct!==''?`<span class="badge badge-${pct>=85?4:pct>=75?3:pct>=65?2:1}" style="font-size:.85rem;padding:3px 9px">${pct>=85?4:pct>=75?3:pct>=65?2:1}</span>`:''}</div>
         </div>
-        <div id="gpct_${s.id}" style="font-size:.7rem;font-weight:600;margin-top:2px;color:${pct>=85?'#5C3317':pct>=75?'#6B3A1F':pct>=65?'#A5704C':'#C49A6C'}">${pct!==''?pct+'%':''}</div>
       </td>
       <td style="text-align:center">
         <label style="display:inline-flex;align-items:center;gap:3px;font-size:.75rem;cursor:pointer;margin-right:8px">
@@ -1412,16 +1417,20 @@ function openGradeEntryModal(assignmentId){
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--bpi-brown-sugar)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <span style="font-size:.8rem;color:var(--bpi-ink-2)">Total points: <strong>${tp}</strong> &nbsp;·&nbsp; Enter earned points per student. <strong>M</strong> = Missing &nbsp; <strong>E</strong> = Excused</span>
     </div>
-    <table><thead><tr><th>Student</th><th style="text-align:center">Points Earned</th><th style="text-align:center">Status</th></tr></thead><tbody>${rows}</tbody></table>
+    <table><thead><tr><th>Student</th><th style="text-align:center">Points &nbsp;·&nbsp; Score</th><th style="text-align:center">Status</th></tr></thead><tbody>${rows}</tbody></table>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveGrades('${assignmentId}')">Save Grades</button></div>`,'large');
 }
 function updatePctPreview(sid,tp){
   const val=parseFloat(document.getElementById('ge_pts_'+sid)?.value);
-  const el=document.getElementById('gpct_'+sid);if(!el)return;
-  if(isNaN(val)){el.textContent='';return;}
+  const el=document.getElementById('gpct_'+sid);
+  const sc=document.getElementById('gscore_'+sid);
+  if(!el)return;
+  if(isNaN(val)){el.textContent='';if(sc)sc.innerHTML='';return;}
   const pct=Math.round(val/tp*100);
   el.textContent=pct+'%';
   el.style.color=pct>=85?'#5C3317':pct>=75?'#6B3A1F':pct>=65?'#A5704C':'#C49A6C';
+  const score=pct>=85?4:pct>=75?3:pct>=65?2:1;
+  if(sc)sc.innerHTML=`<span class="badge badge-${score}" style="font-size:.85rem;padding:3px 9px">${score}</span>`;
 }
 function toggleME(sid,type,tp){
   const mEl=document.getElementById('gm_'+sid);
@@ -1431,8 +1440,8 @@ function toggleME(sid,type,tp){
   if(type==='M'&&mEl?.checked){if(xEl)xEl.checked=false;}
   if(type==='E'&&xEl?.checked){if(mEl)mEl.checked=false;}
   const disabled=mEl?.checked||xEl?.checked;
-  if(ptsEl){ptsEl.disabled=disabled;if(disabled){ptsEl.value='';if(pctEl)pctEl.textContent='';}}
-}
+  const scoreEl=document.getElementById('gscore_'+sid);
+  if(ptsEl){ptsEl.disabled=disabled;if(disabled){ptsEl.value='';if(pctEl)pctEl.textContent='';if(scoreEl)scoreEl.innerHTML='';}}}
 function saveGrades(aid){
   const a=DB.assignments.find(x=>x.id===aid);
   const cls=DB.classes.find(c=>c.id===a.classId);
