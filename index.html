@@ -232,6 +232,34 @@ tr:hover td{background:var(--bpi-caramel-20)}
 .role-dot{width:8px;height:8px;border-radius:50%;background:var(--bpi-caramel)}
 .role-dot.admin{background:#90caf9}
 @media print{#header,#sidebar,.no-print{display:none!important}#main{padding:0}body{background:#fff}}
+
+/* ── Week Documents ─────────────────────────────────────────────────────── */
+.week-docs-section{background:#fff;border:1px solid var(--bpi-rule);border-radius:var(--radius-lg);padding:16px 20px}
+.week-docs-title{font-family:var(--font-display);font-weight:700;font-size:.9rem;color:var(--bpi-bistre);margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.week-docs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.doc-slot{border:1px dashed var(--bpi-rule-strong);border-radius:var(--radius-md);padding:14px 14px 12px;display:flex;flex-direction:column;gap:8px;background:var(--bpi-cream);transition:border-color .15s}
+.doc-slot.has-file{border-style:solid;border-color:var(--bpi-brown-sugar);background:#faf7f4}
+.doc-slot-label{font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--bpi-ink-2)}
+.doc-slot-name{font-size:.78rem;color:var(--bpi-bistre);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.doc-slot-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.doc-upload-btn{display:inline-flex;align-items:center;gap:4px;font-size:.75rem;padding:4px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);background:#fff;color:var(--bpi-ink);cursor:pointer;font-family:var(--font-body);transition:background .12s}
+.doc-upload-btn:hover{background:var(--bpi-gold-10)}
+.doc-remove-btn{font-size:.72rem;color:var(--intent-danger);background:none;border:none;cursor:pointer;padding:2px 4px;font-family:var(--font-body)}
+.doc-remove-btn:hover{text-decoration:underline}
+.doc-download-link{font-size:.75rem;color:var(--bpi-brown-sugar);font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:3px}
+.doc-download-link:hover{text-decoration:underline}
+.doc-empty-hint{font-size:.74rem;color:var(--bpi-ink-3);font-style:italic}
+
+/* ── Activity Attachments ───────────────────────────────────────────────── */
+.blk-attach-item{display:flex;align-items:center;gap:7px;padding:6px 8px;background:var(--bpi-cream);border:1px solid var(--bpi-rule);border-radius:var(--radius-md);font-size:.77rem;margin-bottom:5px}
+.blk-attach-item a{color:var(--bpi-brown-sugar);font-weight:600;text-decoration:none;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.blk-attach-item a:hover{text-decoration:underline}
+.blk-attach-remove{background:none;border:none;cursor:pointer;color:var(--bpi-ink-3);font-size:1rem;line-height:1;padding:0 2px;flex-shrink:0}
+.blk-attach-remove:hover{color:var(--intent-danger)}
+.lp-attach-chip{display:inline-flex;align-items:center;gap:3px;font-size:.63rem;padding:2px 6px;border-radius:10px;background:#e8f0fe;color:#1a56db;font-weight:600;margin:1px;text-decoration:none;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lp-attach-chip:hover{background:#c7d7fc}
+.lp-attach-chip.file{background:#e8f5e9;color:#2e7d32}
+.lp-attach-chip.file:hover{background:#c8e6c9}
 </style>
 </head>
 <body>
@@ -279,7 +307,7 @@ tr:hover td{background:var(--bpi-caramel-20)}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg><span class="nav-label">Classes</span></div>
   <div class="nav-item" onclick="nav('standards')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span class="nav-label">Standards</span></div>
-  <div class="nav-section">Review</div>
+  <div class="nav-section" id="nav-section-review">Review</div>
   <div class="nav-item" onclick="nav('review')" id="nav-review">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg><span class="nav-label">Weekly Review</span></div>
 
@@ -347,6 +375,7 @@ tr:hover td{background:var(--bpi-caramel-20)}
   <div id="lp-submit-bar" class="no-print"></div>
   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:6px" id="lp-day-headers"></div>
   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px" id="lp-grid"></div>
+  <div id="lp-week-docs" class="no-print" style="margin-top:18px"></div>
 </div>
 
 <div id="page-gradebook" class="page">
@@ -600,12 +629,14 @@ function renderLessonPlan(){
           </button>
         </div>
         ${asnChips?`<div style="margin-top:5px">${asnChips}</div>`:''}
+        ${(b.attachments&&b.attachments.length)?`<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:2px">${b.attachments.map(a=>{const href=a.type==='file'?a.dataUrl:a.url;const dl=a.type==='file'?`download="${escH(a.name)}"`:'target="_blank" rel="noopener"';return`<a class="lp-attach-chip ${a.type==='file'?'file':''}" href="${escH(href)}" ${dl} title="${escH(a.name)}" onclick="event.stopPropagation()">${a.type==='file'?'📎':'🔗'} ${escH(a.name)}</a>`;}).join('')}</div>`:''}
         ${adminCommentArea}
       </div>`;
     }).join('')).join('');
     return`<div class="lp-day" onclick="openBlockModal(${dayIdx})" title="Click to add">${bHtml||`<div style="color:var(--bpi-bistre-20);font-size:.73rem;text-align:center;margin-top:36px;font-style:italic">Click to add</div>`}</div>`;
   }).join('');
   renderLPStatusBar();
+  renderWeekDocs();
 }
 
 function buildStdCheckboxes(classId,existingRefs){
@@ -647,6 +678,23 @@ function openBlockModal(dayIdx){
     </div>
     <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bpi-rule)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-weight:700;font-size:.84rem;color:var(--bpi-bistre)">Attachments</span>
+        <div style="display:flex;gap:6px">
+          <label class="btn btn-secondary btn-sm" style="cursor:pointer">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload File
+            <input type="file" multiple style="display:none" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.mp4,.mov" onchange="blkAddFiles(event)">
+          </label>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="blkAddLink()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+            Add Link
+          </button>
+        </div>
+      </div>
+      <div id="blk-attach-list"></div>
+    </div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bpi-rule)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <span style="font-weight:700;font-size:.84rem;color:var(--bpi-bistre)">Graded Assignments</span>
         <button type="button" class="btn btn-secondary btn-sm" id="blk-add-asn-btn" onclick="addAsnSubform('${dayDateStr}',${trimester})">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -656,6 +704,7 @@ function openBlockModal(dayIdx){
       <div id="blk-asn-list"></div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveBlock()">Save Activity</button></div>`);
+  blkAttachInit([]);
 }
 
 let _blkAsnCount=0;
@@ -782,7 +831,25 @@ function editBlockModal(blockId){
       </div>
       <div style="max-height:220px;overflow-y:auto;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);padding:10px" id="blk-std-wrap">${buildStdCheckboxes(getCtxClass(),b.standardRefs)}</div>
     </div>
-    <div class="modal-footer"><button class="btn btn-danger btn-sm" onclick="deleteBlock('${blockId}')">Delete</button><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveBlock('${blockId}')">Save</button></div>`);
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bpi-rule)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-weight:700;font-size:.84rem;color:var(--bpi-bistre)">Attachments</span>
+        <div style="display:flex;gap:6px">
+          <label class="btn btn-secondary btn-sm" style="cursor:pointer">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload File
+            <input type="file" multiple style="display:none" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.mp4,.mov" onchange="blkAddFiles(event)">
+          </label>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="blkAddLink()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+            Add Link
+          </button>
+        </div>
+      </div>
+      <div id="blk-attach-list">${buildAttachHtml(b.attachments||[])}</div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-danger btn-sm" onclick="deleteBlock('${blockId}')">Delete</button><button class="btn btn-secondary" onclick="openCopyBlockModal('${blockId}')">Copy to Day&hellip;</button><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveBlock('${blockId}')">Save</button></div>`);
+  blkAttachInit(b.attachments||[]);
 }
 
 function saveBlock(existingId){
@@ -792,8 +859,9 @@ function saveBlock(existingId){
   if(!title){alert('Please enter a title');return;}
   const stdRefs=[];document.querySelectorAll('.std-ref-cb:checked').forEach(cb=>{const[grade,section,stdi]=cb.dataset.key.split('||');stdRefs.push({grade,section,stdIndex:parseInt(stdi)});});
   let blockId=existingId;
-  if(existingId){const b=DB.lessonBlocks.find(x=>x.id===existingId);Object.assign(b,{dayIndex:day,subject,title,content,standardRefs:stdRefs});}
-  else{blockId=newId();DB.lessonBlocks.push({id:blockId,classId,weekStart:wsStr,dayIndex:day,subject,title,content,standardRefs:stdRefs});}
+  const attachments=blkGetAttachments();
+  if(existingId){const b=DB.lessonBlocks.find(x=>x.id===existingId);Object.assign(b,{dayIndex:day,subject,title,content,standardRefs:stdRefs,attachments});}
+  else{blockId=newId();DB.lessonBlocks.push({id:blockId,classId,weekStart:wsStr,dayIndex:day,subject,title,content,standardRefs:stdRefs,attachments});}
   // Collect assignment sub-forms (up to 3)
   const asnItems=document.querySelectorAll('.blk-asn-item');
   const newAssignments=[];
@@ -867,6 +935,18 @@ function setRole(role){
   const btnA=document.getElementById('role-btn-admin');
   if(btnT)btnT.classList.toggle('role-btn-active', role==='teacher');
   if(btnA)btnA.classList.toggle('role-btn-active', role==='admin');
+  // Hide Weekly Review nav from teachers
+  const reviewNav=document.getElementById('nav-review');
+  const reviewSection=document.getElementById('nav-section-review');
+  const isTeacher=role==='teacher';
+  if(reviewNav)reviewNav.style.display=isTeacher?'none':'';
+  if(reviewSection)reviewSection.style.display=isTeacher?'none':'';
+  // If teacher landed on review page, redirect away
+  if(isTeacher&&document.querySelector('.page.active')?.id==='page-review'){
+    nav('lessonplan');
+    toast('Switched to Teacher View');
+    return;
+  }
   // Refresh current page
   const active=document.querySelector('.page.active');
   if(active){const pid=active.id.replace('page-','');nav(pid);}
@@ -1605,6 +1685,184 @@ let _tt;function toast(msg){const el=document.getElementById('toast');el.textCon
 seedData();seedLessonWeekData();setRole(DB.role);
 populateContextSelects();
 renderDashboard();
+
+
+// ── Week Documents ────────────────────────────────────────────────────────────
+const DOC_SLOTS = [
+  {key:'newsletter',  label:'Newsletter',       icon:'📰'},
+  {key:'homework',    label:'Homework Packet',  icon:'📝'},
+  {key:'classwork',   label:'Classwork Packet', icon:'📚'},
+];
+
+function renderWeekDocs(){
+  const classId=getCtxClass(); if(!classId)return;
+  const wsStr=lpCurrentWeek.toISOString().split('T')[0];
+  const lw=getLW(classId,wsStr);
+  if(!lw.docs)lw.docs={};
+  const wrap=document.getElementById('lp-week-docs'); if(!wrap)return;
+
+  let html=`<div class="week-docs-section">
+    <div class="week-docs-title">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Week Documents
+    </div>
+    <div class="week-docs-grid">`;
+
+  DOC_SLOTS.forEach(slot=>{
+    const doc=lw.docs[slot.key];
+    const hasFile=!!(doc&&doc.name);
+    html+=`<div class="doc-slot ${hasFile?'has-file':''}">
+      <div class="doc-slot-label">${slot.icon} ${slot.label}</div>`;
+    if(hasFile){
+      html+=`<div class="doc-slot-name" title="${escH(doc.name)}">${escH(doc.name)}</div>
+        <div class="doc-slot-actions">
+          <a class="doc-download-link" href="${doc.dataUrl}" download="${escH(doc.name)}">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download
+          </a>
+          <button class="doc-remove-btn" onclick="removeWeekDoc('${classId}','${wsStr}','${slot.key}')">Remove</button>
+        </div>`;
+    } else {
+      html+=`<div class="doc-empty-hint">No file uploaded</div>
+        <div class="doc-slot-actions">
+          <label class="doc-upload-btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload
+            <input type="file" style="display:none" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" onchange="handleWeekDocUpload(event,'${classId}','${wsStr}','${slot.key}')">
+          </label>
+        </div>`;
+    }
+    html+=`</div>`;
+  });
+
+  html+=`</div></div>`;
+  wrap.innerHTML=html;
+}
+
+function handleWeekDocUpload(event,classId,wsStr,slotKey){
+  const file=event.target.files[0]; if(!file)return;
+  const maxMB=10;
+  if(file.size>maxMB*1024*1024){toast('File too large (max 10 MB)');return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const lw=getLW(classId,wsStr);
+    if(!lw.docs)lw.docs={};
+    lw.docs[slotKey]={name:file.name, dataUrl:e.target.result, uploadedAt:new Date().toLocaleString()};
+    renderWeekDocs();
+    toast('File uploaded!');
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeWeekDoc(classId,wsStr,slotKey){
+  const lw=getLW(classId,wsStr);
+  if(lw.docs)delete lw.docs[slotKey];
+  renderWeekDocs();
+  toast('File removed');
+}
+
+
+// ── Copy Block to Another Day ────────────────────────────────────────────────
+function openCopyBlockModal(blockId){
+  const b=DB.lessonBlocks.find(x=>x.id===blockId);if(!b)return;
+  let wkOpts='';
+  for(let w=0;w<9;w++){
+    const d=new Date(lpCurrentWeek);d.setDate(d.getDate()+w*7);
+    const ws=d.toISOString().split('T')[0];
+    const lbl=w===0?`This week (${ws})`:`Week of ${ws}`;
+    wkOpts+=`<option value="${ws}"${w===0?' selected':''}>${lbl}</option>`;
+  }
+  const dayOpts=DAYS.map((d,i)=>`<option value="${i}"${i===b.dayIndex?' selected':''}>${d}</option>`).join('');
+  showModal(`<div class="modal-title">Copy Activity to Another Day</div>
+    <div style="font-size:.82rem;color:var(--bpi-ink-2);margin-bottom:14px">Copying: <strong>${escH(b.title)}</strong></div>
+    <div class="form-row cols-2">
+      <div><label>Destination Week</label><select id="copy-week">${wkOpts}</select></div>
+      <div><label>Destination Day</label><select id="copy-day">${dayOpts}</select></div>
+    </div>
+    <div style="margin-top:4px;font-size:.78rem;color:var(--bpi-ink-3)">Title, content, subject, and standards will be copied. Graded assignments will not be copied.</div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="doCopyBlock(${JSON.stringify(blockId)})">Copy</button>
+    </div>`);
+}
+function doCopyBlock(blockId){
+  const b=DB.lessonBlocks.find(x=>x.id===blockId);if(!b)return;
+  const classId=getCtxClass();
+  const destWeek=document.getElementById('copy-week').value;
+  const destDay=parseInt(document.getElementById('copy-day').value);
+  if(destWeek===b.weekStart&&destDay===b.dayIndex){toast('Choose a different day or week');return;}
+  DB.lessonBlocks.push({id:newId(),classId,weekStart:destWeek,dayIndex:destDay,subject:b.subject,title:b.title,content:b.content,standardRefs:[...b.standardRefs]});
+  closeModal();renderLessonPlan();toast('Activity copied!');
+}
+
+// ── Activity Attachments ─────────────────────────────────────────────────────
+// In-modal attachment state (array of {type:'link'|'file', name, url/dataUrl})
+let _blkAttachments = [];
+
+function blkAttachInit(existing){
+  _blkAttachments = existing ? JSON.parse(JSON.stringify(existing)) : [];
+  blkRenderAttachList();
+}
+
+function blkRenderAttachList(){
+  const list = document.getElementById('blk-attach-list');
+  if(!list) return;
+  list.innerHTML = buildAttachHtml(_blkAttachments);
+}
+
+function buildAttachHtml(attachments){
+  if(!attachments || !attachments.length){
+    return '<div style="font-size:.75rem;color:var(--bpi-ink-3);font-style:italic;padding:2px 0">No attachments yet</div>';
+  }
+  return attachments.map((a,i) => {
+    const icon = a.type==='file'
+      ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+      : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>';
+    const href = a.type==='file' ? a.dataUrl : a.url;
+    const dl = a.type==='file' ? `download="${escH(a.name)}"` : 'target="_blank" rel="noopener"';
+    return `<div class="blk-attach-item">
+      ${icon}
+      <a href="${escH(href)}" ${dl} title="${escH(a.name)}">${escH(a.name)}</a>
+      <button class="blk-attach-remove" onclick="blkRemoveAttach(${i})" title="Remove">&times;</button>
+    </div>`;
+  }).join('');
+}
+
+function blkRemoveAttach(idx){
+  _blkAttachments.splice(idx,1);
+  blkRenderAttachList();
+}
+
+function blkAddLink(){
+  const url = prompt('Enter URL (e.g. https://docs.google.com/…):','https://');
+  if(!url || url==='https://') return;
+  let name = prompt('Label for this link:', url.replace(/^https?:\/\//,'').split('/')[0]);
+  if(name===null) return;
+  if(!name.trim()) name = url;
+  _blkAttachments.push({type:'link', name:name.trim(), url:url.trim()});
+  blkRenderAttachList();
+}
+
+function blkAddFiles(event){
+  const files = Array.from(event.target.files);
+  const maxMB = 10;
+  let loaded = 0;
+  files.forEach(file => {
+    if(file.size > maxMB*1024*1024){ toast(`${file.name} too large (max 10 MB)`); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      _blkAttachments.push({type:'file', name:file.name, dataUrl:e.target.result});
+      loaded++;
+      if(loaded===files.length) blkRenderAttachList();
+    };
+    reader.readAsDataURL(file);
+  });
+  event.target.value=''; // reset input
+}
+
+function blkGetAttachments(){
+  return JSON.parse(JSON.stringify(_blkAttachments));
+}
 </script>
 </body>
 </html>
