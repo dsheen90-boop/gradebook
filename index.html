@@ -502,38 +502,76 @@ function openBlockModal(dayIdx){
   const trimester=getCtxTrimester();
   showModal(`<div class="modal-title">Add Lesson Activity</div>
     <div class="form-row cols-2"><div><label>Day</label><select id="blk-day">${DAYS.map((d,i)=>`<option value="${i}" ${i===(dayIdx||0)?'selected':''}>${d}</option>`).join('')}</select></div><div><label>Subject Block</label><select id="blk-subject" onchange="refreshBlkStds()">${SUBJECTS.map(s=>`<option>${s}</option>`).join('')}</select></div></div>
-    <div class="form-row"><div><label>Activity Title</label><input type="text" id="blk-title" placeholder="e.g. Parts of a Story Day 1"></div></div>
+    <div class="form-row"><div><label>Activity Title</label><input type="text" id="blk-title" placeholder="e.g. Parts of a Story Day 1" oninput="syncAsnTitles()"></div></div>
     <div class="form-row"><div><label>Content / Notes</label><textarea id="blk-content" rows="3" placeholder="Whole Group → Centers → Teacher Table…"></textarea></div></div>
     <div style="margin-top:8px"><label style="margin-bottom:8px">Tag Standards <span style="font-weight:400;color:var(--bpi-ink-3);font-size:.7rem">(auto-links to gradebook)</span></label><div style="max-height:160px;overflow-y:auto;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);padding:10px" id="blk-std-wrap">${buildStdCheckboxes(classId,[])}</div></div>
     <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bpi-rule)">
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;font-size:.84rem">
-        <input type="checkbox" id="blk-is-graded" onchange="toggleGradedSection()">
-        This activity is a graded assignment
-      </label>
-      <div id="blk-graded-section" style="display:none;margin-top:12px;padding:12px;background:var(--bpi-gold-10);border:1px solid var(--bpi-gold-20);border-radius:var(--radius-md)">
-        <div style="font-size:.72rem;font-weight:700;color:var(--bpi-bistre);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Assignment Details</div>
-        <div class="form-row cols-2">
-          <div><label>Assignment Title <span style="font-weight:400;font-size:.72rem;color:var(--bpi-ink-3)">(defaults to activity title)</span></label><input type="text" id="blk-asn-title" placeholder="Leave blank to use activity title"></div>
-          <div><label>Total Points</label><input type="number" id="blk-asn-points" value="100" min="1" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"></div>
-        </div>
-        <div class="form-row cols-2">
-          <div><label>Due Date</label><input type="date" id="blk-asn-date" value="${dayDateStr}"></div>
-          <div><label>Trimester</label><select id="blk-asn-trimester" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"><option value="1" ${trimester===1?'selected':''}>T1</option><option value="2" ${trimester===2?'selected':''}>T2</option><option value="3" ${trimester===3?'selected':''}>T3</option></select></div>
-        </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-weight:700;font-size:.84rem;color:var(--bpi-bistre)">Graded Assignments</span>
+        <button type="button" class="btn btn-secondary btn-sm" id="blk-add-asn-btn" onclick="addAsnSubform('${dayDateStr}',${trimester})">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Graded Assignment
+        </button>
       </div>
+      <div id="blk-asn-list"></div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveBlock()">Save Activity</button></div>`);
 }
-function toggleGradedSection(){
-  const show=document.getElementById('blk-is-graded')?.checked;
-  const sec=document.getElementById('blk-graded-section');
-  if(sec)sec.style.display=show?'block':'none';
-  // pre-fill assignment title from activity title if empty
-  if(show){
-    const asnTitle=document.getElementById('blk-asn-title');
-    const blkTitle=document.getElementById('blk-title')?.value||'';
-    if(asnTitle&&!asnTitle.value)asnTitle.value=blkTitle;
-  }
+
+let _blkAsnCount=0;
+function addAsnSubform(defaultDate,defaultTrimester){
+  const list=document.getElementById('blk-asn-list');
+  const existing=list.querySelectorAll('.blk-asn-item').length;
+  if(existing>=3){toast('Max 3 assignments per activity');return;}
+  const idx=_blkAsnCount++;
+  const actTitle=document.getElementById('blk-title')?.value||'';
+  const item=document.createElement('div');
+  item.className='blk-asn-item';
+  item.dataset.idx=idx;
+  item.style.cssText='background:var(--bpi-gold-10);border:1px solid var(--bpi-gold-20);border-radius:var(--radius-md);padding:12px;margin-bottom:8px;position:relative';
+  item.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-size:.72rem;font-weight:700;color:var(--bpi-bistre);text-transform:uppercase;letter-spacing:.07em">Assignment ${existing+1}</span>
+      <button type="button" onclick="removeAsnSubform(this)" style="background:none;border:none;cursor:pointer;color:var(--bpi-ink-3);font-size:1rem;line-height:1;padding:0 2px" title="Remove">&times;</button>
+    </div>
+    <div class="form-row cols-2" style="margin-bottom:8px">
+      <div><label style="font-size:.74rem">Title <span style="font-weight:400;color:var(--bpi-ink-3)">(blank = activity title)</span></label>
+        <input type="text" class="blk-asn-title" data-idx="${idx}" placeholder="${escH(actTitle)||'Same as activity'}" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"></div>
+      <div><label style="font-size:.74rem">Total Points</label>
+        <input type="number" class="blk-asn-points" data-idx="${idx}" value="100" min="1" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"></div>
+    </div>
+    <div class="form-row cols-2">
+      <div><label style="font-size:.74rem">Due Date</label>
+        <input type="date" class="blk-asn-date" data-idx="${idx}" value="${defaultDate}" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"></div>
+      <div><label style="font-size:.74rem">Trimester</label>
+        <select class="blk-asn-trimester" data-idx="${idx}" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem">
+          <option value="1" ${defaultTrimester===1?'selected':''}>T1</option>
+          <option value="2" ${defaultTrimester===2?'selected':''}>T2</option>
+          <option value="3" ${defaultTrimester===3?'selected':''}>T3</option>
+        </select></div>
+    </div>`;
+  list.appendChild(item);
+  // disable button at 3
+  const btn=document.getElementById('blk-add-asn-btn');
+  if(btn&&list.querySelectorAll('.blk-asn-item').length>=3){btn.disabled=true;btn.style.opacity='.45';}
+}
+function removeAsnSubform(btn){
+  const item=btn.closest('.blk-asn-item');if(item)item.remove();
+  // re-enable add button
+  const addBtn=document.getElementById('blk-add-asn-btn');
+  if(addBtn){addBtn.disabled=false;addBtn.style.opacity='';}
+  // re-number labels
+  document.querySelectorAll('.blk-asn-item').forEach((el,i)=>{
+    const lbl=el.querySelector('span[style*="text-transform"]');
+    if(lbl)lbl.textContent='Assignment '+(i+1);
+  });
+}
+function syncAsnTitles(){
+  // keep placeholder in sync with activity title as user types
+  const actTitle=document.getElementById('blk-title')?.value||'';
+  document.querySelectorAll('.blk-asn-title').forEach(inp=>{
+    inp.placeholder=actTitle||'Same as activity';
+  });
 }
 function refreshBlkStds(){
   const classId=getCtxClass();
@@ -561,21 +599,27 @@ function saveBlock(existingId){
   let blockId=existingId;
   if(existingId){const b=DB.lessonBlocks.find(x=>x.id===existingId);Object.assign(b,{dayIndex:day,subject,title,content,standardRefs:stdRefs});}
   else{blockId=newId();DB.lessonBlocks.push({id:blockId,classId,weekStart:wsStr,dayIndex:day,subject,title,content,standardRefs:stdRefs});}
-  // If graded checkbox is checked, also create assignment
-  const isGraded=document.getElementById('blk-is-graded')?.checked;
-  if(isGraded&&!existingId){
-    const asnRawTitle=document.getElementById('blk-asn-title')?.value.trim();
+  // Collect assignment sub-forms (up to 3)
+  const asnItems=document.querySelectorAll('.blk-asn-item');
+  const newAssignments=[];
+  asnItems.forEach(item=>{
+    const asnRawTitle=item.querySelector('.blk-asn-title')?.value.trim();
     const asnTitle=asnRawTitle||title;
-    const totalPoints=parseInt(document.getElementById('blk-asn-points')?.value)||100;
-    const date=document.getElementById('blk-asn-date')?.value||wsStr;
-    const trimester=parseInt(document.getElementById('blk-asn-trimester')?.value)||getCtxTrimester();
-    const a={id:newId(),classId,title:asnTitle,date,subject,trimester,standardRefs:stdRefs,grades:{},totalPoints,blockId};
-    DB.assignments.push(a);
-    closeModal();renderLessonPlan();toast('Activity + assignment created!');
-    openGradeEntryModal(a.id);
-    return;
+    const totalPoints=parseInt(item.querySelector('.blk-asn-points')?.value)||100;
+    const date=item.querySelector('.blk-asn-date')?.value||wsStr;
+    const trimester=parseInt(item.querySelector('.blk-asn-trimester')?.value)||getCtxTrimester();
+    newAssignments.push({id:newId(),classId,title:asnTitle,date,subject,trimester,standardRefs:stdRefs,grades:{},totalPoints,blockId});
+  });
+  newAssignments.forEach(a=>DB.assignments.push(a));
+  closeModal();renderLessonPlan();
+  if(newAssignments.length===1){
+    toast('Activity + 1 assignment created!');
+    openGradeEntryModal(newAssignments[0].id);
+  } else if(newAssignments.length>1){
+    toast(`Activity + ${newAssignments.length} assignments created!`);
+  } else {
+    toast('Activity saved');
   }
-  closeModal();renderLessonPlan();toast('Activity saved');
 }
 function deleteBlock(id){DB.lessonBlocks=DB.lessonBlocks.filter(b=>b.id!==id);closeModal();renderLessonPlan();toast('Removed');}
 
