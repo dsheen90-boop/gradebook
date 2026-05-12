@@ -265,6 +265,61 @@ tr:hover td{background:var(--bpi-caramel-20)}
 .chip-group-high{background:#3B1F0A;color:#fff;font-size:.62rem;padding:1px 6px;border-radius:10px;font-weight:700}
 .chip-group-middle{background:#A5704C;color:#fff;font-size:.62rem;padding:1px 6px;border-radius:10px;font-weight:700}
 .chip-group-low{background:#E8D5C0;color:#5C3317;font-size:.62rem;padding:1px 6px;border-radius:10px;font-weight:700}
+
+/* ── Attendance ─────────────────────────────────────────────────────────── */
+.att-table{width:100%;border-collapse:collapse;font-size:.84rem}
+.att-table th{text-align:left;padding:8px 10px;background:var(--bpi-bistre);color:#fff;font-family:var(--font-display);font-size:.75rem;letter-spacing:.04em}
+.att-table td{padding:8px 10px;border-bottom:1px solid var(--bpi-rule);vertical-align:middle}
+.att-table tr:hover td{background:var(--bpi-bistre-05)}
+.att-radio-group{display:flex;gap:4px}
+.att-radio-btn{padding:4px 10px;font-size:.73rem;font-weight:700;border-radius:var(--radius-sm);border:1.5px solid var(--bpi-rule-strong);background:#fff;cursor:pointer;font-family:var(--font-body);transition:all 120ms;color:var(--bpi-ink-2)}
+.att-radio-btn.P{border-color:#5C3317;background:#5C3317;color:#fff}
+.att-radio-btn.A{border-color:#C49A6C;background:#C49A6C;color:#fff}
+.att-radio-btn.T{border-color:#A5704C;background:#A5704C;color:#fff}
+.att-note-input{width:100%;font-family:var(--font-body);font-size:.78rem;padding:4px 8px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-sm)}
+.att-summary-chip{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;padding:2px 8px;border-radius:10px;font-weight:700;margin:1px}
+.att-P{background:#f0ece7;color:#5C3317}.att-A{background:#E8D5C0;color:#5C3317}.att-T{background:#fff3e0;color:#A5704C}
+
+/* ── Student Profiles ────────────────────────────────────────────────────── */
+.profile-card{background:#fff;border:1px solid var(--bpi-rule);border-radius:var(--radius-lg);margin-bottom:16px;overflow:hidden}
+.profile-header{display:flex;align-items:center;gap:14px;padding:16px 20px;cursor:pointer;background:var(--bpi-bistre-05);border-bottom:1px solid transparent;transition:background .12s}
+.profile-header:hover{background:#e8e0d8}
+.profile-header.open{border-bottom-color:var(--bpi-rule)}
+.profile-avatar{width:40px;height:40px;border-radius:50%;background:var(--bpi-bistre);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:1.1rem;flex-shrink:0}
+.profile-name{font-family:var(--font-display);font-weight:700;font-size:.95rem;color:var(--bpi-bistre)}
+.profile-meta{font-size:.73rem;color:var(--bpi-ink-3);margin-top:1px}
+.profile-body{display:none;padding:18px 20px}
+.profile-body.open{display:block}
+.profile-section{margin-bottom:16px}
+.profile-section-title{font-family:var(--font-display);font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--bpi-brown-sugar);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--bpi-rule)}
+.profile-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.profile-stat{background:var(--bpi-bistre-05);border-radius:var(--radius-md);padding:10px 12px;text-align:center}
+.profile-stat-val{font-family:var(--font-display);font-weight:700;font-size:1.3rem;color:var(--bpi-bistre)}
+.profile-stat-lbl{font-size:.68rem;color:var(--bpi-ink-3);margin-top:2px}
+.profile-note-area{width:100%;font-family:var(--font-body);font-size:.82rem;padding:8px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);resize:vertical;min-height:70px;color:var(--bpi-ink)}
+.missing-asn-chip{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:8px;background:#E8D5C0;color:#5C3317;margin:2px;font-weight:600}
+
+/* ── Teacher Dashboard enhancements ─────────────────────────────────────── */
+.dash-announcement{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--bpi-rule);align-items:flex-start}
+.ann-type-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.ann-type-announcement{background:#5C3317}.ann-type-event{background:#A5704C}
+.ann-type-meeting{background:#C49A6C}.ann-type-testing{background:#3B1F0A}.ann-type-birthday{background:#E8D5C0;border:1px solid #C49A6C}
+.ann-add-btn{float:right;font-size:.72rem}
+.deadline-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bpi-rule);font-size:.82rem}
+.deadline-date{font-size:.7rem;font-weight:700;color:var(--bpi-brown-sugar);min-width:56px}
+.deadline-overdue{color:#C49A6C;font-weight:700}
+
+/* ── Reports page enhancements ───────────────────────────────────────────── */
+.report-tab-group{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.report-tab{padding:6px 14px;border-radius:var(--radius-md);font-size:.78rem;font-weight:600;border:1.5px solid var(--bpi-rule-strong);background:#fff;cursor:pointer;font-family:var(--font-body);color:var(--bpi-ink-2);transition:all 120ms}
+.report-tab.active{background:var(--bpi-bistre);color:#fff;border-color:var(--bpi-bistre)}
+
+
+/* ── Admin dashboard ── */
+.admin-sect{margin-bottom:20px}
+.flag-row{background:#FFF8F3!important}
+.compliance-chip{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.65rem;font-weight:700}
+
 </style>
 </head>
 <body>
@@ -301,16 +356,32 @@ tr:hover td{background:var(--bpi-caramel-20)}
   <div class="nav-section">Grading</div>
   <div class="nav-item" onclick="nav('gradebook')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span class="nav-label">Gradebook</span></div>
+  <div class="nav-item" onclick="nav('attendance')" id="nav-attendance">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg><span class="nav-label">Attendance</span></div>
   <div class="nav-item" onclick="nav('reports')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span class="nav-label">Report Cards</span></div>
-  <div class="nav-section">Admin</div>
-  <div class="nav-item" onclick="nav('students')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span class="nav-label">Reports</span></div>
+  <div class="nav-section" id="nav-section-admin">Admin</div>
+  <div class="nav-item" onclick="nav('overview')" id="nav-overview">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><span class="nav-label">Schoolwide</span></div>
+  <div class="nav-item" onclick="nav('compliance')" id="nav-compliance">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span class="nav-label">Compliance</span></div>
+  <div class="nav-item" onclick="nav('oversight')" id="nav-oversight">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span class="nav-label">Gradebook Oversight</span></div>
+  <div class="nav-item" onclick="nav('stdreport')" id="nav-stdreport">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span class="nav-label">Standards Report</span></div>
+  <div class="nav-item" onclick="nav('adminprofiles')" id="nav-adminprofiles">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span class="nav-label">Student Profiles</span></div>
+  <div class="nav-item" onclick="nav('adminreports')" id="nav-adminreports">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span class="nav-label">Reports</span></div>
+  <div class="nav-item" onclick="nav('students')" id="nav-students">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span class="nav-label">Students</span></div>
-  <div class="nav-item" onclick="nav('teachers')">
+  <div class="nav-item" onclick="nav('profiles')" id="nav-profiles">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><line x1="17" y1="11" x2="22" y2="11"/><line x1="19.5" y1="8.5" x2="19.5" y2="13.5"/></svg><span class="nav-label">Profiles</span></div>
+  <div class="nav-item" onclick="nav('teachers')" id="nav-teachers">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span class="nav-label">Teachers</span></div>
-  <div class="nav-item" onclick="nav('classes')">
+  <div class="nav-item" onclick="nav('classes')" id="nav-classes">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg><span class="nav-label">Classes</span></div>
-  <div class="nav-item" onclick="nav('standards')">
+  <div class="nav-item" onclick="nav('standards')" id="nav-standards">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span class="nav-label">Standards</span></div>
   <div class="nav-section" id="nav-section-review">Review</div>
   <div class="nav-item" onclick="nav('review')" id="nav-review">
@@ -399,16 +470,49 @@ tr:hover td{background:var(--bpi-caramel-20)}
 </div>
 
 <div id="page-reports" class="page">
-  <div class="page-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Report Cards</div>
-  <div class="card no-print">
-    <div class="card-title">Generate Report Cards</div>
-    <div class="form-row cols-3">
-      <div><label>Class</label><select id="rc-class" onchange="updateRCStudentSelect();renderReportCards()"></select></div>
-      <div><label>Trimester</label><select id="rc-trimester" onchange="renderReportCards()"><option value="1">T1</option><option value="2">T2</option><option value="3" selected>T3</option></select></div>
-      <div><label>Student</label><select id="rc-student" onchange="renderReportCards()"><option value="">All Students</option></select></div>
-    </div>
+  <div class="page-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Reports</div>
+  <div id="reports-content"></div>
+</div>
+
+<!-- ══ ADMIN SCHOOLWIDE DASHBOARD ══ -->
+<div id="page-overview" class="page">
+  <div class="page-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Schoolwide Dashboard</div>
+  <div id="dash-admin-content"></div>
+</div>
+
+<!-- ══ COMPLIANCE TRACKER ══ -->
+<div id="page-compliance" class="page">
+  <div class="page-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Teacher Compliance Tracker</div>
+  <div id="compliance-content"></div>
+</div>
+
+<!-- ══ GRADEBOOK OVERSIGHT ══ -->
+<div id="page-oversight" class="page">
+  <div class="page-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Gradebook Oversight</div>
+  <div id="oversight-content"></div>
+</div>
+
+<!-- ══ STANDARDS REPORT ══ -->
+<div id="page-stdreport" class="page">
+  <div class="page-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Standards-Based Reporting</div>
+  <div id="sr-content"></div>
+</div>
+
+<!-- ══ ADMIN STUDENT PROFILES ══ -->
+<div id="page-adminprofiles" class="page">
+  <div class="page-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Student Profiles</div>
+  <div class="toolbar no-print">
+    <div class="search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input class="search-input" id="admin-profile-search" placeholder="Search students…" oninput="renderAdminProfiles()"></div>
+    <select id="admin-profile-grade-filter" onchange="renderAdminProfiles()" style="width:auto;padding:7px 11px;font-size:.79rem"><option value="">All Grades</option><option>K</option><option>1st</option><option>2nd</option><option>3rd</option><option>PK3</option><option>VPK</option></select>
+    <button class="btn btn-secondary" onclick="_arTab='intervention';nav('adminreports')">View Intervention List</button>
   </div>
-  <div id="report-cards-output"></div>
+  <div id="admin-profiles-content"></div>
+</div>
+
+<!-- ══ ADMIN REPORTS ══ -->
+<div id="page-adminreports" class="page">
+  <div class="page-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Reports</div>
+  <div id="admin-reports-content"></div>
 </div>
 
 <div id="page-students" class="page">
@@ -434,6 +538,31 @@ tr:hover td{background:var(--bpi-caramel-20)}
   <div class="page-title">Classes</div>
   <div class="toolbar"><button class="btn btn-primary" onclick="openClassModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Class</button></div>
   <div class="card"><table><thead><tr><th>Class Name</th><th>Teacher</th><th>Students</th><th>Grades</th><th>Actions</th></tr></thead><tbody id="classes-tbody"></tbody></table></div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════ ATTENDANCE PAGE -->
+<div id="page-attendance" class="page">
+  <div class="page-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>Attendance</div>
+  <div class="toolbar no-print">
+    <div class="week-nav">
+      <button onclick="attPrevDay()">&#8592;</button>
+      <span class="week-label" id="att-date-label"></span>
+      <button onclick="attNextDay()">&#8594;</button>
+    </div>
+    <button class="btn btn-primary" onclick="submitAttendance()" id="att-submit-btn">Submit Attendance</button>
+    <span id="att-status-badge" style="font-size:.78rem;font-weight:600;padding:4px 10px;border-radius:10px"></span>
+  </div>
+  <div id="att-grid"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ PROFILES PAGE -->
+<div id="page-profiles" class="page">
+  <div class="page-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Student Profiles</div>
+  <div class="toolbar no-print">
+    <div class="search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input class="search-input" id="profile-search" placeholder="Search students…" oninput="renderProfiles()"></div>
+  </div>
+  <div id="profile-list"></div>
 </div>
 
 <div id="page-standards" class="page">
@@ -466,7 +595,16 @@ const STANDARDS={
 '3rd':{'Reading – Literature':['Ask and answer questions to demonstrate understanding of a text','Recount stories and determine the central message, lesson or moral','Describe characters and how their actions contribute to the plot','Determine the meaning of words and phrases in a text','Compare and contrast themes, settings, and plots of stories'],'Reading – Informational':['Ask and answer questions to demonstrate understanding of informational text','Determine the main idea and explain how key details support it','Describe the relationship between historical events, scientific ideas, or concepts','Use text features to locate information'],'Foundational Skills':['Know and apply grade-level phonics and word analysis skills','Read with sufficient accuracy and fluency to support comprehension'],'Writing':['Write opinion pieces supporting a point of view with reasons','Write informative/explanatory texts examining a topic','Write narratives using effective technique and clear sequences','Use technology to produce and publish writing'],'Speaking & Listening':['Engage effectively in collaborative discussions','Determine the main idea and supporting details of a text read aloud','Report on a topic using appropriate facts and details'],'Language':['Explain the function of nouns, pronouns, verbs, adjectives, and adverbs','Form and use regular and irregular plural nouns','Use punctuation correctly','Determine the meaning of unknown words using context clues'],'Mathematics – Operations & Algebraic Thinking':['Interpret products of whole numbers','Interpret whole-number quotients of whole numbers','Use multiplication and division within 100 to solve word problems','Apply properties of operations to multiply and divide','Fluently multiply and divide within 100'],'Mathematics – Numbers in Base Ten':['Round whole numbers to the nearest 10 or 100','Fluently add and subtract within 1000','Multiply one-digit whole numbers by multiples of 10'],'Mathematics – Fractions':['Understand a fraction as a number on the number line','Explain equivalence of fractions','Compare two fractions with same numerator or denominator'],'Mathematics – Measurement & Data':['Tell and write time to the nearest minute','Measure and estimate liquid volumes and masses','Draw a scaled picture graph and bar graph','Measure areas by counting unit squares'],'Mathematics – Geometry':['Understand that shapes in different categories may share attributes','Partition shapes into parts with equal areas'],'Social Studies':['Demonstrate understanding of Social Studies concepts; Show interest','Complete Social Studies projects and tasks'],'Science':['Demonstrate understanding of Science concepts; Show interest','Complete Science projects and tasks'],'Social Skills & Work Habits':['Show enthusiasm for learning','Demonstrate appropriate self-control','Interact well with peers and adults; Respect others','Stay on task; Work independently']}
 };
 
-let DB={teachers:[],students:[],classes:[],lessonBlocks:[],assignments:[],lessonWeeks:{},role:'admin',nextId:1};
+let DB={
+  teachers:[],students:[],classes:[],lessonBlocks:[],assignments:[],lessonWeeks:{},
+  role:'admin',nextId:1,
+  // Attendance: keyed "classId||dateStr" → {submitted:bool, records:{studentId:{status:'P'|'A'|'T', note:''}}}
+  attendance:{},
+  // Announcements / events / meetings / reminders
+  announcements:[],   // {id,type:'announcement'|'event'|'meeting'|'testing'|'birthday',title,date,description,classId:''}
+  // Student profile extras keyed by studentId
+  studentProfiles:{}  // {interventionNotes:'', teacherComments:'', parentNotes:''}
+};
 function newId(){return String(DB.nextId++);}
 
 function seedData(){
@@ -501,6 +639,25 @@ function seedData(){
   const sk=(arr,tp)=>Object.fromEntries(cls1S.map((s,i)=>[s.id,{earned:arr[i]!=null?arr[i]:Math.round(tp*0.75)}]));
   DB.assignments.push({id:newId(),classId:cls1.id,title:'Letter Recognition Check',date:'2026-01-08',trimester:3,subject:'Reading/Language Arts',totalPoints:10,standardRefs:[{grade:'K',section:'Foundational Skills',stdIndex:2}],grades:sk([10,9,8,7],10)});
   DB.assignments.push({id:newId(),classId:cls1.id,title:'Counting to 100',date:'2026-01-09',trimester:3,subject:'Math',totalPoints:10,standardRefs:[{grade:'K',section:'Mathematics – Counting & Cardinality',stdIndex:0}],grades:sk([10,10,9,9],10)});
+
+  // Demo announcements
+  DB.announcements=[
+    {id:newId(),type:'announcement',title:'Staff Meeting – Agenda Posted',date:'2026-05-13',description:'Please review the agenda before Tuesday\'s all-staff meeting at 3:45 PM in the library.',classId:''},
+    {id:newId(),type:'testing',title:'State Testing Window Opens',date:'2026-05-14',description:'All grades 3–5 begin ELA state assessments. No interruptions to homerooms during testing blocks.',classId:''},
+    {id:newId(),type:'event',title:'Spring Family Night',date:'2026-05-15',description:'Families invited 5–7 PM. Teachers should have student work displays ready by 4:30.',classId:''},
+    {id:newId(),type:'meeting',title:'Grade-Level PLC – Reading Data',date:'2026-05-16',description:'Bring your most recent running records and any benchmark data for the collaborative review.',classId:''},
+    {id:newId(),type:'birthday',title:'Ms. Williams Birthday 🎂',date:'2026-05-17',description:'Stop by room 204 to wish her well!',classId:''},
+    {id:newId(),type:'announcement',title:'Lesson Plans Due – Week of 5/19',date:'2026-05-16',description:'All lesson plans must be submitted and reviewed by Friday at 5 PM.',classId:''},
+  ];
+
+  // Demo attendance: seed cls2 (Blended 1st-2nd) for several past days
+  const attDates=['2026-05-08','2026-05-09','2026-05-12'];
+  attDates.forEach(dateStr=>{
+    const k=cls2.id+'||'+dateStr;
+    const records={};
+    cls2S.forEach((s,i)=>{records[s.id]={status:i===3?'A':i===6?'T':'P',note:i===3?'Sick – parent called':''}; });
+    DB.attendance[k]={submitted:true,records};
+  });
 }
 
 // Seed demo lesson week statuses after seedData()
@@ -538,7 +695,7 @@ function nav(page){
   document.getElementById('page-'+page).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+page+"'"))n.classList.add('active');});
   if(page==='review'){rvCurrentWeek=new Date(lpCurrentWeek);}
-  ({dashboard:renderDashboard,lessonplan:renderLessonPlan,gradebook:renderGradebook,reports:initReportCards,students:renderStudents,teachers:renderTeachers,classes:renderClasses,standards:renderStandards,review:renderReviewPage})[page]?.();
+  ({dashboard:renderDashboard,lessonplan:renderLessonPlan,gradebook:renderGradebook,reports:initReportCards,students:renderStudents,teachers:renderTeachers,classes:renderClasses,standards:renderStandards,review:renderReviewPage,attendance:renderAttendance,profiles:renderProfiles,overview:renderAdminDashboard,compliance:renderCompliance,oversight:renderOversight,stdreport:renderStandardsReport,adminprofiles:renderAdminProfiles,adminreports:renderAdminReports})[page]?.();
 }
 
 function getCtxClass(){return document.getElementById('ctx-class').value||(DB.classes[0]?.id||'');}
@@ -558,38 +715,7 @@ function refreshClassSelect(sel){
 function onTeacherChange(){refreshClassSelect(document.getElementById('ctx-class'));renderDashboard();}
 function onClassChange(){renderDashboard();}
 
-function renderDashboard(){
-  const classId=getCtxClass();const cls=DB.classes.find(c=>c.id===classId);
-  const students=cls?DB.students.filter(s=>cls.studentIds.includes(s.id)):DB.students;
-  const assignments=cls?DB.assignments.filter(a=>a.classId===classId):DB.assignments;
-  document.getElementById('dash-stats').innerHTML=`
-    <div class="stat-card"><div class="stat-val">${students.length}</div><div class="gold-rule-bar"></div><div class="stat-label">Students</div></div>
-    <div class="stat-card"><div class="stat-val">${assignments.length}</div><div class="gold-rule-bar"></div><div class="stat-label">Assignments</div></div>
-    <div class="stat-card"><div class="stat-val">${DB.classes.length}</div><div class="gold-rule-bar"></div><div class="stat-label">Classes</div></div>
-    <div class="stat-card"><div class="stat-val">${DB.teachers.length}</div><div class="gold-rule-bar"></div><div class="stat-label">Teachers</div></div>`;
-  const aHtml=assignments.length?assignments.slice(-6).reverse().map(a=>{
-    const sc=students.map(s=>a.grades?.[s.id]).filter(g=>g&&g.earned!=null&&g.status!=='M'&&g.status!=='E');
-    const pct=sc.length&&a.totalPoints?Math.round(sc.reduce((x,g)=>x+g.earned,0)/sc.length/a.totalPoints*100):null;
-    const avgDisp=pct!=null?`<span style="font-weight:700;font-size:.82rem;color:${pct>=85?'#5C3317':pct>=75?'#6B3A1F':pct>=65?'#A5704C':'#C49A6C'}">${pct}%</span>`:'';
-    return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bpi-rule)"><div style="flex:1"><div style="font-weight:600;font-size:.84rem">${a.title}</div><div style="font-size:.72rem;color:var(--bpi-ink-3)">${a.subject} &middot; ${a.date}${a.totalPoints?' &middot; '+a.totalPoints+' pts':''}</div></div>${avgDisp}</div>`;
-  }).join(''):'<div class="empty-state">No assignments yet</div>';
-  document.getElementById('dash-assignments').innerHTML=aHtml;
-  if(cls){
-    const grades=[...new Set(students.map(s=>s.grade))];
-    let stdHtml='';
-    grades.forEach(grade=>{
-      const secs=STANDARDS[grade];if(!secs)return;
-      stdHtml+=`<div class="eyebrow" style="margin:10px 0 6px">${grade}</div>`;
-      Object.keys(secs).slice(0,2).forEach(section=>{
-        const stds=secs[section];
-        const assessed=stds.filter((_,si)=>assignments.some(a=>a.standardRefs.some(r=>r.grade===grade&&r.section===section&&r.stdIndex===si))).length;
-        const pct=stds.length?Math.round(assessed/stds.length*100):0;
-        stdHtml+=`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:.72rem;margin-bottom:3px"><span style="color:var(--bpi-ink-2)">${section}</span><span style="color:var(--bpi-ink-3);font-weight:600">${assessed}/${stds.length}</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div>`;
-      });
-    });
-    document.getElementById('dash-standards').innerHTML=stdHtml||'<div class="empty-state">Select a class to see coverage</div>';
-  }else document.getElementById('dash-standards').innerHTML='<div class="empty-state">Select a class above</div>';
-}
+// renderDashboard defined below (teacher/admin aware version)
 
 const DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday'];
 let lpCurrentWeek=new Date('2026-01-05');
@@ -735,6 +861,8 @@ function addAsnSubform(defaultDate,defaultTrimester){
         <input type="number" class="blk-asn-points" data-idx="${idx}" value="100" min="1" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"></div>
       <div><label style="font-size:.74rem">Group</label>
         <select class="blk-asn-group" data-idx="${idx}" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"><option value="">All Students</option><option value="high">High</option><option value="middle">Middle</option><option value="low">Low</option></select></div>
+      <div><label style="font-size:.74rem">Category</label>
+        <select class="blk-asn-category" data-idx="${idx}" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"><option value="classwork">Classwork</option><option value="homework">Homework</option><option value="assessment">Assessment</option><option value="project">Project</option></select></div>
     </div>
     <div class="form-row cols-2">
       <div><label style="font-size:.74rem">Due Date</label>
@@ -878,7 +1006,7 @@ function saveBlock(existingId){
     const totalPoints=parseInt(item.querySelector('.blk-asn-points')?.value)||100;
     const date=item.querySelector('.blk-asn-date')?.value||wsStr;
     const trimester=parseInt(item.querySelector('.blk-asn-trimester')?.value)||getCtxTrimester();
-    const asnGroup=item.querySelector('.blk-asn-group')?.value||'';newAssignments.push({id:newId(),classId,title:asnTitle,date,subject,trimester,standardRefs:stdRefs,grades:{},totalPoints,blockId,group:asnGroup});
+    const asnGroup=item.querySelector('.blk-asn-group')?.value||'';const asnCat=item.querySelector('.blk-asn-category')?.value||'classwork';newAssignments.push({id:newId(),classId,title:asnTitle,date,subject,trimester,standardRefs:stdRefs,grades:{},totalPoints,blockId,group:asnGroup,category:asnCat});
   });
   newAssignments.forEach(a=>DB.assignments.push(a));
   closeModal();renderLessonPlan();
@@ -948,6 +1076,10 @@ function setRole(role){
   const isTeacher=role==='teacher';
   if(reviewNav)reviewNav.style.display=isTeacher?'none':'';
   if(reviewSection)reviewSection.style.display=isTeacher?'none':'';
+  // Hide admin-only nav items from teachers; show teacher items to teachers only
+  ['nav-students','nav-teachers','nav-classes','nav-standards','nav-section-admin','nav-overview','nav-compliance','nav-oversight','nav-stdreport','nav-adminprofiles','nav-adminreports'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display=isTeacher?'none':'';
+  });
   // If teacher landed on review page, redirect away
   if(isTeacher&&document.querySelector('.page.active')?.id==='page-review'){
     nav('lessonplan');
@@ -1305,6 +1437,10 @@ function openAssignmentModal(){
         <option>Reading/Language Arts</option><option>Math</option><option>Phonics/Handwriting</option>
         <option>Science</option><option>Social Studies</option><option>Project Based Learning</option><option>Social Skills</option>
       </select></div>
+      <div><label>Category</label><select id="asn-category" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem">
+        <option value="classwork">Classwork</option><option value="homework">Homework</option>
+        <option value="assessment">Assessment</option><option value="project">Project</option>
+      </select></div>
       <div><label>Trimester</label><select id="asn-trimester"><option value="1">T1</option><option value="2">T2</option><option value="3" selected>T3</option></select></div>
       <div><label>Total Points</label><input type="number" id="asn-points" value="100" min="1" placeholder="100" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"></div>
     </div>
@@ -1328,7 +1464,8 @@ function saveAssignment(){
   const stdRefs=[];document.querySelectorAll('.std-ref-cb:checked').forEach(cb=>{const[grade,section,stdi]=cb.dataset.key.split('||');if(!stdRefs.find(r=>r.grade===grade&&r.section===section&&r.stdIndex===parseInt(stdi)))stdRefs.push({grade,section,stdIndex:parseInt(stdi)});});
   const blockId=document.getElementById('asn-block-id')?.value||null;
   const totalPoints=parseInt(document.getElementById('asn-points')?.value)||100;
-  const a={id:newId(),classId,title,date,subject,trimester,standardRefs:stdRefs,grades:{},totalPoints,blockId:blockId||undefined};
+  const category=document.getElementById('asn-category')?.value||'classwork';
+  const a={id:newId(),classId,title,date,subject,trimester,standardRefs:stdRefs,grades:{},totalPoints,blockId:blockId||undefined,category};
   DB.assignments.push(a);closeModal();openGradeEntryModal(a.id);
   if(blockId&&document.getElementById('page-lessonplan')?.classList.contains('active'))renderLessonPlan();
 }
@@ -1359,6 +1496,10 @@ function openAssignmentFromBlock(blockId,dateStr){
       <div><label>Subject</label><select id="asn-subject" onchange="refreshAsnStandards()">
         <option>Reading/Language Arts</option><option>Math</option><option>Phonics/Handwriting</option>
         <option>Science</option><option>Social Studies</option><option>Project Based Learning</option><option>Social Skills</option>
+      </select></div>
+      <div><label>Category</label><select id="asn-category" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem">
+        <option value="classwork">Classwork</option><option value="homework">Homework</option>
+        <option value="assessment">Assessment</option><option value="project">Project</option>
       </select></div>
       <div><label>Trimester</label><select id="asn-trimester"><option value="1" ${trimester===1?'selected':''}>T1</option><option value="2" ${trimester===2?'selected':''}>T2</option><option value="3" ${trimester===3?'selected':''}>T3</option></select></div>
       <div><label>Total Points</label><input type="number" id="asn-points" value="100" min="1" placeholder="100" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"></div>
@@ -1401,14 +1542,24 @@ function openGradeEntryModal(assignmentId){
         </div>
       </td>
       <td style="text-align:center">
-        <label style="display:inline-flex;align-items:center;gap:3px;font-size:.75rem;cursor:pointer;margin-right:8px">
+        <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center">
+        <label style="display:inline-flex;align-items:center;gap:3px;font-size:.73rem;cursor:pointer">
           <input type="checkbox" id="gm_${s.id}" ${isMissing?'checked':''}
             onchange="toggleME('${s.id}','M',${tp})"> M
         </label>
-        <label style="display:inline-flex;align-items:center;gap:3px;font-size:.75rem;cursor:pointer">
+        <label style="display:inline-flex;align-items:center;gap:3px;font-size:.73rem;cursor:pointer">
           <input type="checkbox" id="gx_${s.id}" ${isExcused?'checked':''}
             onchange="toggleME('${s.id}','E',${tp})"> E
         </label>
+        <label style="display:inline-flex;align-items:center;gap:3px;font-size:.73rem;cursor:pointer">
+          <input type="checkbox" id="gl_${s.id}" ${g.status==='L'?'checked':''}
+            onchange="toggleME('${s.id}','L',${tp})"> L
+        </label>
+        <label style="display:inline-flex;align-items:center;gap:3px;font-size:.73rem;cursor:pointer">
+          <input type="checkbox" id="gi_${s.id}" ${g.status==='I'?'checked':''}
+            onchange="toggleME('${s.id}','I',${tp})"> I
+        </label>
+        </div>
       </td>
     </tr>`;
   }).join('');
@@ -1435,10 +1586,14 @@ function updatePctPreview(sid,tp){
 function toggleME(sid,type,tp){
   const mEl=document.getElementById('gm_'+sid);
   const xEl=document.getElementById('gx_'+sid);
+  const lEl=document.getElementById('gl_'+sid);
+  const iEl=document.getElementById('gi_'+sid);
   const ptsEl=document.getElementById('ge_pts_'+sid);
   const pctEl=document.getElementById('gpct_'+sid);
-  if(type==='M'&&mEl?.checked){if(xEl)xEl.checked=false;}
-  if(type==='E'&&xEl?.checked){if(mEl)mEl.checked=false;}
+  // uncheck others when one is checked
+  const all=[mEl,xEl,lEl,iEl];
+  const cur=document.getElementById('g'+type.toLowerCase()+'_'+sid);
+  if(cur?.checked)all.forEach(el=>{if(el&&el!==cur)el.checked=false;});
   const disabled=mEl?.checked||xEl?.checked;
   const scoreEl=document.getElementById('gscore_'+sid);
   if(ptsEl){ptsEl.disabled=disabled;if(disabled){ptsEl.value='';if(pctEl)pctEl.textContent='';if(scoreEl)scoreEl.innerHTML='';}}}
@@ -1451,8 +1606,12 @@ function saveGrades(aid){
     const excused=document.getElementById('gx_'+s.id)?.checked;
     const raw=document.getElementById('ge_pts_'+s.id)?.value;
     const earned=raw!==''&&raw!=null?parseFloat(raw):null;
+    const late=document.getElementById('gl_'+s.id)?.checked;
+    const incomplete=document.getElementById('gi_'+s.id)?.checked;
     if(missing){a.grades[s.id]={status:'M',earned:null};}
     else if(excused){a.grades[s.id]={status:'E',earned:null};}
+    else if(late&&earned!=null){a.grades[s.id]={status:'L',earned};}
+    else if(incomplete){a.grades[s.id]={status:'I',earned:earned??null};}
     else if(earned!=null){a.grades[s.id]={status:'',earned};}
   });
   closeModal();renderGradebook();toast('Grades saved!');
@@ -1470,23 +1629,7 @@ function openStudentStdModal(studentId,classId){
   showModal(html,'large');
 }
 
-function initReportCards(){
-  document.getElementById('rc-class').innerHTML=DB.classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
-  updateRCStudentSelect();renderReportCards();
-}
-function updateRCStudentSelect(){
-  const cls=DB.classes.find(c=>c.id===document.getElementById('rc-class').value);
-  const students=cls?DB.students.filter(s=>cls.studentIds.includes(s.id)):[];
-  document.getElementById('rc-student').innerHTML='<option value="">All Students</option>'+students.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
-}
-function renderReportCards(){
-  const classId=document.getElementById('rc-class')?.value;const trimester=parseInt(document.getElementById('rc-trimester')?.value)||3;const studentFilter=document.getElementById('rc-student')?.value;
-  const cls=DB.classes.find(c=>c.id===classId);if(!cls)return;
-  const teacher=DB.teachers.find(t=>t.id===cls.teacherId);
-  let students=DB.students.filter(s=>cls.studentIds.includes(s.id));if(studentFilter)students=students.filter(s=>s.id===studentFilter);
-  const assignments=DB.assignments.filter(a=>a.classId===classId&&a.trimester===trimester);
-  document.getElementById('report-cards-output').innerHTML=students.map(s=>buildReportCard(s,teacher,assignments,trimester)).join('')||'<div class="card"><div class="empty-state">No students found</div></div>';
-}
+// old initReportCards removed — see new tabbed version below
 function buildReportCard(student,teacher,assignments,trimester){
   const grade=student.grade;const secs=STANDARDS[grade];if(!secs)return`<div class="card"><div class="alert alert-info">No standards for grade ${grade}</div></div>`;
   const stdScores={};assignments.forEach(a=>{if(a.group&&student.group&&a.group!==student.group)return;const g=a.grades?.[student.id];if(!g||g.status==='M'||g.status==='E'||g.earned==null||!a.totalPoints)return;const pct=g.earned/a.totalPoints;const score=pct>=0.85?4:pct>=0.75?3:pct>=0.65?2:1;a.standardRefs.filter(r=>r.grade===grade).forEach(r=>{const k=`${r.section}||${r.stdIndex}`;(stdScores[k]=stdScores[k]||[]).push(score);});});
@@ -1926,6 +2069,1457 @@ function commentAddLink(){
   const ct=document.getElementById('comment-attach-count');
   if(ct)ct.textContent=_commentAttachments.length+' attachment'+(_commentAttachments.length!==1?'s':'');
 }
+
+
+// ═══════════════════════════════════════════════════════════════
+// ATTENDANCE
+// ═══════════════════════════════════════════════════════════════
+let attCurrentDate = new Date('2026-01-12');
+function attKey(classId, dateStr){ return classId+'||'+dateStr; }
+function getAtt(classId, dateStr){
+  const k=attKey(classId,dateStr);
+  if(!DB.attendance[k]) DB.attendance[k]={submitted:false,records:{}};
+  return DB.attendance[k];
+}
+function attPrevDay(){
+  attCurrentDate=new Date(attCurrentDate);
+  attCurrentDate.setDate(attCurrentDate.getDate()-1);
+  renderAttendance();
+}
+function attNextDay(){
+  attCurrentDate=new Date(attCurrentDate);
+  attCurrentDate.setDate(attCurrentDate.getDate()+1);
+  renderAttendance();
+}
+function renderAttendance(){
+  const classId=getCtxClass();
+  const dateStr=attCurrentDate.toISOString().split('T')[0];
+  const lbl=document.getElementById('att-date-label');
+  if(lbl) lbl.textContent=attCurrentDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const att=getAtt(classId,dateStr);
+  const badge=document.getElementById('att-status-badge');
+  const submitBtn=document.getElementById('att-submit-btn');
+  if(badge){
+    if(att.submitted){
+      badge.textContent='✓ Submitted';badge.style.background='#f0ece7';badge.style.color='#5C3317';
+    } else {badge.textContent='Draft';badge.style.background='#E8D5C0';badge.style.color='#5C3317';}
+  }
+  if(submitBtn) submitBtn.disabled=att.submitted;
+  const cls=DB.classes.find(c=>c.id===classId);
+  const grid=document.getElementById('att-grid');
+  if(!grid) return;
+  if(!cls){ grid.innerHTML='<div class="empty-state">Select a class above</div>'; return; }
+  const students=DB.students.filter(s=>cls.studentIds.includes(s.id));
+  if(!students.length){ grid.innerHTML='<div class="empty-state">No students in this class</div>'; return; }
+
+  // Summary bar
+  const recs=att.records;
+  const pCount=students.filter(s=>recs[s.id]?.status==='P').length;
+  const aCount=students.filter(s=>recs[s.id]?.status==='A').length;
+  const tCount=students.filter(s=>recs[s.id]?.status==='T').length;
+  const nCount=students.length-pCount-aCount-tCount;
+
+  let html=`<div class="card" style="margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-weight:700;font-size:.84rem;color:var(--bpi-bistre)">${students.length} students</span>
+      <span class="att-summary-chip att-P">✓ Present: ${pCount}</span>
+      <span class="att-summary-chip att-A">✗ Absent: ${aCount}</span>
+      <span class="att-summary-chip att-T">~ Tardy: ${tCount}</span>
+      ${nCount?`<span class="att-summary-chip" style="background:#f5f5f5;color:var(--bpi-ink-3)">? Not marked: ${nCount}</span>`:''}
+      <button class="btn btn-secondary btn-sm" onclick="markAllPresent('${classId}','${dateStr}')" style="margin-left:auto">Mark All Present</button>
+    </div>
+  </div>
+  <div class="card" style="padding:0">
+  <table class="att-table">
+    <thead><tr><th>Student</th><th>Grade</th><th>Status</th><th>Note</th></tr></thead>
+    <tbody>`;
+
+  students.forEach(s=>{
+    const rec=recs[s.id]||{status:'',note:''};
+    const statuses=['P','A','T'];
+    const labels={P:'Present',A:'Absent',T:'Tardy'};
+    const btns=statuses.map(st=>`<button class="att-radio-btn ${rec.status===st?st:''}" onclick="setAttStatus('${classId}','${dateStr}','${s.id}','${st}')" title="${labels[st]}">${st}</button>`).join('');
+    html+=`<tr>
+      <td><strong>${s.name}</strong>${s.group?` <span class="chip-group-${s.group}" style="font-size:.6rem">${s.group.charAt(0).toUpperCase()+s.group.slice(1)}</span>`:''}</td>
+      <td><span class="chip chip-grade">${s.grade}</span></td>
+      <td><div class="att-radio-group">${btns}</div></td>
+      <td><input class="att-note-input" id="att-note-${s.id}" value="${escH(rec.note||'')}" placeholder="Add note…" onchange="setAttNote('${classId}','${dateStr}','${s.id}',this.value)" ${att.submitted?'disabled':''}></td>
+    </tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  grid.innerHTML=html;
+}
+function setAttStatus(classId,dateStr,studentId,status){
+  const att=getAtt(classId,dateStr);
+  if(!att.records[studentId]) att.records[studentId]={status:'',note:''};
+  att.records[studentId].status=status;
+  renderAttendance();
+}
+function setAttNote(classId,dateStr,studentId,note){
+  const att=getAtt(classId,dateStr);
+  if(!att.records[studentId]) att.records[studentId]={status:'',note:''};
+  att.records[studentId].note=note;
+}
+function markAllPresent(classId,dateStr){
+  const att=getAtt(classId,dateStr);
+  const cls=DB.classes.find(c=>c.id===classId);
+  if(!cls) return;
+  DB.students.filter(s=>cls.studentIds.includes(s.id)).forEach(s=>{
+    if(!att.records[s.id]) att.records[s.id]={status:'P',note:''};
+    else att.records[s.id].status='P';
+  });
+  renderAttendance();
+}
+function submitAttendance(){
+  const classId=getCtxClass();
+  const dateStr=attCurrentDate.toISOString().split('T')[0];
+  const att=getAtt(classId,dateStr);
+  att.submitted=true;
+  renderAttendance();
+  toast('Attendance submitted!');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TEACHER DASHBOARD (enhanced)
+// ═══════════════════════════════════════════════════════════════
+function renderDashboard(){
+  const classId=getCtxClass();
+  const cls=DB.classes.find(c=>c.id===classId);
+  const isTeacher=DB.role==='teacher';
+  const students=cls?DB.students.filter(s=>cls.studentIds.includes(s.id)):DB.students;
+  const assignments=cls?DB.assignments.filter(a=>a.classId===classId):DB.assignments;
+
+  // Stats
+  const today=new Date().toISOString().split('T')[0];
+  const attToday=classId?getAtt(classId,today):null;
+  const attDone=attToday?.submitted;
+  const missingCount=assignments.reduce((n,a)=>{
+    return n+Object.values(a.grades||{}).filter(g=>g.status==='M').length;
+  },0);
+  document.getElementById('dash-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-val">${students.length}</div><div class="gold-rule-bar"></div><div class="stat-label">Students</div></div>
+    <div class="stat-card"><div class="stat-val">${assignments.length}</div><div class="gold-rule-bar"></div><div class="stat-label">Assignments</div></div>
+    <div class="stat-card" style="${attDone?'':'border:2px solid #A5704C'}" onclick="nav('attendance')" title="Go to attendance" style="cursor:pointer">
+      <div class="stat-val" style="color:${attDone?'#5C3317':'#A5704C'}">${attDone?'✓':'!'}</div>
+      <div class="gold-rule-bar"></div>
+      <div class="stat-label">Attendance ${attDone?'Done':'Pending'}</div>
+    </div>
+    <div class="stat-card" onclick="nav('gradebook')" title="Missing assignments" style="cursor:pointer">
+      <div class="stat-val" style="color:${missingCount?'#A5704C':'#5C3317'}">${missingCount}</div>
+      <div class="gold-rule-bar"></div><div class="stat-label">Missing Grades</div>
+    </div>`;
+
+  if(isTeacher){
+    // Teacher view: show announcements + deadlines + recent assignments + standards
+    const dash=document.getElementById('dash-assignments');
+    const dashStd=document.getElementById('dash-standards');
+
+    // Announcements panel
+    const anns=DB.announcements.filter(a=>!a.classId||a.classId===classId).sort((a,b)=>a.date.localeCompare(b.date));
+    const todayISO=new Date().toISOString().split('T')[0];
+    const upcoming=anns.filter(a=>a.date>=todayISO).slice(0,8);
+    const annColors={announcement:'#5C3317',event:'#A5704C',meeting:'#C49A6C',testing:'#3B1F0A',birthday:'#E09900'};
+    const annIcons={announcement:'📢',event:'📅',meeting:'🤝',testing:'📝',birthday:'🎂'};
+    let annHtml=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="card-title" style="margin:0">Announcements & Upcoming</div>
+      ${DB.role==='admin'?`<button class="btn btn-secondary btn-sm ann-add-btn" onclick="openAnnouncementModal()">+ Add</button>`:''}
+    </div>`;
+    if(upcoming.length){
+      upcoming.forEach(a=>{
+        annHtml+=`<div class="dash-announcement">
+          <span class="ann-type-dot" style="background:${annColors[a.type]||'#5C3317'}"></span>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:.83rem">${annIcons[a.type]||'📌'} ${escH(a.title)}</div>
+            <div style="font-size:.71rem;color:var(--bpi-ink-3)">${a.date}${a.description?' · '+escH(a.description.substring(0,60)):''}</div>
+          </div>
+          ${DB.role==='admin'?`<button style="background:none;border:none;cursor:pointer;color:var(--bpi-ink-3);font-size:.9rem" onclick="deleteAnnouncement('${a.id}')">×</button>`:''}
+        </div>`;
+      });
+    } else annHtml+='<div class="empty-state">No upcoming announcements</div>';
+    dash.innerHTML=annHtml;
+
+    // Deadlines + recent assignments
+    const now=new Date();
+    const twoWeeks=new Date(now);twoWeeks.setDate(twoWeeks.getDate()+14);
+    const deadlines=[];
+    // LP due dates
+    if(cls){
+      for(let w=0;w<6;w++){
+        const d=new Date(now);d.setDate(d.getDate()+w*7);
+        const ws=weekStartFor(d).toISOString().split('T')[0];
+        const lw=getLW(classId,ws);
+        if(lw.status==='draft'||lw.status==='revisions'){
+          const due=lpDueDateStr(ws);
+          if(due>=todayISO) deadlines.push({label:`LP Due: Week of ${ws}`,date:due,overdue:due<todayISO});
+        }
+      }
+    }
+    // Missing assignments
+    assignments.forEach(a=>{
+      const cnt=students.filter(s=>!a.grades?.[s.id]||a.grades[s.id].earned==null).length;
+      if(cnt>0) deadlines.push({label:`${escH(a.title)} — ${cnt} grade${cnt!==1?'s':''} missing`,date:a.date,overdue:true});
+    });
+    deadlines.sort((a,b)=>a.date.localeCompare(b.date));
+    let dlHtml='<div class="card-title" style="margin-bottom:10px">Deadlines & Missing</div>';
+    if(deadlines.length){
+      deadlines.slice(0,8).forEach(d=>{
+        dlHtml+=`<div class="deadline-row"><span class="deadline-date ${d.overdue?'deadline-overdue':''}">${d.date}</span><span style="flex:1;font-size:.81rem">${d.label}</span></div>`;
+      });
+    } else dlHtml+='<div class="empty-state">All caught up!</div>';
+    dashStd.innerHTML=dlHtml;
+
+  } else {
+    // Admin view (original)
+    const aHtml=assignments.length?assignments.slice(-6).reverse().map(a=>{
+      const sc=students.map(s=>a.grades?.[s.id]).filter(g=>g&&g.earned!=null&&g.status!=='M'&&g.status!=='E');
+      const pct=sc.length&&a.totalPoints?Math.round(sc.reduce((x,g)=>x+g.earned,0)/sc.length/a.totalPoints*100):null;
+      const avgDisp=pct!=null?`<span style="font-weight:700;font-size:.82rem;color:${pct>=85?'#5C3317':pct>=75?'#6B3A1F':pct>=65?'#A5704C':'#C49A6C'}">${pct}%</span>`:'';
+      return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bpi-rule)"><div style="flex:1"><div style="font-weight:600;font-size:.84rem">${a.title}</div><div style="font-size:.72rem;color:var(--bpi-ink-3)">${a.subject} · ${a.date}${a.totalPoints?' · '+a.totalPoints+' pts':''}</div></div>${avgDisp}</div>`;
+    }).join(''):'<div class="empty-state">No assignments yet</div>';
+    document.getElementById('dash-assignments').innerHTML=`<div class="card-title" style="margin-bottom:6px">Recent Assignments</div>${aHtml}`;
+    if(cls){
+      const grades=[...new Set(students.map(s=>s.grade))];
+      let stdHtml='';
+      grades.forEach(grade=>{
+        const secs=STANDARDS[grade];if(!secs)return;
+        stdHtml+=`<div class="eyebrow" style="margin:10px 0 6px">${grade}</div>`;
+        Object.keys(secs).slice(0,2).forEach(section=>{
+          const stds=secs[section];
+          const assessed=stds.filter((_,si)=>assignments.some(a=>a.standardRefs.some(r=>r.grade===grade&&r.section===section&&r.stdIndex===si))).length;
+          const pct=stds.length?Math.round(assessed/stds.length*100):0;
+          stdHtml+=`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:.72rem;margin-bottom:3px"><span style="color:var(--bpi-ink-2)">${section}</span><span style="color:var(--bpi-ink-3);font-weight:600">${assessed}/${stds.length}</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div>`;
+        });
+      });
+      document.getElementById('dash-standards').innerHTML=stdHtml||'<div class="empty-state">No standards data</div>';
+    } else document.getElementById('dash-standards').innerHTML='<div class="empty-state">Select a class above</div>';
+  }
+}
+
+// ── Announcements ──────────────────────────────────────────────────────────
+function openAnnouncementModal(){
+  const classId=getCtxClass();
+  showModal(`<div class="modal-title">Add Announcement / Event</div>
+    <div class="form-row cols-2">
+      <div><label>Type</label><select id="ann-type">
+        <option value="announcement">📢 Announcement</option>
+        <option value="event">📅 Event</option>
+        <option value="meeting">🤝 Meeting</option>
+        <option value="testing">📝 Testing Reminder</option>
+        <option value="birthday">🎂 Birthday</option>
+      </select></div>
+      <div><label>Date</label><input type="date" id="ann-date" value="${new Date().toISOString().split('T')[0]}"></div>
+    </div>
+    <div class="form-row"><div><label>Title</label><input type="text" id="ann-title" placeholder="e.g. Math benchmark testing"></div></div>
+    <div class="form-row"><div><label>Description (optional)</label><textarea id="ann-desc" rows="2" placeholder="Additional details…"></textarea></div></div>
+    <div class="form-row"><div><label>Class (blank = school-wide)</label><select id="ann-class">
+      <option value="">All Classes (school-wide)</option>
+      ${DB.classes.map(c=>`<option value="${c.id}" ${c.id===classId?'selected':''}>${escH(c.name)}</option>`).join('')}
+    </select></div></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveAnnouncement()">Save</button></div>`);
+}
+function saveAnnouncement(){
+  const type=document.getElementById('ann-type').value;
+  const date=document.getElementById('ann-date').value;
+  const title=document.getElementById('ann-title').value.trim();
+  const description=document.getElementById('ann-desc').value.trim();
+  const classId=document.getElementById('ann-class').value;
+  if(!title){toast('Enter a title');return;}
+  DB.announcements.push({id:newId(),type,date,title,description,classId});
+  closeModal();renderDashboard();toast('Added!');
+}
+function deleteAnnouncement(id){
+  DB.announcements=DB.announcements.filter(a=>a.id!==id);
+  renderDashboard();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STUDENT PROFILES
+// ═══════════════════════════════════════════════════════════════
+function renderProfiles(){
+  const classId=getCtxClass();
+  const cls=DB.classes.find(c=>c.id===classId);
+  const q=(document.getElementById('profile-search')?.value||'').toLowerCase();
+  let students=cls?DB.students.filter(s=>cls.studentIds.includes(s.id)):DB.students;
+  if(q) students=students.filter(s=>s.name.toLowerCase().includes(q)||s.grade.toLowerCase().includes(q));
+  const wrap=document.getElementById('profile-list');
+  if(!wrap) return;
+  if(!students.length){wrap.innerHTML='<div class="empty-state">No students found</div>';return;}
+
+  wrap.innerHTML=students.map(s=>{
+    const initials=s.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const enrolled=DB.classes.filter(c=>c.studentIds.includes(s.id)).map(c=>c.name).join(', ')||'—';
+    const grpChip=s.group?`<span class="chip-group-${s.group}">${s.group.charAt(0).toUpperCase()+s.group.slice(1)}</span>`:'';
+    return`<div class="profile-card">
+      <div class="profile-header" onclick="toggleProfile('pb_${s.id}',this)">
+        <div class="profile-avatar">${initials}</div>
+        <div style="flex:1">
+          <div class="profile-name">${escH(s.name)} <span class="chip chip-grade">${s.grade}</span> ${grpChip}</div>
+          <div class="profile-meta">${enrolled}</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="profile-body" id="pb_${s.id}">
+        ${buildProfileBody(s,classId)}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleProfile(bodyId, header){
+  const body=document.getElementById(bodyId);
+  if(!body) return;
+  const open=body.classList.toggle('open');
+  header.classList.toggle('open',open);
+  if(open && body.dataset.built!=='1'){
+    body.dataset.built='1'; // already rendered on first open
+  }
+}
+
+function buildProfileBody(student, classId){
+  const assignments=classId
+    ? DB.assignments.filter(a=>a.classId===classId)
+    : DB.assignments.filter(a=>{const c=DB.classes.find(x=>x.studentIds.includes(student.id));return c&&a.classId===c.id;});
+
+  // Attendance summary
+  let pDays=0,aDays=0,tDays=0;
+  Object.values(DB.attendance).forEach(att=>{
+    const rec=att.records?.[student.id];
+    if(!rec) return;
+    if(rec.status==='P') pDays++;
+    else if(rec.status==='A') aDays++;
+    else if(rec.status==='T') tDays++;
+  });
+
+  // Grade summary
+  const graded=assignments.filter(a=>{const g=a.grades?.[student.id];return g&&g.earned!=null&&g.status!=='M'&&g.status!=='E';});
+  const avg=graded.length?Math.round(graded.reduce((n,a)=>{const g=a.grades[student.id];return n+(g.earned/a.totalPoints*100);},0)/graded.length):null;
+
+  // Missing assignments
+  const missing=assignments.filter(a=>{const g=a.grades?.[student.id];return !g||g.status==='M';});
+
+  // Standards mastery
+  const stdScores={};
+  assignments.forEach(a=>{
+    if(a.group&&student.group&&a.group!==student.group) return;
+    const g=a.grades?.[student.id];
+    if(!g||g.status==='M'||g.status==='E'||g.earned==null||!a.totalPoints) return;
+    const pct=g.earned/a.totalPoints;
+    const score=pct>=0.85?4:pct>=0.75?3:pct>=0.65?2:1;
+    a.standardRefs.forEach(r=>{
+      const k=`${r.grade}||${r.section}||${r.stdIndex}`;
+      (stdScores[k]=stdScores[k]||[]).push(score);
+    });
+  });
+  const masteredCount=Object.values(stdScores).filter(sc=>sc.reduce((a,b)=>a+b,0)/sc.length>=3).length;
+  const totalStd=Object.keys(stdScores).length;
+
+  // Profile notes
+  const prof=DB.studentProfiles[student.id]||{interventionNotes:'',teacherComments:'',parentNotes:''};
+
+  // Assessment scores (assessments category only)
+  const assessments=assignments.filter(a=>a.category==='assessment');
+  const assessHtml=assessments.length?`<table style="width:100%;font-size:.78rem;border-collapse:collapse">
+    <thead><tr><th style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--bpi-rule)">Assessment</th><th style="text-align:center;padding:4px 8px;border-bottom:1px solid var(--bpi-rule)">Score</th><th style="text-align:center;padding:4px 8px;border-bottom:1px solid var(--bpi-rule)">%</th></tr></thead>
+    <tbody>${assessments.map(a=>{const g=a.grades?.[student.id];const pts=g?.earned!=null?g.earned:'—';const pct=g?.earned!=null&&a.totalPoints?Math.round(g.earned/a.totalPoints*100)+'%':'—';const score=g?.earned!=null&&a.totalPoints?(g.earned/a.totalPoints>=0.85?4:g.earned/a.totalPoints>=0.75?3:g.earned/a.totalPoints>=0.65?2:1):'—';return`<tr><td style="padding:4px 8px;border-bottom:1px solid var(--bpi-rule)">${escH(a.title)}</td><td style="text-align:center;padding:4px 8px;border-bottom:1px solid var(--bpi-rule)">${score!=='—'?`<span class="badge badge-${score}">${score}</span>`:score}</td><td style="text-align:center;padding:4px 8px;border-bottom:1px solid var(--bpi-rule)">${pct}</td></tr>`;}).join('')}</tbody>
+  </table>`:'<div style="font-size:.78rem;color:var(--bpi-ink-3);font-style:italic">No assessments</div>';
+
+  return`<div class="profile-grid">
+    <div class="profile-stat"><div class="profile-stat-val">${pDays}</div><div class="profile-stat-lbl">Days Present</div></div>
+    <div class="profile-stat"><div class="profile-stat-val" style="color:${aDays>3?'#A5704C':'inherit'}">${aDays}</div><div class="profile-stat-lbl">Days Absent</div></div>
+    <div class="profile-stat"><div class="profile-stat-val">${avg!=null?avg+'%':'—'}</div><div class="profile-stat-lbl">Overall Avg</div></div>
+    <div class="profile-stat"><div class="profile-stat-val" style="color:${missing.length?'#A5704C':'#5C3317'}">${missing.length}</div><div class="profile-stat-lbl">Missing</div></div>
+    <div class="profile-stat"><div class="profile-stat-val">${masteredCount}/${totalStd||'—'}</div><div class="profile-stat-lbl">Stds Mastered</div></div>
+    <div class="profile-stat"><div class="profile-stat-val">${tDays}</div><div class="profile-stat-lbl">Tardies</div></div>
+  </div>
+
+  ${missing.length?`<div class="profile-section"><div class="profile-section-title">Missing Assignments</div>
+    ${missing.map(a=>`<span class="missing-asn-chip">${escH(a.title)} (${a.date})</span>`).join('')}
+  </div>`:''}
+
+  <div class="profile-section"><div class="profile-section-title">Assessment Scores</div>${assessHtml}</div>
+
+  <div class="profile-section"><div class="profile-section-title">Intervention Notes</div>
+    <textarea class="profile-note-area" placeholder="Intervention notes…" onchange="saveProfileNote('${student.id}','interventionNotes',this.value)">${escH(prof.interventionNotes)}</textarea>
+  </div>
+  <div class="profile-section"><div class="profile-section-title">Teacher Comments</div>
+    <textarea class="profile-note-area" placeholder="Teacher comments…" onchange="saveProfileNote('${student.id}','teacherComments',this.value)">${escH(prof.teacherComments)}</textarea>
+  </div>
+  <div class="profile-section"><div class="profile-section-title">Parent Communication Notes</div>
+    <textarea class="profile-note-area" placeholder="Parent communication notes…" onchange="saveProfileNote('${student.id}','parentNotes',this.value)">${escH(prof.parentNotes)}</textarea>
+  </div>
+  <div style="margin-top:8px;display:flex;gap:8px">
+    <button class="btn btn-primary btn-sm" onclick="saveProfileNotes('${student.id}')">Save Notes</button>
+    <button class="btn btn-secondary btn-sm" onclick="openStudentStdModal('${student.id}','${classId||''}')">Standards Detail</button>
+  </div>`;
+}
+
+function saveProfileNote(studentId,field,value){
+  if(!DB.studentProfiles[studentId]) DB.studentProfiles[studentId]={interventionNotes:'',teacherComments:'',parentNotes:''};
+  DB.studentProfiles[studentId][field]=value;
+}
+function saveProfileNotes(studentId){
+  // Notes are auto-saved on change; this just confirms
+  toast('Notes saved');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ENHANCED REPORTS
+// ═══════════════════════════════════════════════════════════════
+let activeReportTab='reportcards';
+function initReportCards(){
+  renderReportTabs();
+}
+function renderReportTabs(){
+  const wrap=document.getElementById('reports-content');
+  if(!wrap) return;
+  const tabs=[
+    {id:'reportcards',label:'Report Cards'},
+    {id:'progress',label:'Progress Reports'},
+    {id:'mastery',label:'Standards Mastery'},
+    {id:'missing',label:'Missing Assignments'},
+    {id:'classavg',label:'Class Averages'},
+    {id:'studentperf',label:'Student Performance'},
+  ];
+  wrap.innerHTML=`<div class="report-tab-group">${tabs.map(t=>`<button class="report-tab ${t.id===activeReportTab?'active':''}" onclick="switchReportTab('${t.id}')">${t.label}</button>`).join('')}</div>
+  <div id="report-body"></div>`;
+  renderReportBody();
+}
+function switchReportTab(tab){
+  activeReportTab=tab;
+  renderReportTabs();
+}
+function renderReportBody(){
+  const body=document.getElementById('report-body');
+  if(!body) return;
+  const classId=getCtxClass();
+  const cls=DB.classes.find(c=>c.id===classId);
+  const trimester=getCtxTrimester();
+
+  if(activeReportTab==='reportcards'){
+    // Original report cards
+    const sel=document.getElementById('rc-class');
+    if(!sel){
+      // build original report card UI inline
+      const students=cls?DB.students.filter(s=>cls.studentIds.includes(s.id)):[];
+      const teacher=cls?DB.teachers.find(t=>t.id===cls.teacherId):null;
+      const assignments=cls?DB.assignments.filter(a=>a.classId===classId&&a.trimester===trimester):[];
+      body.innerHTML=students.map(s=>buildReportCard(s,teacher,assignments,trimester)).join('');
+      return;
+    }
+    const students=cls?DB.students.filter(s=>cls.studentIds.includes(s.id)):[];
+    const teacher=cls?DB.teachers.find(t=>t.id===cls.teacherId):null;
+    const assignments=cls?DB.assignments.filter(a=>a.classId===classId&&a.trimester===trimester):[];
+    body.innerHTML=students.length?students.map(s=>buildReportCard(s,teacher,assignments,trimester)).join(''):'<div class="empty-state">Select a class above</div>';
+    return;
+  }
+
+  if(!cls){body.innerHTML='<div class="empty-state">Select a class above</div>';return;}
+  const students=DB.students.filter(s=>cls.studentIds.includes(s.id));
+  const assignments=DB.assignments.filter(a=>a.classId===classId);
+
+  if(activeReportTab==='progress'){
+    // Progress report: per student, avg by category
+    const cats={classwork:'Classwork',homework:'Homework',assessment:'Assessment',project:'Project'};
+    body.innerHTML=students.map(s=>{
+      let catHtml='';
+      Object.entries(cats).forEach(([key,lbl])=>{
+        const asns=assignments.filter(a=>(a.category||'classwork')===key);
+        const graded=asns.filter(a=>{const g=a.grades?.[s.id];return g&&g.earned!=null&&g.status!=='M'&&g.status!=='E';});
+        const avg=graded.length?Math.round(graded.reduce((n,a)=>{const g=a.grades[s.id];return n+(g.earned/a.totalPoints*100);},0)/graded.length):null;
+        catHtml+=`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bpi-rule)"><span style="flex:1;font-size:.82rem">${lbl}</span><span style="font-size:.78rem;color:var(--bpi-ink-3)">${graded.length} graded</span>${avg!=null?`<span style="font-weight:700;font-size:.84rem;color:${avg>=85?'#5C3317':avg>=75?'#6B3A1F':avg>=65?'#A5704C':'#C49A6C'}">${avg}%</span>`:'<span style="color:var(--bpi-ink-3);font-size:.8rem">—</span>'}</div>`;
+      });
+      return`<div class="card" style="margin-bottom:12px"><div style="font-weight:700;font-size:.9rem;margin-bottom:10px;color:var(--bpi-bistre)">${escH(s.name)} <span class="chip chip-grade">${s.grade}</span></div>${catHtml}</div>`;
+    }).join('');
+
+  } else if(activeReportTab==='mastery'){
+    // Standards mastery per student
+    body.innerHTML=students.map(s=>{
+      const stdScores={};
+      assignments.forEach(a=>{
+        if(a.group&&s.group&&a.group!==s.group) return;
+        const g=a.grades?.[s.id];
+        if(!g||g.status==='M'||g.status==='E'||g.earned==null||!a.totalPoints) return;
+        const pct=g.earned/a.totalPoints;
+        const score=pct>=0.85?4:pct>=0.75?3:pct>=0.65?2:1;
+        a.standardRefs.forEach(r=>{const k=`${r.section}||${r.stdIndex}`;(stdScores[k]=stdScores[k]||{key:`${r.grade}||${r.section}||${r.stdIndex}`,scores:[]}).scores.push(score);});
+      });
+      const entries=Object.entries(stdScores);
+      if(!entries.length) return`<div class="card" style="margin-bottom:10px"><strong>${escH(s.name)}</strong> — no standards data</div>`;
+      const mastered=entries.filter(([,v])=>v.scores.reduce((a,b)=>a+b,0)/v.scores.length>=3).length;
+      return`<div class="card" style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-weight:700;font-size:.9rem;color:var(--bpi-bistre)">${escH(s.name)} <span class="chip chip-grade">${s.grade}</span></div>
+          <span style="font-size:.78rem;font-weight:700;color:#5C3317">${mastered}/${entries.length} mastered</span>
+        </div>
+        ${entries.map(([sec,v])=>{const avg=v.scores.reduce((a,b)=>a+b,0)/v.scores.length;const score=Math.round(avg);return`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--bpi-rule);font-size:.78rem"><span style="flex:1">${sec}</span><span class="badge badge-${score}">${score}</span></div>`;}).join('')}
+      </div>`;
+    }).join('');
+
+  } else if(activeReportTab==='missing'){
+    // Missing assignment report
+    let html='';
+    students.forEach(s=>{
+      const missing=assignments.filter(a=>{const g=a.grades?.[s.id];return !g||g.status==='M'||g.earned==null;});
+      if(!missing.length) return;
+      html+=`<div class="card" style="margin-bottom:10px"><div style="font-weight:700;margin-bottom:8px;color:var(--bpi-bistre)">${escH(s.name)} — ${missing.length} missing</div>
+        ${missing.map(a=>`<div style="display:flex;gap:8px;padding:4px 0;font-size:.8rem;border-bottom:1px solid var(--bpi-rule)"><span style="flex:1">${escH(a.title)}</span><span style="color:var(--bpi-ink-3)">${a.subject}</span><span style="color:var(--bpi-ink-3)">${a.date}</span></div>`).join('')}
+      </div>`;
+    });
+    body.innerHTML=html||'<div class="empty-state">No missing assignments! 🎉</div>';
+
+  } else if(activeReportTab==='classavg'){
+    // Class averages by subject and category
+    const cats={classwork:'Classwork',homework:'Homework',assessment:'Assessment',project:'Project'};
+    const subjects=[...new Set(assignments.map(a=>a.subject))];
+    let html='<div class="card"><div class="card-title">Class Averages by Category</div>';
+    Object.entries(cats).forEach(([key,lbl])=>{
+      const asns=assignments.filter(a=>(a.category||'classwork')===key);
+      if(!asns.length) return;
+      const allGrades=[];
+      asns.forEach(a=>{students.forEach(s=>{const g=a.grades?.[s.id];if(g&&g.earned!=null&&g.status!=='M'&&g.status!=='E')allGrades.push(g.earned/a.totalPoints*100);});});
+      const avg=allGrades.length?Math.round(allGrades.reduce((a,b)=>a+b,0)/allGrades.length):null;
+      html+=`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bpi-rule)"><span style="flex:1;font-weight:600">${lbl}</span><span style="color:var(--bpi-ink-3);font-size:.78rem">${asns.length} assignments · ${allGrades.length} grades</span>${avg!=null?`<span style="font-weight:700;color:${avg>=85?'#5C3317':avg>=75?'#6B3A1F':avg>=65?'#A5704C':'#C49A6C'}">${avg}%</span>`:'<span style="color:var(--bpi-ink-3)">—</span>'}</div>`;
+    });
+    html+='</div><div class="card" style="margin-top:12px"><div class="card-title">By Subject</div>';
+    subjects.forEach(subj=>{
+      const asns=assignments.filter(a=>a.subject===subj);
+      const allG=[];
+      asns.forEach(a=>{students.forEach(s=>{const g=a.grades?.[s.id];if(g&&g.earned!=null&&g.status!=='M'&&g.status!=='E')allG.push(g.earned/a.totalPoints*100);});});
+      const avg=allG.length?Math.round(allG.reduce((a,b)=>a+b,0)/allG.length):null;
+      html+=`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bpi-rule)"><span style="flex:1">${escH(subj)}</span>${avg!=null?`<span style="font-weight:700;color:${avg>=85?'#5C3317':avg>=75?'#6B3A1F':avg>=65?'#A5704C':'#C49A6C'}">${avg}%</span>`:'<span style="color:var(--bpi-ink-3)">—</span>'}</div>`;
+    });
+    body.innerHTML=html+'</div>';
+
+  } else if(activeReportTab==='studentperf'){
+    // Student performance report
+    body.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:.82rem">
+      <thead><tr style="background:var(--bpi-bistre);color:#fff">
+        <th style="padding:8px 10px;text-align:left">Student</th>
+        <th style="padding:8px 10px;text-align:left">Grade</th>
+        <th style="padding:8px 10px;text-align:center">Overall %</th>
+        <th style="padding:8px 10px;text-align:center">Score</th>
+        <th style="padding:8px 10px;text-align:center">Missing</th>
+        <th style="padding:8px 10px;text-align:center">Absences</th>
+      </tr></thead>
+      <tbody>${students.map(s=>{
+        const graded=assignments.filter(a=>{const g=a.grades?.[s.id];return g&&g.earned!=null&&g.status!=='M'&&g.status!=='E';});
+        const avg=graded.length?Math.round(graded.reduce((n,a)=>{const g=a.grades[s.id];return n+(g.earned/a.totalPoints*100);},0)/graded.length):null;
+        const score=avg!=null?(avg>=85?4:avg>=75?3:avg>=65?2:1):null;
+        const missing=assignments.filter(a=>{const g=a.grades?.[s.id];return !g||g.status==='M';}).length;
+        let abs=0;
+        Object.values(DB.attendance).forEach(att=>{if(att.records?.[s.id]?.status==='A')abs++;});
+        return`<tr style="border-bottom:1px solid var(--bpi-rule)">
+          <td style="padding:7px 10px;font-weight:600">${escH(s.name)}</td>
+          <td style="padding:7px 10px"><span class="chip chip-grade">${s.grade}</span></td>
+          <td style="padding:7px 10px;text-align:center;font-weight:700;color:${avg!=null?(avg>=85?'#5C3317':avg>=75?'#6B3A1F':avg>=65?'#A5704C':'#C49A6C'):'var(--bpi-ink-3)'}">${avg!=null?avg+'%':'—'}</td>
+          <td style="padding:7px 10px;text-align:center">${score!=null?`<span class="badge badge-${score}">${score}</span>`:'—'}</td>
+          <td style="padding:7px 10px;text-align:center;color:${missing?'#A5704C':'#5C3317'};font-weight:${missing?'700':'400'}">${missing||'—'}</td>
+          <td style="padding:7px 10px;text-align:center;color:${abs>3?'#A5704C':'inherit'}">${abs||'—'}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+  }
+}
+
+// nav routing extended above to include attendance and profiles
+
+
+
+// ═══════════════════════════════════════════════════════════════
+// ADMIN DASHBOARD — SCHOOLWIDE
+// ═══════════════════════════════════════════════════════════════
+function renderAdminDashboard(){
+  const wrap=document.getElementById('dash-admin-content');
+  if(!wrap)return;
+
+  // ── Stat cards ──────────────────────────────────────────────
+  const totalStudents=DB.students.length;
+  const today=new Date().toISOString().split('T')[0];
+
+  // Attendance summary across all classes today
+  let attP=0,attA=0,attT=0,attTotal=0;
+  DB.classes.forEach(c=>{
+    const att=DB.attendance[c.id+'||'+today];
+    if(att&&att.submitted){
+      c.studentIds.forEach(sid=>{
+        const rec=att.records[sid];
+        attTotal++;
+        if(rec?.status==='A')attA++;
+        else if(rec?.status==='T')attT++;
+        else attP++;
+      });
+    }
+  });
+  const attSubmitted=DB.classes.filter(c=>DB.attendance[c.id+'||'+today]?.submitted).length;
+
+  // Missing grades count
+  let missingGrades=0;
+  DB.assignments.forEach(a=>{
+    DB.classes.find(c=>c.id===a.classId)?.studentIds.forEach(sid=>{
+      const g=a.grades?.[sid];
+      if(!g||g.earned==null)missingGrades++;
+    });
+  });
+
+  // Students below grade level (avg < 65%)
+  const belowGL=DB.students.filter(s=>{
+    const cls=DB.classes.find(c=>c.studentIds.includes(s.id));
+    if(!cls)return false;
+    const asns=DB.assignments.filter(a=>a.classId===cls.id);
+    const graded=asns.filter(a=>{const g=a.grades?.[s.id];return g&&g.earned!=null&&g.status!=='M'&&g.status!=='E';});
+    if(!graded.length)return false;
+    const avg=graded.reduce((n,a)=>{const g=a.grades[s.id];return n+(g.earned/a.totalPoints*100);},0)/graded.length;
+    return avg<65;
+  }).length;
+
+  wrap.innerHTML=`
+  <div class="stats-grid" style="grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px">
+    <div class="stat-card"><div class="stat-val">${totalStudents}</div><div class="gold-rule-bar"></div><div class="stat-label">Total Students</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#5C3317">${attSubmitted}/${DB.classes.length}</div><div class="gold-rule-bar"></div><div class="stat-label">Att. Submitted</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:${attA?'#A5704C':'#5C3317'}">${attA}</div><div class="gold-rule-bar"></div><div class="stat-label">Absent Today</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:${missingGrades>10?'#A5704C':'#5C3317'}">${missingGrades}</div><div class="gold-rule-bar"></div><div class="stat-label">Missing Grades</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:${belowGL?'#A5704C':'#5C3317'}">${belowGL}</div><div class="gold-rule-bar"></div><div class="stat-label">Below Grade Level</div></div>
+    <div class="stat-card" style="cursor:pointer" onclick="nav('compliance')"><div class="stat-val" style="color:#5C3317">${_complianceScore()}%</div><div class="gold-rule-bar"></div><div class="stat-label">Compliance</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+    ${_adminAttPanel()}
+    ${_adminMissingPanel()}
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+    ${_adminClassAvgPanel()}
+    ${_adminStdMasteryPanel()}
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+    ${_adminBelowGLPanel()}
+    ${_adminStaffCommPanel()}
+  </div>`;
+}
+
+function _complianceScore(){
+  const ws=weekStartFor(new Date()).toISOString().split('T')[0];
+  let total=0,done=0;
+  DB.classes.forEach(c=>{
+    // Lesson plan submitted
+    total++;if(['pending','approved','revisions'].includes(getLW(c.id,ws).status))done++;
+    // Attendance today
+    const today=new Date().toISOString().split('T')[0];
+    total++;if(DB.attendance[c.id+'||'+today]?.submitted)done++;
+  });
+  return total?Math.round(done/total*100):100;
+}
+
+function _adminAttPanel(){
+  const today=new Date().toISOString().split('T')[0];
+  const rows=DB.classes.map(c=>{
+    const att=DB.attendance[c.id+'||'+today];
+    const done=att?.submitted;
+    const abs=done?Object.values(att.records).filter(r=>r.status==='A').length:0;
+    const tard=done?Object.values(att.records).filter(r=>r.status==='T').length:0;
+    return`<div class="deadline-row">
+      <span style="flex:1;font-size:.8rem;font-weight:600">${escH(c.name)}</span>
+      ${done?`<span class="att-summary-chip" style="background:#E8D5C0;color:#5C3317">✓ Submitted</span>
+        ${abs?`<span class="att-summary-chip" style="background:#F5E6D3;color:#A5704C">${abs} absent</span>`:''}
+        ${tard?`<span class="att-summary-chip" style="background:#FDF3E3;color:#C49A6C">${tard} tardy</span>`:''}`
+      :`<span class="att-summary-chip" style="background:#FEF3CD;color:#856404;border:1px solid #ffc107">⚠ Pending</span>`}
+    </div>`;
+  }).join('');
+  return`<div class="card"><div class="card-title">Today's Attendance</div>${rows}</div>`;
+}
+
+function _adminMissingPanel(){
+  const byTeacher={};
+  DB.assignments.forEach(a=>{
+    const cls=DB.classes.find(c=>c.id===a.classId);if(!cls)return;
+    const t=DB.teachers.find(t=>t.id===cls.teacherId);
+    const tName=t?t.name:'Unknown';
+    cls.studentIds.forEach(sid=>{
+      const g=a.grades?.[sid];
+      if(!g||g.earned==null)byTeacher[tName]=(byTeacher[tName]||0)+1;
+    });
+  });
+  const rows=Object.entries(byTeacher).sort((a,b)=>b[1]-a[1]).map(([name,cnt])=>
+    `<div class="deadline-row"><span style="flex:1;font-size:.8rem">${escH(name)}</span>
+    <span style="font-weight:700;font-size:.85rem;color:${cnt>20?'#A5704C':cnt>10?'#C49A6C':'#5C3317'}">${cnt} missing</span></div>`
+  ).join('');
+  return`<div class="card"><div class="card-title">Missing Grades by Teacher</div>${rows||'<div class="empty-state">All grades entered ✓</div>'}</div>`;
+}
+
+function _adminClassAvgPanel(){
+  const rows=DB.classes.map(c=>{
+    const asns=DB.assignments.filter(a=>a.classId===c.id);
+    const students=DB.students.filter(s=>c.studentIds.includes(s.id));
+    const allG=[];
+    asns.forEach(a=>students.forEach(s=>{const g=a.grades?.[s.id];if(g&&g.earned!=null&&g.status!=='M'&&g.status!=='E')allG.push(g.earned/a.totalPoints*100);}));
+    const avg=allG.length?Math.round(allG.reduce((a,b)=>a+b,0)/allG.length):null;
+    const score=avg!=null?(avg>=85?4:avg>=75?3:avg>=65?2:1):null;
+    return`<div class="deadline-row">
+      <span style="flex:1;font-size:.8rem;font-weight:600">${escH(c.name)}</span>
+      ${avg!=null?`<span style="font-weight:700;font-size:.84rem;color:${avg>=85?'#5C3317':avg>=75?'#6B3A1F':avg>=65?'#A5704C':'#C49A6C'}">${avg}%</span>
+        <span class="badge badge-${score}" style="margin-left:6px">${score}</span>`:'<span style="color:var(--bpi-ink-3);font-size:.78rem">No data</span>'}
+    </div>`;
+  }).join('');
+  return`<div class="card"><div class="card-title">Class Averages</div>${rows}</div>`;
+}
+
+function _adminStdMasteryPanel(){
+  // Schoolwide mastery: % of std scores >= 3
+  const stdScores={};
+  DB.assignments.forEach(a=>{
+    const cls=DB.classes.find(c=>c.id===a.classId);if(!cls)return;
+    cls.studentIds.forEach(sid=>{
+      const g=a.grades?.[sid];
+      if(!g||g.earned==null||g.status==='M'||g.status==='E'||!a.totalPoints)return;
+      const pct=g.earned/a.totalPoints;
+      const score=pct>=0.85?4:pct>=0.75?3:pct>=0.65?2:1;
+      a.standardRefs.forEach(r=>{
+        const k=`${r.grade}||${r.section}||${r.stdIndex}`;
+        (stdScores[k]=stdScores[k]||{scores:[],grade:r.grade,section:r.section}).scores.push(score);
+      });
+    });
+  });
+  const entries=Object.entries(stdScores);
+  if(!entries.length)return`<div class="card"><div class="card-title">Standards Mastery Overview</div><div class="empty-state">No standards data yet</div></div>`;
+
+  const gradeGroups={};
+  entries.forEach(([k,v])=>{
+    (gradeGroups[v.grade]=gradeGroups[v.grade]||{mastered:0,total:0,reteach:0});
+    gradeGroups[v.grade].total++;
+    const avg=v.scores.reduce((a,b)=>a+b,0)/v.scores.length;
+    if(avg>=3)gradeGroups[v.grade].mastered++;
+    if(avg<2.5)gradeGroups[v.grade].reteach++;
+  });
+
+  const rows=Object.entries(gradeGroups).map(([grade,d])=>{
+    const pct=Math.round(d.mastered/d.total*100);
+    return`<div class="deadline-row">
+      <span style="flex:1;font-size:.8rem;font-weight:600">Grade ${grade}</span>
+      <span style="font-size:.75rem;color:var(--bpi-ink-3)">${d.mastered}/${d.total} mastered</span>
+      <span style="font-weight:700;margin-left:8px;color:${pct>=75?'#5C3317':pct>=50?'#A5704C':'#C49A6C'}">${pct}%</span>
+      ${d.reteach?`<span class="att-summary-chip" style="background:#FEF3CD;color:#856404;margin-left:6px">${d.reteach} need reteach</span>`:''}
+    </div>`;
+  }).join('');
+  return`<div class="card"><div class="card-title">Standards Mastery Overview</div>${rows}</div>`;
+}
+
+function _adminBelowGLPanel(){
+  const below=DB.students.filter(s=>{
+    const cls=DB.classes.find(c=>c.studentIds.includes(s.id));
+    if(!cls)return false;
+    const asns=DB.assignments.filter(a=>a.classId===cls.id);
+    const graded=asns.filter(a=>{const g=a.grades?.[s.id];return g&&g.earned!=null&&g.status!=='M'&&g.status!=='E';});
+    if(!graded.length)return false;
+    const avg=graded.reduce((n,a)=>{const g=a.grades[s.id];return n+(g.earned/a.totalPoints*100);},0)/graded.length;
+    return avg<65;
+  });
+  const rows=below.map(s=>{
+    const cls=DB.classes.find(c=>c.studentIds.includes(s.id));
+    const asns=DB.assignments.filter(a=>a.classId===cls.id);
+    const graded=asns.filter(a=>{const g=a.grades?.[s.id];return g&&g.earned!=null&&g.status!=='M'&&g.status!=='E';});
+    const avg=graded.length?Math.round(graded.reduce((n,a)=>{const g=a.grades[s.id];return n+(g.earned/a.totalPoints*100);},0)/graded.length):null;
+    return`<div class="deadline-row">
+      <span style="flex:1;font-size:.8rem;font-weight:600">${escH(s.name)}</span>
+      <span class="chip chip-grade">${s.grade}</span>
+      <span style="font-weight:700;font-size:.84rem;color:#A5704C;margin-left:6px">${avg!=null?avg+'%':'—'}</span>
+      <span class="badge badge-1" style="margin-left:6px">1</span>
+    </div>`;
+  }).join('');
+  return`<div class="card"><div class="card-title">⚠ Students Below Grade Level</div>${rows||'<div class="empty-state">No students flagged ✓</div>'}</div>`;
+}
+
+function _adminStaffCommPanel(){
+  const anns=DB.announcements.slice().sort((a,b)=>a.date.localeCompare(b.date));
+  const annColors={announcement:'#5C3317',event:'#A5704C',meeting:'#C49A6C',testing:'#3B1F0A',birthday:'#E09900'};
+  const annIcons={announcement:'📢',event:'📅',meeting:'🤝',testing:'📝',birthday:'🎂'};
+  const rows=anns.slice(0,6).map(a=>`<div class="dash-announcement">
+    <span class="ann-type-dot" style="background:${annColors[a.type]||'#5C3317'}"></span>
+    <div style="flex:1">
+      <div style="font-weight:600;font-size:.8rem">${annIcons[a.type]||'📌'} ${escH(a.title)}</div>
+      <div style="font-size:.69rem;color:var(--bpi-ink-3)">${a.date}${a.description?' · '+escH(a.description.substring(0,50)):''}</div>
+    </div>
+    <button style="background:none;border:none;cursor:pointer;color:var(--bpi-ink-3);font-size:.9rem" onclick="deleteAnnouncement('${a.id}');renderAdminDashboard()">×</button>
+  </div>`).join('');
+  return`<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div class="card-title" style="margin:0">Staff Communications</div>
+    <button class="btn btn-secondary btn-sm" onclick="openAnnouncementModal()">+ Add</button>
+  </div>${rows||'<div class="empty-state">No announcements</div>'}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TEACHER COMPLIANCE TRACKER
+// ═══════════════════════════════════════════════════════════════
+function renderCompliance(){
+  const wrap=document.getElementById('compliance-content');
+  if(!wrap)return;
+
+  const today=new Date().toISOString().split('T')[0];
+  const ws=weekStartFor(new Date()).toISOString().split('T')[0];
+  const prevWs=new Date(ws);prevWs.setDate(prevWs.getDate()-7);
+  const prevWsStr=prevWs.toISOString().split('T')[0];
+
+  const rows=DB.classes.map(cls=>{
+    const teacher=DB.teachers.find(t=>t.id===cls.teacherId);
+    const lw=getLW(cls.id,ws);
+    const lpDone=['pending','approved'].includes(lw.status);
+    const lpStatus=lpDone?'✓':lw.status==='revisions'?'Rev':'—';
+
+    // Grades entered this week: any assignment with a due date in this week
+    const weekEnd=new Date(ws);weekEnd.setDate(weekEnd.getDate()+4);
+    const weekEndStr=weekEnd.toISOString().split('T')[0];
+    const weekAsns=DB.assignments.filter(a=>a.classId===cls.id&&a.date>=ws&&a.date<=weekEndStr);
+    const gradesEntered=weekAsns.every(a=>cls.studentIds.every(sid=>a.grades?.[sid]?.earned!=null));
+
+    // Attendance
+    let attDays=0,attDone=0;
+    for(let i=0;i<5;i++){const d=new Date(ws);d.setDate(d.getDate()+i);const ds=d.toISOString().split('T')[0];if(ds<=today){attDays++;if(DB.attendance[cls.id+'||'+ds]?.submitted)attDone++;}}
+
+    // Missing assignments
+    const totalMissing=DB.assignments.filter(a=>a.classId===cls.id).reduce((n,a)=>{
+      return n+cls.studentIds.filter(sid=>{const g=a.grades?.[sid];return !g||g.earned==null;}).length;
+    },0);
+
+    const flags=[];
+    if(!lpDone)flags.push('LP missing');
+    if(attDays>0&&attDone<attDays)flags.push(`Att ${attDone}/${attDays}`);
+    if(totalMissing>15)flags.push(`${totalMissing} missing grades`);
+
+    return`<tr style="border-bottom:1px solid var(--bpi-rule)${flags.length?' background:#FFF8F3':''}">
+      <td style="padding:8px 10px;font-weight:600;font-size:.82rem">${escH(teacher?teacher.name:'—')}</td>
+      <td style="padding:8px 10px;font-size:.78rem;color:var(--bpi-ink-2)">${escH(cls.name)}</td>
+      <td style="padding:8px 10px;text-align:center">
+        <span style="font-weight:700;color:${lpDone?'#5C3317':lw.status==='revisions'?'#C49A6C':'#A5704C'}">${lpStatus}</span>
+      </td>
+      <td style="padding:8px 10px;text-align:center">
+        <span style="font-weight:700;color:${gradesEntered||!weekAsns.length?'#5C3317':'#A5704C'}">${gradesEntered||!weekAsns.length?'✓':'⚠'}</span>
+      </td>
+      <td style="padding:8px 10px;text-align:center">
+        <span style="font-weight:700;color:${attDone===attDays?'#5C3317':attDone>=attDays*0.6?'#C49A6C':'#A5704C'}">${attDone}/${attDays}</span>
+      </td>
+      <td style="padding:8px 10px;text-align:center">
+        <span style="font-weight:700;color:${totalMissing===0?'#5C3317':totalMissing>20?'#A5704C':'#C49A6C'}">${totalMissing}</span>
+      </td>
+      <td style="padding:8px 10px">
+        ${flags.length?flags.map(f=>`<span class="att-summary-chip" style="background:#FEF3CD;color:#856404;font-size:.65rem">${f}</span>`).join(' '):'<span style="color:#5C3317;font-size:.78rem">✓ On track</span>'}
+      </td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML=`
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="card-title" style="margin:0">Teacher Compliance — Week of ${ws}</div>
+      <button class="btn btn-secondary btn-sm" onclick="exportCompliance()">Export</button>
+    </div>
+    <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+      <thead><tr style="background:var(--bpi-bistre);color:#fff">
+        <th style="padding:8px 10px;text-align:left">Teacher</th>
+        <th style="padding:8px 10px;text-align:left">Class</th>
+        <th style="padding:8px 10px;text-align:center">Lesson Plan</th>
+        <th style="padding:8px 10px;text-align:center">Grades Entered</th>
+        <th style="padding:8px 10px;text-align:center">Attendance</th>
+        <th style="padding:8px 10px;text-align:center">Missing Grades</th>
+        <th style="padding:8px 10px;text-align:left">Alerts</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px">
+    ${_complianceHistory()}
+    ${_complianceAlerts()}
+  </div>`;
+}
+
+function _complianceHistory(){
+  // Lesson plan submission history last 4 weeks
+  const weeks=[];
+  for(let i=3;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i*7);weeks.push(weekStartFor(d).toISOString().split('T')[0]);}
+  const rows=weeks.map(ws=>{
+    const submitted=DB.classes.filter(c=>['pending','approved'].includes(getLW(c.id,ws).status)).length;
+    const pct=DB.classes.length?Math.round(submitted/DB.classes.length*100):0;
+    return`<div class="deadline-row">
+      <span style="flex:1;font-size:.78rem">Week of ${ws}</span>
+      <span style="font-size:.78rem;color:var(--bpi-ink-3)">${submitted}/${DB.classes.length}</span>
+      <div style="width:80px;background:var(--bpi-rule);border-radius:4px;height:6px;margin-left:8px;overflow:hidden">
+        <div style="width:${pct}%;background:${pct>=80?'#5C3317':pct>=50?'#A5704C':'#C49A6C'};height:100%"></div>
+      </div>
+      <span style="font-weight:700;font-size:.78rem;margin-left:6px;color:${pct>=80?'#5C3317':pct>=50?'#A5704C':'#C49A6C'}">${pct}%</span>
+    </div>`;
+  }).join('');
+  return`<div class="card"><div class="card-title">Lesson Plan History (4 Weeks)</div>${rows}</div>`;
+}
+
+function _complianceAlerts(){
+  const alerts=[];
+  const today=new Date().toISOString().split('T')[0];
+  DB.classes.forEach(cls=>{
+    const t=DB.teachers.find(t=>t.id===cls.teacherId);
+    const tName=t?t.name:cls.name;
+    // Attendance gaps
+    for(let i=0;i<5;i++){
+      const d=new Date();d.setDate(d.getDate()-i);
+      const ds=d.toISOString().split('T')[0];
+      if(ds>today)continue;
+      if(!DB.attendance[cls.id+'||'+ds]?.submitted){
+        alerts.push({level:'warn',msg:`${tName}: Attendance missing ${ds}`});
+        break;
+      }
+    }
+    // Missing many grades
+    const missing=DB.assignments.filter(a=>a.classId===cls.id).reduce((n,a)=>n+cls.studentIds.filter(sid=>{const g=a.grades?.[sid];return !g||g.earned==null;}).length,0);
+    if(missing>20)alerts.push({level:'error',msg:`${tName}: ${missing} ungraded assignments`});
+  });
+
+  const rows=alerts.length?alerts.map(a=>`<div class="dash-announcement">
+    <span class="ann-type-dot" style="background:${a.level==='error'?'#A5704C':'#C49A6C'}"></span>
+    <span style="font-size:.8rem">${escH(a.msg)}</span>
+  </div>`).join(''):'<div class="empty-state">No active alerts ✓</div>';
+  return`<div class="card"><div class="card-title">Missing Documentation Alerts</div>${rows}</div>`;
+}
+
+function exportCompliance(){
+  const ws=weekStartFor(new Date()).toISOString().split('T')[0];
+  let csv='Teacher,Class,Lesson Plan,Grades Entered,Attendance Done,Missing Grades\n';
+  const today=new Date().toISOString().split('T')[0];
+  DB.classes.forEach(cls=>{
+    const t=DB.teachers.find(t=>t.id===cls.teacherId);
+    const lw=getLW(cls.id,ws);
+    const lpDone=['pending','approved'].includes(lw.status)?'Yes':'No';
+    const weekEnd=new Date(ws);weekEnd.setDate(weekEnd.getDate()+4);
+    const weekAsns=DB.assignments.filter(a=>a.classId===cls.id&&a.date>=ws&&a.date<=weekEnd.toISOString().split('T')[0]);
+    const gradesEntered=weekAsns.every(a=>cls.studentIds.every(sid=>a.grades?.[sid]?.earned!=null))?'Yes':'No';
+    let attDays=0,attDone=0;
+    for(let i=0;i<5;i++){const d=new Date(ws);d.setDate(d.getDate()+i);const ds=d.toISOString().split('T')[0];if(ds<=today){attDays++;if(DB.attendance[cls.id+'||'+ds]?.submitted)attDone++;}}
+    const missing=DB.assignments.filter(a=>a.classId===cls.id).reduce((n,a)=>n+cls.studentIds.filter(sid=>{const g=a.grades?.[sid];return !g||g.earned==null;}).length,0);
+    csv+=`"${t?t.name:''}","${cls.name}",${lpDone},${gradesEntered},${attDone}/${attDays},${missing}\n`;
+  });
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`compliance_${ws}.csv`;a.click();
+  toast('Compliance report exported');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GRADEBOOK OVERSIGHT
+// ═══════════════════════════════════════════════════════════════
+let _goTeacher='',_goGrade='',_goSubject='',_goSearch='';
+
+function renderOversight(){
+  const wrap=document.getElementById('oversight-content');
+  if(!wrap)return;
+
+  // Build filter UI
+  const teachers=[{id:'',name:'All Teachers'},...DB.teachers];
+  const grades=['','K','1st','2nd','3rd','PK3','VPK'];
+  const subjects=['','Circle Time','Phonics/Handwriting','Reading/Language Arts','Math','Project Based Learning','Science','Social Studies'];
+
+  wrap.innerHTML=`
+  <div class="card no-print" style="margin-bottom:16px">
+    <div class="form-row" style="grid-template-columns:1fr 1fr 1fr 2fr auto;gap:12px;align-items:end">
+      <div><label>Teacher</label>
+        <select onchange="_goTeacher=this.value;renderOversight()" style="width:100%">
+          ${teachers.map(t=>`<option value="${t.id}" ${t.id===_goTeacher?'selected':''}>${escH(t.name)}</option>`).join('')}
+        </select></div>
+      <div><label>Grade</label>
+        <select onchange="_goGrade=this.value;renderOversight()" style="width:100%">
+          ${grades.map(g=>`<option value="${g}" ${g===_goGrade?'selected':''}>${g||'All Grades'}</option>`).join('')}
+        </select></div>
+      <div><label>Subject</label>
+        <select onchange="_goSubject=this.value;renderOversight()" style="width:100%">
+          ${subjects.map(s=>`<option value="${s}" ${s===_goSubject?'selected':''}>${s||'All Subjects'}</option>`).join('')}
+        </select></div>
+      <div><label>Search Student</label>
+        <input type="text" value="${escH(_goSearch)}" oninput="_goSearch=this.value;renderOversight()" placeholder="Student name…" style="width:100%">
+      </div>
+      <div style="padding-top:18px"><button class="btn btn-secondary" onclick="exportOversight()">Export CSV</button></div>
+    </div>
+  </div>`;
+
+  // Filter assignments
+  let asns=DB.assignments;
+  if(_goTeacher){
+    const clsIds=DB.classes.filter(c=>c.teacherId===_goTeacher).map(c=>c.id);
+    asns=asns.filter(a=>clsIds.includes(a.classId));
+  }
+  if(_goSubject) asns=asns.filter(a=>a.subject===_goSubject);
+
+  // Filter students
+  let students=DB.students;
+  if(_goGrade) students=students.filter(s=>s.grade===_goGrade);
+  if(_goSearch) students=students.filter(s=>s.name.toLowerCase().includes(_goSearch.toLowerCase()));
+
+  if(!asns.length||!students.length){
+    wrap.innerHTML+=`<div class="card"><div class="empty-state">No data matches current filters</div></div>`;return;
+  }
+
+  // Table: students as rows, assignments as columns (max 10 per view)
+  const visAsns=asns.slice(0,15);
+  const visStudents=students.filter(s=>{const cls=DB.classes.find(c=>c.studentIds.includes(s.id));return cls&&asns.some(a=>a.classId===cls.id);});
+
+  let tableHtml=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.75rem">
+    <thead><tr style="background:var(--bpi-bistre);color:#fff">
+      <th style="padding:7px 10px;text-align:left;white-space:nowrap">Student</th>
+      <th style="padding:7px 10px;text-align:center">Avg</th>
+      <th style="padding:7px 10px;text-align:center">Score</th>
+      ${visAsns.map(a=>`<th style="padding:7px 8px;text-align:center;max-width:80px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escH(a.title)}">${escH(a.title.substring(0,12))}…<div style="font-weight:400;font-size:.62rem;opacity:.8">${a.date}</div></th>`).join('')}
+    </tr></thead><tbody>`;
+
+  visStudents.forEach((s,si)=>{
+    const cls=DB.classes.find(c=>c.studentIds.includes(s.id));
+    const sAsns=visAsns.filter(a=>a.classId===cls?.id);
+    const graded=sAsns.filter(a=>{const g=a.grades?.[s.id];return g&&g.earned!=null&&g.status!=='M'&&g.status!=='E';});
+    const avg=graded.length?Math.round(graded.reduce((n,a)=>{const g=a.grades[s.id];return n+(g.earned/a.totalPoints*100);},0)/graded.length):null;
+    const score=avg!=null?(avg>=85?4:avg>=75?3:avg>=65?2:1):null;
+    const flagRow=avg!=null&&avg<65;
+    tableHtml+=`<tr style="border-bottom:1px solid var(--bpi-rule)${flagRow?' background:#FFF8F3':''}${si%2===0?' background:var(--bpi-warm)':''}">
+      <td style="padding:6px 10px;font-weight:600;white-space:nowrap">${escH(s.name)} <span class="chip chip-grade" style="font-size:.58rem">${s.grade}</span>${flagRow?'<span style="color:#A5704C;margin-left:4px" title="Below grade level">⚠</span>':''}</td>
+      <td style="padding:6px 8px;text-align:center;font-weight:700;color:${avg!=null?(avg>=85?'#5C3317':avg>=75?'#6B3A1F':avg>=65?'#A5704C':'#C49A6C'):'var(--bpi-ink-3)'}">${avg!=null?avg+'%':'—'}</td>
+      <td style="padding:6px 8px;text-align:center">${score!=null?`<span class="badge badge-${score}">${score}</span>`:'—'}</td>
+      ${visAsns.map(a=>{
+        const cls2=DB.classes.find(c=>c.studentIds.includes(s.id));
+        if(!cls2||a.classId!==cls2.id)return`<td style="padding:6px 8px;text-align:center;color:var(--bpi-ink-3)">—</td>`;
+        const g=a.grades?.[s.id];
+        if(!g||g.earned==null){
+          const st=g?.status;
+          return`<td style="padding:6px 8px;text-align:center;font-weight:700;color:${st==='E'?'#5C3317':'#A5704C'}">${st==='E'?'EXC':st==='M'?'M':'—'}</td>`;
+        }
+        const pct=Math.round(g.earned/a.totalPoints*100);
+        const sc=pct>=85?4:pct>=75?3:pct>=65?2:1;
+        return`<td style="padding:6px 8px;text-align:center">
+          <span style="font-weight:700;font-size:.78rem;color:${pct>=85?'#5C3317':pct>=75?'#6B3A1F':pct>=65?'#A5704C':'#C49A6C'}">${pct}%</span>
+          <span class="badge badge-${sc}" style="font-size:.58rem;padding:1px 4px;margin-left:2px">${sc}</span>
+          ${g.status==='L'?'<span style="font-size:.58rem;color:#C49A6C"> L</span>':''}
+        </td>`;
+      }).join('')}
+    </tr>`;
+  });
+  tableHtml+='</tbody></table></div>';
+  if(asns.length>15)tableHtml+=`<div style="padding:8px 12px;font-size:.75rem;color:var(--bpi-ink-3)">Showing 15 of ${asns.length} assignments. Use filters to narrow results.</div>`;
+  wrap.innerHTML+=`<div class="card">${tableHtml}</div>`;
+}
+
+function exportOversight(){
+  let csv='Student,Grade,Class,Teacher,Assignment,Date,Subject,Points Earned,Total Points,Pct,Score,Status\n';
+  DB.students.forEach(s=>{
+    const cls=DB.classes.find(c=>c.studentIds.includes(s.id));if(!cls)return;
+    if(_goGrade&&s.grade!==_goGrade)return;
+    if(_goSearch&&!s.name.toLowerCase().includes(_goSearch.toLowerCase()))return;
+    const t=DB.teachers.find(t=>t.id===cls.teacherId);
+    let asns=DB.assignments.filter(a=>a.classId===cls.id);
+    if(_goTeacher&&cls.teacherId!==_goTeacher)return;
+    if(_goSubject)asns=asns.filter(a=>a.subject===_goSubject);
+    asns.forEach(a=>{
+      const g=a.grades?.[s.id];
+      const pct=g&&g.earned!=null&&a.totalPoints?Math.round(g.earned/a.totalPoints*100):'';
+      const score=pct!==''?(pct>=85?4:pct>=75?3:pct>=65?2:1):'';
+      csv+=`"${s.name}",${s.grade},"${cls.name}","${t?t.name:''}","${a.title}",${a.date},${a.subject},${g?.earned??''},${a.totalPoints},${pct}%,${score},${g?.status||''}\n`;
+    });
+  });
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='gradebook_oversight.csv';a.click();
+  toast('Gradebook data exported');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STANDARDS-BASED REPORTING (ADMIN)
+// ═══════════════════════════════════════════════════════════════
+let _srGrade='K',_srView='class';
+function renderStandardsReport(){
+  const wrap=document.getElementById('sr-content');
+  if(!wrap)return;
+
+  const gradeList=Object.keys(STANDARDS);
+  wrap.innerHTML=`
+  <div class="card no-print" style="margin-bottom:16px">
+    <div class="form-row" style="grid-template-columns:auto auto 1fr;gap:12px;align-items:center">
+      <div><label>Grade</label>
+        <select onchange="_srGrade=this.value;renderStandardsReport()" style="width:120px">
+          ${gradeList.map(g=>`<option value="${g}" ${g===_srGrade?'selected':''}>${g}</option>`).join('')}
+        </select></div>
+      <div><label>View</label>
+        <select onchange="_srView=this.value;renderStandardsReport()" style="width:140px">
+          <option value="class" ${_srView==='class'?'selected':''}>By Class</option>
+          <option value="student" ${_srView==='student'?'selected':''}>By Student</option>
+          <option value="untaught" ${_srView==='untaught'?'selected':''}>Not Yet Taught</option>
+          <option value="reteach" ${_srView==='reteach'?'selected':''}>Needs Reteaching</option>
+        </select></div>
+    </div>
+  </div>`;
+
+  const secs=STANDARDS[_srGrade];
+  if(!secs){wrap.innerHTML+='<div class="card"><div class="empty-state">No standards for this grade</div></div>';return;}
+
+  if(_srView==='class'||_srView==='untaught'||_srView==='reteach'){
+    // Build std scores aggregated per class
+    const classes=DB.classes.filter(c=>DB.students.some(s=>s.grade===_srGrade&&c.studentIds.includes(s.id)));
+    classes.forEach(cls=>{
+      const students=DB.students.filter(s=>s.grade===_srGrade&&cls.studentIds.includes(s.id));
+      const asns=DB.assignments.filter(a=>a.classId===cls.id);
+      let html=`<div class="card" style="margin-bottom:16px"><div class="card-title">${escH(cls.name)} — Standards Mastery (Grade ${_srGrade})</div>`;
+      let hasData=false;
+      Object.entries(secs).forEach(([section,stds])=>{
+        const secRows=[];
+        stds.forEach((std,si)=>{
+          const stdAsns=asns.filter(a=>a.standardRefs.some(r=>r.grade===_srGrade&&r.section===section&&r.stdIndex===si));
+          if(_srView==='untaught'){if(stdAsns.length)return;}
+          const scores=[];
+          stdAsns.forEach(a=>{students.forEach(s=>{const g=a.grades?.[s.id];if(g&&g.earned!=null&&g.status!=='M'&&g.status!=='E'&&a.totalPoints){const pct=g.earned/a.totalPoints;scores.push(pct>=0.85?4:pct>=0.75?3:pct>=0.65?2:1);}});});
+          const avg=scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:null;
+          if(_srView==='reteach'&&(avg===null||avg>=2.5))return;
+          if(_srView==='untaught'&&stdAsns.length)return;
+          hasData=true;
+          const sc=avg!=null?Math.round(avg):null;
+          secRows.push(`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bpi-rule);font-size:.78rem">
+            <span style="flex:1;color:var(--bpi-ink-2)">${escH(std.substring?std.substring(0,70)+'…':std)}</span>
+            <span style="color:var(--bpi-ink-3);font-size:.7rem">${stdAsns.length} asn</span>
+            ${avg!=null?`<span class="badge badge-${sc}" style="min-width:22px">${sc}</span>`:`<span style="color:#C49A6C;font-size:.75rem;font-weight:600">${_srView==='untaught'?'Not taught':'—'}</span>`}
+          </div>`);
+        });
+        if(secRows.length){html+=`<div class="eyebrow" style="margin:10px 0 4px">${escH(section)}</div>${secRows.join('')}`;}
+      });
+      if(!hasData)html+=`<div class="empty-state">${_srView==='untaught'?'All standards have been taught!':_srView==='reteach'?'No standards need reteaching ✓':'No data yet'}</div>`;
+      html+='</div>';
+      wrap.innerHTML+=html;
+    });
+    if(!classes.length)wrap.innerHTML+=`<div class="card"><div class="empty-state">No classes found for grade ${_srGrade}</div></div>`;
+
+  } else if(_srView==='student'){
+    const students=DB.students.filter(s=>s.grade===_srGrade);
+    if(!students.length){wrap.innerHTML+=`<div class="card"><div class="empty-state">No students in grade ${_srGrade}</div></div>`;return;}
+    students.forEach(s=>{
+      const cls=DB.classes.find(c=>c.studentIds.includes(s.id));if(!cls)return;
+      const asns=DB.assignments.filter(a=>a.classId===cls.id);
+      const stdScores={};
+      asns.forEach(a=>{
+        const g=a.grades?.[s.id];
+        if(!g||g.earned==null||g.status==='M'||g.status==='E'||!a.totalPoints)return;
+        const pct=g.earned/a.totalPoints;const score=pct>=0.85?4:pct>=0.75?3:pct>=0.65?2:1;
+        a.standardRefs.filter(r=>r.grade===_srGrade).forEach(r=>{const k=`${r.section}||${r.stdIndex}`;(stdScores[k]=stdScores[k]||{scores:[],section:r.section,stdIndex:r.stdIndex}).scores.push(score);});
+      });
+      const entries=Object.entries(stdScores);
+      if(!entries.length)return;
+      const mastered=entries.filter(([,v])=>v.scores.reduce((a,b)=>a+b,0)/v.scores.length>=3).length;
+      let html=`<div class="card" style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-weight:700;font-size:.88rem">${escH(s.name)} <span class="chip chip-grade">${s.grade}</span>${s.group?`<span class="chip-group-${s.group}" style="margin-left:4px">${s.group}</span>`:''}</div>
+          <span style="font-size:.75rem;font-weight:700;color:#5C3317">${mastered}/${entries.length} mastered</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px">`;
+      entries.forEach(([k,v])=>{
+        const avg=v.scores.reduce((a,b)=>a+b,0)/v.scores.length;const sc=Math.round(avg);
+        const std=secs[v.section]?.[v.stdIndex]||k;
+        html+=`<div style="background:var(--bpi-warm);border-radius:6px;padding:5px 8px;display:flex;align-items:center;gap:6px">
+          <span style="flex:1;font-size:.7rem;color:var(--bpi-ink-2)" title="${escH(typeof std==='string'?std:k)}">${escH(v.section.substring(0,20))}</span>
+          <span class="badge badge-${sc}">${sc}</span>
+        </div>`;
+      });
+      html+=`</div></div>`;
+      wrap.innerHTML+=html;
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ADMIN REPORTS SUITE
+// ═══════════════════════════════════════════════════════════════
+let _arTab='reportcards';
+const AR_TABS=[
+  {id:'reportcards',label:'Report Cards'},
+  {id:'progress',label:'Progress Reports'},
+  {id:'mastery',label:'Standards Mastery'},
+  {id:'missing',label:'Missing Assignments'},
+  {id:'classavg',label:'Class Averages'},
+  {id:'studentperf',label:'Student Performance'},
+  {id:'intervention',label:'Intervention'},
+  {id:'compliance',label:'Compliance Report'},
+];
+
+function renderAdminReports(){
+  const wrap=document.getElementById('admin-reports-content');
+  if(!wrap)return;
+  wrap.innerHTML=`<div class="report-tab-group">${AR_TABS.map(t=>`<button class="report-tab ${t.id===_arTab?'active':''}" onclick="_arTab='${t.id}';renderAdminReports()">${t.label}</button>`).join('')}</div>
+  <div id="ar-body" style="margin-top:16px"></div>`;
+  _renderArBody();
+}
+
+function _renderArBody(){
+  const body=document.getElementById('ar-body');
+  if(!body)return;
+  const classId=getCtxClass();
+  const cls=DB.classes.find(c=>c.id===classId);
+  const trimester=getCtxTrimester();
+
+  if(_arTab==='reportcards'){
+    if(!cls){body.innerHTML='<div class="empty-state">Select a class above</div>';return;}
+    const teacher=DB.teachers.find(t=>t.id===cls.teacherId);
+    const students=DB.students.filter(s=>cls.studentIds.includes(s.id));
+    const asns=DB.assignments.filter(a=>a.classId===classId&&a.trimester===trimester);
+    body.innerHTML=students.map(s=>buildReportCard(s,teacher,asns,trimester)).join('')||'<div class="empty-state">No students</div>';
+    return;
+  }
+
+  if(_arTab==='progress'){
+    if(!cls){body.innerHTML='<div class="empty-state">Select a class above</div>';return;}
+    const students=DB.students.filter(s=>cls.studentIds.includes(s.id));
+    const asns=DB.assignments.filter(a=>a.classId===classId);
+    const cats={classwork:'Classwork',homework:'Homework',assessment:'Assessment',project:'Project'};
+    body.innerHTML=students.map(s=>{
+      let catHtml='';
+      Object.entries(cats).forEach(([key,lbl])=>{
+        const ca=asns.filter(a=>(a.category||'classwork')===key);
+        const graded=ca.filter(a=>{const g=a.grades?.[s.id];return g&&g.earned!=null&&g.status!=='M'&&g.status!=='E';});
+        const avg=graded.length?Math.round(graded.reduce((n,a)=>{const g=a.grades[s.id];return n+(g.earned/a.totalPoints*100);},0)/graded.length):null;
+        catHtml+=`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bpi-rule)"><span style="flex:1;font-size:.82rem">${lbl}</span><span style="font-size:.75rem;color:var(--bpi-ink-3)">${graded.length} graded</span>${avg!=null?`<span style="font-weight:700;color:${avg>=85?'#5C3317':avg>=75?'#6B3A1F':avg>=65?'#A5704C':'#C49A6C'}">${avg}%</span><span class="badge badge-${avg>=85?4:avg>=75?3:avg>=65?2:1}" style="margin-left:6px">${avg>=85?4:avg>=75?3:avg>=65?2:1}</span>`:'<span style="color:var(--bpi-ink-3)">—</span>'}</div>`;
+      });
+      return`<div class="card" style="margin-bottom:12px"><div style="font-weight:700;font-size:.9rem;margin-bottom:10px;color:var(--bpi-bistre)">${escH(s.name)} <span class="chip chip-grade">${s.grade}</span></div>${catHtml}</div>`;
+    }).join('');
+    return;
+  }
+
+  if(_arTab==='mastery'){
+    body.innerHTML='';
+    const gradeList=[...new Set(DB.students.map(s=>s.grade))];
+    gradeList.forEach(grade=>{
+      const students=cls?DB.students.filter(s=>cls.studentIds.includes(s.id)&&s.grade===grade):DB.students.filter(s=>s.grade===grade);
+      if(!students.length)return;
+      students.forEach(s=>{
+        const c2=DB.classes.find(c=>c.studentIds.includes(s.id));if(!c2)return;
+        const asns=DB.assignments.filter(a=>a.classId===c2.id);
+        const stdScores={};
+        asns.forEach(a=>{const g=a.grades?.[s.id];if(!g||g.earned==null||g.status==='M'||g.status==='E'||!a.totalPoints)return;const pct=g.earned/a.totalPoints;const score=pct>=0.85?4:pct>=0.75?3:pct>=0.65?2:1;a.standardRefs.forEach(r=>{const k=`${r.section}||${r.stdIndex}`;(stdScores[k]=stdScores[k]||{scores:[]}).scores.push(score);});});
+        const entries=Object.entries(stdScores);if(!entries.length)return;
+        const mastered=entries.filter(([,v])=>v.scores.reduce((a,b)=>a+b,0)/v.scores.length>=3).length;
+        body.innerHTML+=`<div class="card" style="margin-bottom:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div style="font-weight:700;font-size:.88rem">${escH(s.name)} <span class="chip chip-grade">${s.grade}</span></div>
+            <span style="font-size:.75rem;font-weight:700;color:#5C3317">${mastered}/${entries.length} mastered</span>
+          </div>
+          ${entries.map(([k,v])=>{const avg=v.scores.reduce((a,b)=>a+b,0)/v.scores.length;const sc=Math.round(avg);return`<div style="display:flex;align-items:center;gap:8px;padding:3px 0;border-bottom:1px solid var(--bpi-rule);font-size:.76rem"><span style="flex:1">${k.split('||')[0]}</span><span class="badge badge-${sc}">${sc}</span></div>`;}).join('')}
+        </div>`;
+      });
+    });
+    if(!body.innerHTML)body.innerHTML='<div class="empty-state">No standards data</div>';
+    return;
+  }
+
+  if(_arTab==='missing'){
+    const allStudents=cls?DB.students.filter(s=>cls.studentIds.includes(s.id)):DB.students;
+    let html='';
+    allStudents.forEach(s=>{
+      const c2=DB.classes.find(c=>c.studentIds.includes(s.id));if(!c2)return;
+      const asns=DB.assignments.filter(a=>a.classId===c2.id);
+      const missing=asns.filter(a=>{const g=a.grades?.[s.id];return !g||g.status==='M'||g.earned==null;});
+      if(!missing.length)return;
+      html+=`<div class="card" style="margin-bottom:10px"><div style="font-weight:700;margin-bottom:6px;color:var(--bpi-bistre)">${escH(s.name)} — ${missing.length} missing</div>
+        ${missing.map(a=>`<div style="display:flex;gap:8px;padding:4px 0;font-size:.78rem;border-bottom:1px solid var(--bpi-rule)"><span style="flex:1">${escH(a.title)}</span><span style="color:var(--bpi-ink-3)">${a.subject}</span><span style="color:var(--bpi-ink-3)">${a.date}</span></div>`).join('')}
+      </div>`;
+    });
+    body.innerHTML=html||'<div class="empty-state">No missing assignments! 🎉</div>';
+    return;
+  }
+
+  if(_arTab==='classavg'){
+    const cats={classwork:'Classwork',homework:'Homework',assessment:'Assessment',project:'Project'};
+    let html='';
+    DB.classes.forEach(c=>{
+      const students=DB.students.filter(s=>c.studentIds.includes(s.id));
+      const asns=DB.assignments.filter(a=>a.classId===c.id);
+      html+=`<div class="card" style="margin-bottom:14px"><div class="card-title">${escH(c.name)}</div>`;
+      Object.entries(cats).forEach(([key,lbl])=>{
+        const ca=asns.filter(a=>(a.category||'classwork')===key);
+        const allG=[];ca.forEach(a=>students.forEach(s=>{const g=a.grades?.[s.id];if(g&&g.earned!=null&&g.status!=='M'&&g.status!=='E')allG.push(g.earned/a.totalPoints*100);}));
+        const avg=allG.length?Math.round(allG.reduce((a,b)=>a+b,0)/allG.length):null;
+        html+=`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--bpi-rule)"><span style="flex:1;font-size:.82rem">${lbl}</span><span style="font-size:.75rem;color:var(--bpi-ink-3)">${ca.length} asn</span>${avg!=null?`<span style="font-weight:700;color:${avg>=85?'#5C3317':avg>=75?'#6B3A1F':avg>=65?'#A5704C':'#C49A6C'}">${avg}%</span>`:''}</div>`;
+      });
+      html+='</div>';
+    });
+    body.innerHTML=html||'<div class="empty-state">No data</div>';
+    return;
+  }
+
+  if(_arTab==='studentperf'){
+    const allS=cls?DB.students.filter(s=>cls.studentIds.includes(s.id)):DB.students;
+    body.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:.82rem">
+      <thead><tr style="background:var(--bpi-bistre);color:#fff">
+        <th style="padding:8px 10px;text-align:left">Student</th><th style="padding:8px 10px;text-align:left">Grade</th>
+        <th style="padding:8px 10px;text-align:left">Class</th><th style="padding:8px 10px;text-align:center">Avg</th>
+        <th style="padding:8px 10px;text-align:center">Score</th><th style="padding:8px 10px;text-align:center">Missing</th>
+        <th style="padding:8px 10px;text-align:center">Absences</th><th style="padding:8px 10px;text-align:center">Flag</th>
+      </tr></thead><tbody>
+      ${allS.map(s=>{
+        const c2=DB.classes.find(c=>c.studentIds.includes(s.id));
+        const asns=c2?DB.assignments.filter(a=>a.classId===c2.id):[];
+        const graded=asns.filter(a=>{const g=a.grades?.[s.id];return g&&g.earned!=null&&g.status!=='M'&&g.status!=='E';});
+        const avg=graded.length?Math.round(graded.reduce((n,a)=>{const g=a.grades[s.id];return n+(g.earned/a.totalPoints*100);},0)/graded.length):null;
+        const score=avg!=null?(avg>=85?4:avg>=75?3:avg>=65?2:1):null;
+        const missing=asns.filter(a=>{const g=a.grades?.[s.id];return !g||g.status==='M';}).length;
+        let abs=0;Object.values(DB.attendance).forEach(att=>{if(att.records?.[s.id]?.status==='A')abs++;});
+        const needsIntervention=avg!=null&&avg<65||missing>5||abs>8;
+        return`<tr style="border-bottom:1px solid var(--bpi-rule)${needsIntervention?' background:#FFF8F3':''}">
+          <td style="padding:7px 10px;font-weight:600">${escH(s.name)}</td>
+          <td style="padding:7px 10px"><span class="chip chip-grade">${s.grade}</span></td>
+          <td style="padding:7px 10px;font-size:.75rem;color:var(--bpi-ink-2)">${c2?escH(c2.name):''}</td>
+          <td style="padding:7px 10px;text-align:center;font-weight:700;color:${avg!=null?(avg>=85?'#5C3317':avg>=75?'#6B3A1F':avg>=65?'#A5704C':'#C49A6C'):'var(--bpi-ink-3)'}">${avg!=null?avg+'%':'—'}</td>
+          <td style="padding:7px 10px;text-align:center">${score!=null?`<span class="badge badge-${score}">${score}</span>`:'—'}</td>
+          <td style="padding:7px 10px;text-align:center;color:${missing?'#A5704C':'inherit'};font-weight:${missing?'700':'400'}">${missing||'—'}</td>
+          <td style="padding:7px 10px;text-align:center;color:${abs>3?'#A5704C':'inherit'}">${abs||'—'}</td>
+          <td style="padding:7px 10px;text-align:center">${needsIntervention?'<span style="color:#A5704C;font-size:1rem" title="Needs attention">⚠</span>':'<span style="color:#5C3317">✓</span>'}</td>
+        </tr>`;
+      }).join('')}
+      </tbody></table>`;
+    return;
+  }
+
+  if(_arTab==='intervention'){
+    const at_risk=DB.students.filter(s=>{
+      const c2=DB.classes.find(c=>c.studentIds.includes(s.id));if(!c2)return false;
+      const asns=DB.assignments.filter(a=>a.classId===c2.id);
+      const graded=asns.filter(a=>{const g=a.grades?.[s.id];return g&&g.earned!=null&&g.status!=='M'&&g.status!=='E';});
+      const avg=graded.length?graded.reduce((n,a)=>{const g=a.grades[s.id];return n+(g.earned/a.totalPoints*100);},0)/graded.length:null;
+      const missing=asns.filter(a=>{const g=a.grades?.[s.id];return !g||g.status==='M';}).length;
+      let abs=0;Object.values(DB.attendance).forEach(att=>{if(att.records?.[s.id]?.status==='A')abs++;});
+      return(avg!=null&&avg<65)||missing>5||abs>8;
+    });
+    if(!at_risk.length){body.innerHTML='<div class="card"><div class="empty-state">No students currently flagged for intervention ✓</div></div>';return;}
+    body.innerHTML=at_risk.map(s=>{
+      const prof=DB.studentProfiles[s.id]||{};
+      const c2=DB.classes.find(c=>c.studentIds.includes(s.id));
+      const asns=c2?DB.assignments.filter(a=>a.classId===c2.id):[];
+      const graded=asns.filter(a=>{const g=a.grades?.[s.id];return g&&g.earned!=null&&g.status!=='M'&&g.status!=='E';});
+      const avg=graded.length?Math.round(graded.reduce((n,a)=>{const g=a.grades[s.id];return n+(g.earned/a.totalPoints*100);},0)/graded.length):null;
+      const missing=asns.filter(a=>{const g=a.grades?.[s.id];return !g||g.status==='M';}).length;
+      let abs=0;Object.values(DB.attendance).forEach(att=>{if(att.records?.[s.id]?.status==='A')abs++;});
+      const reasons=[];
+      if(avg!=null&&avg<65)reasons.push(`Avg ${avg}% (below grade level)`);
+      if(missing>5)reasons.push(`${missing} missing assignments`);
+      if(abs>8)reasons.push(`${abs} absences`);
+      return`<div class="card" style="margin-bottom:14px;border-left:3px solid #A5704C">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div><span style="font-weight:700;font-size:.9rem">${escH(s.name)}</span> <span class="chip chip-grade">${s.grade}</span></div>
+          <div style="display:flex;gap:6px">${reasons.map(r=>`<span class="att-summary-chip" style="background:#FEF3CD;color:#856404">${r}</span>`).join('')}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div><label style="font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:var(--bpi-ink-3)">Intervention Notes</label>
+            <textarea class="profile-note-area" placeholder="Add intervention notes…" onchange="saveProfileNote('${s.id}','interventionNotes',this.value)">${escH(prof.interventionNotes||'')}</textarea></div>
+          <div><label style="font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:var(--bpi-ink-3)">Teacher Comments</label>
+            <textarea class="profile-note-area" placeholder="Teacher observations…" onchange="saveProfileNote('${s.id}','teacherComments',this.value)">${escH(prof.teacherComments||'')}</textarea></div>
+          <div><label style="font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:var(--bpi-ink-3)">Parent Communication</label>
+            <textarea class="profile-note-area" placeholder="Parent contact log…" onchange="saveProfileNote('${s.id}','parentNotes',this.value)">${escH(prof.parentNotes||'')}</textarea></div>
+        </div>
+      </div>`;
+    }).join('');
+    return;
+  }
+
+  if(_arTab==='compliance'){
+    renderCompliance();
+    const compWrap=document.getElementById('compliance-content');
+    if(compWrap)body.innerHTML=compWrap.innerHTML;
+    return;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ADMIN STUDENT PROFILES (ENHANCED)
+// ═══════════════════════════════════════════════════════════════
+function renderAdminProfiles(){
+  const wrap=document.getElementById('admin-profiles-content');
+  if(!wrap)return;
+  const search=(document.getElementById('admin-profile-search')?.value||'').toLowerCase();
+  const gradeF=document.getElementById('admin-profile-grade-filter')?.value||'';
+  let students=DB.students;
+  if(search)students=students.filter(s=>s.name.toLowerCase().includes(search));
+  if(gradeF)students=students.filter(s=>s.grade===gradeF);
+
+  wrap.innerHTML=students.map(s=>{
+    const cls=DB.classes.find(c=>c.studentIds.includes(s.id));
+    const prof=DB.studentProfiles[s.id]||{};
+    const asns=cls?DB.assignments.filter(a=>a.classId===cls.id):[];
+    const graded=asns.filter(a=>{const g=a.grades?.[s.id];return g&&g.earned!=null&&g.status!=='M'&&g.status!=='E';});
+    const avg=graded.length?Math.round(graded.reduce((n,a)=>{const g=a.grades[s.id];return n+(g.earned/a.totalPoints*100);},0)/graded.length):null;
+    const score=avg!=null?(avg>=85?4:avg>=75?3:avg>=65?2:1):null;
+    const missing=asns.filter(a=>{const g=a.grades?.[s.id];return !g||g.status==='M';}).length;
+    let abs=0,tard=0;
+    Object.values(DB.attendance).forEach(att=>{
+      if(att.records?.[s.id]?.status==='A')abs++;
+      if(att.records?.[s.id]?.status==='T')tard++;
+    });
+    const flag=avg!=null&&avg<65||missing>5||abs>8;
+    return`<div class="profile-card" id="ap-${s.id}">
+      <div class="profile-header" onclick="toggleAdminProfile('${s.id}')">
+        <div style="display:flex;align-items:center;gap:10px;flex:1">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--bpi-bistre);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0">${s.name.charAt(0)}</div>
+          <div>
+            <div style="font-weight:700;font-size:.9rem">${escH(s.name)} ${flag?'<span style="color:#A5704C" title="Needs attention">⚠</span>':''}</div>
+            <div style="font-size:.72rem;color:var(--bpi-ink-3)">${s.grade} · ${cls?escH(cls.name):'No class'}${s.group?` · <span class="chip-group-${s.group}">${s.group}</span>`:''}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          ${avg!=null?`<div style="text-align:center"><div style="font-weight:700;font-size:.9rem;color:${avg>=85?'#5C3317':avg>=75?'#6B3A1F':avg>=65?'#A5704C':'#C49A6C'}">${avg}%</div><div style="font-size:.62rem;color:var(--bpi-ink-3)">Avg</div></div>`:''}
+          ${score!=null?`<span class="badge badge-${score}">${score}</span>`:''}
+          ${abs?`<span class="att-summary-chip" style="background:#FEF3CD;color:#856404">${abs} abs</span>`:''}
+          ${missing?`<span class="att-summary-chip" style="background:#FFF0E5;color:#A5704C">${missing} missing</span>`:''}
+        </div>
+      </div>
+      <div class="profile-body" id="apb-${s.id}" style="display:none">
+        ${_buildAdminProfileBody(s,cls,asns,prof,avg,score,missing,abs,tard)}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleAdminProfile(sid){
+  const body=document.getElementById('apb-'+sid);
+  if(body)body.style.display=body.style.display==='none'?'block':'none';
+}
+
+function _buildAdminProfileBody(s,cls,asns,prof,avg,score,missing,abs,tard){
+  // Grades by category
+  const cats={classwork:'Classwork',homework:'Homework',assessment:'Assessment',project:'Project'};
+  let catHtml='';
+  Object.entries(cats).forEach(([key,lbl])=>{
+    const ca=asns.filter(a=>(a.category||'classwork')===key);
+    const graded=ca.filter(a=>{const g=a.grades?.[s.id];return g&&g.earned!=null&&g.status!=='M'&&g.status!=='E';});
+    const catAvg=graded.length?Math.round(graded.reduce((n,a)=>{const g=a.grades[s.id];return n+(g.earned/a.totalPoints*100);},0)/graded.length):null;
+    catHtml+=`<div class="profile-stat"><div style="font-size:.68rem;color:var(--bpi-ink-3)">${lbl}</div><div style="font-weight:700;color:${catAvg!=null?(catAvg>=85?'#5C3317':catAvg>=75?'#6B3A1F':catAvg>=65?'#A5704C':'#C49A6C'):'var(--bpi-ink-3)'}">${catAvg!=null?catAvg+'%':'—'}</div></div>`;
+  });
+
+  // Standards mastery
+  const stdScores={};
+  asns.forEach(a=>{const g=a.grades?.[s.id];if(!g||g.earned==null||g.status==='M'||g.status==='E'||!a.totalPoints)return;const pct=g.earned/a.totalPoints;const sc=pct>=0.85?4:pct>=0.75?3:pct>=0.65?2:1;a.standardRefs.forEach(r=>{const k=`${r.section}||${r.stdIndex}`;(stdScores[k]=stdScores[k]||{scores:[]}).scores.push(sc);});});
+  const stdEntries=Object.entries(stdScores);
+  const masteredCount=stdEntries.filter(([,v])=>v.scores.reduce((a,b)=>a+b,0)/v.scores.length>=3).length;
+
+  return`<div class="profile-section">
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px">
+      <div class="profile-stat"><div style="font-size:.68rem;color:var(--bpi-ink-3)">Overall Avg</div><div style="font-weight:700;font-size:1.1rem;color:${avg!=null?(avg>=85?'#5C3317':avg>=75?'#6B3A1F':avg>=65?'#A5704C':'#C49A6C'):'var(--bpi-ink-3)'}">${avg!=null?avg+'%':'—'}</div></div>
+      <div class="profile-stat"><div style="font-size:.68rem;color:var(--bpi-ink-3)">Score</div><div style="font-weight:700">${score!=null?`<span class="badge badge-${score}" style="font-size:.9rem">${score}</span>`:'—'}</div></div>
+      <div class="profile-stat"><div style="font-size:.68rem;color:var(--bpi-ink-3)">Absences</div><div style="font-weight:700;color:${abs>3?'#A5704C':'#5C3317'}">${abs}</div></div>
+      <div class="profile-stat"><div style="font-size:.68rem;color:var(--bpi-ink-3)">Tardies</div><div style="font-weight:700;color:${tard>3?'#C49A6C':'inherit'}">${tard}</div></div>
+      <div class="profile-stat"><div style="font-size:.68rem;color:var(--bpi-ink-3)">Missing</div><div style="font-weight:700;color:${missing?'#A5704C':'#5C3317'}">${missing}</div></div>
+      <div class="profile-stat"><div style="font-size:.68rem;color:var(--bpi-ink-3)">Mastered Stds</div><div style="font-weight:700;color:#5C3317">${masteredCount}/${stdEntries.length}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">
+      ${catHtml}
+    </div>
+    ${stdEntries.length?`<div style="margin-bottom:14px"><div class="eyebrow" style="margin-bottom:6px">Standards Mastery</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:5px">${stdEntries.map(([k,v])=>{const a=v.scores.reduce((x,y)=>x+y,0)/v.scores.length;const sc=Math.round(a);return`<div style="background:var(--bpi-warm);border-radius:5px;padding:4px 8px;display:flex;align-items:center;gap:6px;font-size:.72rem"><span style="flex:1;color:var(--bpi-ink-2)">${k.split('||')[0].substring(0,22)}</span><span class="badge badge-${sc}">${sc}</span></div>`;}).join('')}</div></div>`:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div><label style="font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:var(--bpi-ink-3)">Intervention Notes</label>
+        <textarea class="profile-note-area" onchange="saveProfileNote('${s.id}','interventionNotes',this.value)">${escH(prof.interventionNotes||'')}</textarea></div>
+      <div><label style="font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:var(--bpi-ink-3)">Teacher Comments</label>
+        <textarea class="profile-note-area" onchange="saveProfileNote('${s.id}','teacherComments',this.value)">${escH(prof.teacherComments||'')}</textarea></div>
+      <div><label style="font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:var(--bpi-ink-3)">Parent Communication</label>
+        <textarea class="profile-note-area" onchange="saveProfileNote('${s.id}','parentNotes',this.value)">${escH(prof.parentNotes||'')}</textarea></div>
+    </div>
+  </div>`;
+}
+
+// override renderDashboard to branch on role
+const _prevRenderDash=renderDashboard;
+function renderDashboard(){
+  if(DB.role==='admin'){renderAdminDashboard();}
+  else{_prevRenderDash();}
+}
+
 </script>
 </body>
 </html>
