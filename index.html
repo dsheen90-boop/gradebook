@@ -2169,9 +2169,9 @@
           <button id="topbar-logout" onclick="doLogout()">Sign Out</button>
         </div>
         <div class="site-pill"><div class="dot"></div> All Sites <span style="color:var(--fg-3);font-size:11px;margin-left:4px;">▾</span></div>
-        <div style="position:relative;">
+        <div style="position:relative;display:none;" title="Retired with the non-gradebook modules — content pointed only at Tickets/Compliance/Payment Plans, etc.">
           <div class="topbar-bell" id="notif-bell" onclick="toggleNotifPanel()" style="cursor:pointer;">🔔<div class="notif-dot"></div></div>
-          <!-- NOTIFICATION PANEL -->
+          <!-- NOTIFICATION PANEL — hidden: only ever linked to retired modules -->
           <div class="notif-panel" id="notif-panel">
             <div class="notif-panel-header">
               <div class="notif-panel-title">Notifications</div>
@@ -10744,6 +10744,19 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
   function showView(name, clickedEl) {
     // Alias routing: gradebook/roster sidebar links open the hub then navigate internally
 
+    // Gradebook-only guard: the app now only exposes lesson-plans/gradebook/
+    // roster (via showInstSection, not this function). Any leftover link
+    // into a retired module (dashboard, tickets, billing, call-triage,
+    // etc. — reachable e.g. from the notification panel) gets redirected
+    // back into the gradebook instead of actually opening the hidden view.
+    var allowedForRole = ROLE_NAV[_currentRole];
+    if (allowedForRole && allowedForRole !== 'all' && allowedForRole.indexOf(name) === -1) {
+      var fallback = ROLE_DEFAULT_VIEW[_currentRole] || 'lesson-plans';
+      if (typeof showInstSection === 'function') {
+        showInstSection(fallback, document.getElementById('sidenav-inst-' + fallback));
+      }
+      return;
+    }
 
     document.querySelectorAll('.view').forEach(v => {
       v.classList.remove('active');
@@ -12469,49 +12482,35 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
      LOGIN / ROLE SYSTEM
   ══════════════════════════════════════
 
-  Passwords → roles:
-    teacher       → Instructional Teacher
-    admin         → Instructional Admin
-    operations    → Operations Coordinator
-    bmgr          → Business Manager
+  This app is now gradebook-only (Lesson Plans / Gradebook / Roster).
+  Down to 2 roles — matches the permission model the Instructional Hub
+  already used internally. Former "operations" and "bmgr" logins are
+  now "admin" (see SETUP_GUIDE.md for the one-time Supabase migration).
+
+  Passwords → roles (demo mode only):
+    teacher       → Teacher
+    admin         → Admin
 
   Any username is accepted.
   ══════════════════════════════════════ */
 
   var ROLE_MAP = {
-    'teacher':    { label: 'Teacher',                role: 'teacher' },
-    'admin':      { label: 'Instructional Admin',    role: 'admin' },
-    'operations': { label: 'Coordinator',            role: 'operations' },
-    'bmgr':       { label: 'Business Manager',       role: 'bmgr' },
+    'teacher':    { label: 'Teacher', role: 'teacher' },
+    'admin':      { label: 'Admin',   role: 'admin' },
   };
 
   /* Nav items visible per role.
      'all' = visible to everyone.
      Listed by the showView() key or showInstSection() section key. */
   var ROLE_NAV = {
-    teacher: [
-      'lesson-plans', 'gradebook', 'roster',
-      'call-triage', 'safety-security'
-    ],
-    admin: [
-      'dashboard', 'lesson-plans', 'gradebook', 'roster',
-      'people', 'family-engagement', 'operations',
-      'call-triage', 'safety-security'
-    ],
-    operations: [
-      'dashboard', 'tasks', 'team',
-      'operations', 'call-triage', 'safety-security',
-      'family-engagement', 'people'
-    ],
-    bmgr: 'all',   // full access
+    teacher: ['lesson-plans', 'gradebook', 'roster'],
+    admin:   ['lesson-plans', 'gradebook', 'roster'],
   };
 
-  /* Default landing view per role */
+  /* Default landing view per role — both land in the Instructional Hub. */
   var ROLE_DEFAULT_VIEW = {
-    teacher:    'dashboard',
-    admin:      'dashboard',
-    operations: 'dashboard',
-    bmgr:       'dashboard',
+    teacher: 'lesson-plans',
+    admin:   'lesson-plans',
   };
 
   var _currentRole = null;
@@ -12576,7 +12575,14 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
   }
 
   /* ── Shared post-login flow, regardless of auth source ── */
+  // Safety net: if a Supabase profiles row still has a pre-collapse role
+  // string (bmgr/operations) because the migration in SETUP_GUIDE.md
+  // hasn't been run yet, map it down instead of silently defaulting to
+  // the lowest-privilege role.
+  var LEGACY_ROLE_ALIAS = { bmgr: 'admin', operations: 'teacher' };
+
   async function finishLogin(role, name) {
+    role = LEGACY_ROLE_ALIAS[role] || role;
     if (!ROLE_MAP[role]) role = 'teacher';
     _currentRole = role;
 
@@ -12596,13 +12602,23 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
     // Apply nav visibility
     applyRoleNav(role);
 
-    // Navigate to default view (instBootstrap handles teacher/admin → Instructional)
+    // Load data BEFORE rendering the first screen — otherwise the initial
+    // render fires against an empty DB and nothing re-draws once the load
+    // finishes.
+    if (typeof instBootstrap === 'function') await instBootstrap(role);
+
+    // Navigate to default view. The gradebook-only defaults ('lesson-plans',
+    // 'gradebook', 'roster') live inside the Instructional Hub and route
+    // through showInstSection(), not the legacy showView() view map.
     var defaultView = ROLE_DEFAULT_VIEW[role];
-    if (defaultView) {
+    var INST_KEYS = ['lesson-plans', 'gradebook', 'roster'];
+    if (defaultView && INST_KEYS.indexOf(defaultView) !== -1) {
+      var instNavEl = document.getElementById('sidenav-inst-' + defaultView);
+      if (typeof showInstSection === 'function') showInstSection(defaultView, instNavEl);
+    } else if (defaultView) {
       var navEl = document.querySelector('.nav-item[onclick*="' + defaultView + '"]');
       showView(defaultView, navEl);
     }
-    if (typeof instBootstrap === 'function') await instBootstrap(role);
   }
 
   function applyRoleNav(role) {
