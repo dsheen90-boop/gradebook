@@ -2031,6 +2031,24 @@
 
   /* ═══ END INST STYLES ═══ */
 
+  /* ═══ GRADEBOOK-ONLY LOCKDOWN ═══
+     The app now only exposes Lesson Plans / Gradebook / Roster. The nav-hiding
+     and showView() guard in the login/role script are the primary mechanism,
+     but this rule hides these views unconditionally at the CSS layer too —
+     belt and suspenders against any JS timing issue, stale cache, or stray
+     onclick that could otherwise flash retired-module content (Dashboard,
+     Operations, Family Engagement, etc.) on top of the gradebook. Delete this
+     block if a module is ever re-enabled. */
+  #view-dashboard, #view-tasks, #view-team, #view-finance, #view-people,
+  #view-family-engagement, #view-operations, #view-ops-home, #view-bo-home,
+  #view-queue, #view-billing, #view-compliance, #view-staff, #view-facility-ops,
+  #view-events, #view-sites, #view-tickets, #view-payment-plans,
+  #view-purchase-requests, #view-ap, #view-budget, #view-training-log,
+  #view-broadcast, #view-volunteer-hours, #view-fundraising, #view-call-triage,
+  #view-safety-security {
+    display: none !important;
+  }
+
 </style>
 
 <!-- ══════════════════════════════════════════════════════════════════════
@@ -14072,7 +14090,7 @@ function renderStandards(){
 
 function renderScoreBadge(score){return score?`<span class="badge badge-${score}">${score}</span>`:''}
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-function showModal(html,size){document.getElementById('inst-modal-container').innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="${size==='large'?'max-width:720px':''}">${html}</div></div>`;}
+function showModal(html,size){document.getElementById('inst-modal-container').innerHTML=`<div class="modal-overlay open" onclick="if(event.target===this)closeModal()"><div class="modal" style="${size==='large'?'max-width:720px':''}">${html}</div></div>`;}
 function closeModal(){document.getElementById('inst-modal-container').innerHTML='';}
 let _tt;function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2500);}
 
