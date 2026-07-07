@@ -3620,33 +3620,10 @@
           </div>
         </div>
 
-        <!-- Events snapshot -->
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title">Upcoming Events</div>
-            <a class="panel-action" onclick="showView('events')">Open →</a>
-          </div>
-          <div class="list-item">
-            <div class="item-dot green"></div>
-            <div class="item-body"><div class="item-title">Family Engagement Night</div><div class="item-meta">Apr 25 · NMZ Campus · Published · Est. 60 attendees</div></div>
-            <span class="badge ok">Published</span>
-          </div>
-          <div class="list-item">
-            <div class="item-dot amber"></div>
-            <div class="item-body"><div class="item-title">Spring Picture Day</div><div class="item-meta">May 2 · Both Sites · In planning</div></div>
-            <span class="badge warn">Planning</span>
-          </div>
-          <div class="list-item">
-            <div class="item-dot grey"></div>
-            <div class="item-body"><div class="item-title">Teacher Appreciation Week Kickoff</div><div class="item-meta">May 8 · Both Sites · Draft</div></div>
-            <span class="badge neutral">Draft</span>
-          </div>
-          <div class="list-item">
-            <div class="item-dot grey"></div>
-            <div class="item-body"><div class="item-title">Scholar Showcase — Spring</div><div class="item-meta">May 22 · Wesson Campus · Draft</div></div>
-            <span class="badge neutral">Draft</span>
-          </div>
-        </div>
+        <!-- Events snapshot panel physically removed (was leaking into the
+             gradebook view despite being hidden — see conversation history).
+             This entire view-ops-home block is retired; deleting content
+             from it as issues surface rather than relying on hide-only. -->
       </div>
 
 
