@@ -2162,10 +2162,10 @@
 
     <div class="sidebar-footer">
       <div class="user-chip">
-        <div class="user-avatar">DS</div>
+        <div class="user-avatar" id="sidebar-user-avatar">DS</div>
         <div>
-          <div class="user-name">Dylan Sheen</div>
-          <div class="user-role">Business Manager</div>
+          <div class="user-name" id="sidebar-user-name">Dylan Sheen</div>
+          <div class="user-role" id="sidebar-user-role">Business Manager</div>
         </div>
       </div>
     </div>
@@ -10024,11 +10024,12 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
         <!-- ── LESSON PLANS NAV BAR ── -->
         <div id="inst-nav-lesson-plans" class="inst-section-nav" style="display:none;background:var(--bpi-paper);border-bottom:2px solid var(--bpi-bistre-10);padding:0 20px;flex-direction:row;align-items:center;gap:0;flex-shrink:0;">
           <button class="inst-anav-btn active" onclick="instSectionNav('lesson-plans','lessonplan',this)">Plans</button>
-          <button class="inst-anav-btn" onclick="instSectionNav('lesson-plans','review',this)">Weekly Review</button>
+          <button class="inst-anav-btn inst-admin-only" onclick="instSectionNav('lesson-plans','review',this)" style="display:none;">Weekly Review</button>
           <button class="inst-anav-btn" onclick="instSectionNav('lesson-plans','standards',this)">Standards</button>
           <button class="inst-anav-btn inst-admin-only" onclick="instSectionNav('lesson-plans','overview',this)" style="display:none;">Overview</button>
           <button class="inst-anav-btn inst-admin-only" onclick="instSectionNav('lesson-plans','compliance',this)" style="display:none;">Compliance</button>
           <div style="margin-left:auto;display:flex;align-items:center;gap:8px;padding:8px 0;flex-shrink:0;">
+            <span class="ctx-room-label" style="display:none;font-size:.75rem;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--bpi-bistre-10);color:var(--bpi-bistre);border:1px solid var(--bpi-bistre-20);"></span>
             <select id="ctx-teacher" onchange="instOnCtxChange()" style="font-size:.75rem;padding:4px 8px;border:1px solid var(--bpi-bistre-20);border-radius:var(--radius-sm);background:var(--bg-1);color:var(--bpi-ink);max-width:130px;"></select>
             <select id="ctx-class" onchange="instOnCtxChange()" style="font-size:.75rem;padding:4px 8px;border:1px solid var(--bpi-bistre-20);border-radius:var(--radius-sm);background:var(--bg-1);color:var(--bpi-ink);max-width:160px;"></select>
             <select id="ctx-trimester" onchange="instOnCtxChange()" style="font-size:.75rem;padding:4px 8px;border:1px solid var(--bpi-bistre-20);border-radius:var(--radius-sm);background:var(--bg-1);color:var(--bpi-ink);">
@@ -10043,9 +10044,10 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
           <button class="inst-anav-btn active" onclick="instSectionNav('gradebook','gradebook',this)">Grades</button>
           <button class="inst-anav-btn" onclick="instSectionNav('gradebook','reports',this)">Reports</button>
           <button class="inst-anav-btn inst-admin-only" onclick="instSectionNav('gradebook','oversight',this)" style="display:none;">Oversight</button>
-          <button class="inst-anav-btn inst-admin-only" onclick="instSectionNav('gradebook','attendance',this)" style="display:none;">Attendance</button>
+          <button class="inst-anav-btn" onclick="instSectionNav('gradebook','attendance',this)">Attendance</button>
           <button class="inst-anav-btn inst-admin-only" onclick="instSectionNav('gradebook','dashboard',this)" style="display:none;">Dashboard</button>
           <div style="margin-left:auto;display:flex;align-items:center;gap:8px;padding:8px 0;flex-shrink:0;">
+            <span class="ctx-room-label" style="display:none;font-size:.75rem;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--bpi-bistre-10);color:var(--bpi-bistre);border:1px solid var(--bpi-bistre-20);"></span>
             <select id="ctx-teacher-gb" onchange="instOnCtxChange()" style="font-size:.75rem;padding:4px 8px;border:1px solid var(--bpi-bistre-20);border-radius:var(--radius-sm);background:var(--bg-1);color:var(--bpi-ink);max-width:130px;"></select>
             <select id="ctx-class-gradebook" onchange="instSyncCtx()" style="font-size:.75rem;padding:4px 8px;border:1px solid var(--bpi-bistre-20);border-radius:var(--radius-sm);background:var(--bg-1);color:var(--bpi-ink);max-width:160px;"></select>
             <select id="ctx-trimester-gradebook" onchange="instSyncCtx()" style="font-size:.75rem;padding:4px 8px;border:1px solid var(--bpi-bistre-20);border-radius:var(--radius-sm);background:var(--bg-1);color:var(--bpi-ink);">
@@ -10092,6 +10094,21 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:6px" id="lp-day-headers"></div>
   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px" id="lp-grid"></div>
   <div id="lp-week-docs" class="no-print" style="margin-top:18px"></div>
+</div>
+
+<!-- ══ WEEKLY REVIEW (admin) ══ -->
+<div id="inst-page-review" class="inst-page">
+  <div class="page-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Weekly Review</div>
+  <div class="toolbar no-print">
+    <div class="week-nav">
+      <button onclick="rvPrevWeek()">&#8592;</button>
+      <span class="week-label" id="rv-week-label"></span>
+      <button onclick="rvNextWeek()">&#8594;</button>
+    </div>
+    <select id="rv-class-select" onchange="renderReviewPage()" style="font-family:var(--font-body);font-size:.8rem;padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);background:#fff;color:var(--bpi-ink);cursor:pointer;max-width:240px;"></select>
+    <div id="rv-due-display"></div>
+  </div>
+  <div id="review-content"></div>
 </div>
 
 <div id="inst-page-gradebook" class="inst-page">
@@ -10171,7 +10188,7 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
     <button class="btn btn-primary" onclick="openTeacherModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Teacher</button>
     <div class="search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input class="search-input" id="teacher-search" placeholder="Search teachers&hellip;" oninput="renderTeachers()"></div>
   </div>
-  <div class="card"><table><thead><tr><th>Name</th><th>Title</th><th>Classes</th><th>Actions</th></tr></thead><tbody id="teachers-tbody"></tbody></table></div>
+  <div class="card"><table><thead><tr><th>Name</th><th>Title</th><th>Login Email</th><th>Classes</th><th>Actions</th></tr></thead><tbody id="teachers-tbody"></tbody></table></div>
 </div>
 
 <div id="inst-page-classes" class="inst-page">
@@ -12548,6 +12565,9 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
 
     err.style.display = 'none';
     if (btn) { btn.disabled = false; btn.textContent = 'Sign In →'; }
+    // Stash the login email — used to resolve this teacher's own room
+    // (teachers.email match) once instBootstrap runs.
+    DB.myEmail = email;
     await finishLogin(profRes.data.role, profRes.data.full_name || email.split('@')[0]);
   }
 
@@ -12591,6 +12611,19 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
     var roleName = document.getElementById('topbar-role-name');
     badge.style.display = 'flex';
     roleName.textContent = name ? name + ' · ' + ROLE_MAP[role].label : ROLE_MAP[role].label;
+
+    // Update sidebar profile chip (was hardcoded "Dylan Sheen" before)
+    var sbName = document.getElementById('sidebar-user-name');
+    var sbRole = document.getElementById('sidebar-user-role');
+    var sbAvatar = document.getElementById('sidebar-user-avatar');
+    var displayName = name || 'Staff';
+    if (sbName) sbName.textContent = displayName;
+    if (sbRole) sbRole.textContent = ROLE_MAP[role].label;
+    if (sbAvatar) {
+      var initials = displayName.trim().split(/\s+/).filter(Boolean).slice(0, 2)
+        .map(function(w){ return w[0].toUpperCase(); }).join('');
+      sbAvatar.textContent = initials || '?';
+    }
 
     // Close any stray open modals
     document.querySelectorAll('.modal-overlay.open').forEach(function(m){ m.classList.remove('open'); });
@@ -12700,7 +12733,12 @@ let DB={
   // Announcements / events / meetings / reminders
   announcements:[],   // {id,type:'announcement'|'event'|'meeting'|'testing'|'birthday',title,date,description,classId:''}
   // Student profile extras keyed by studentId
-  studentProfiles:{}  // {interventionNotes:'', teacherComments:'', parentNotes:''}
+  studentProfiles:{}, // {interventionNotes:'', teacherComments:'', parentNotes:''}
+  // Teacher room-scoping (live Supabase login only) — resolved in instBootstrap()
+  // by matching the signed-in email against teachers.email, then that
+  // teacher's one class. roomLocked=true means getCtxClass() ignores the
+  // header selectors entirely and always returns myClassId.
+  myEmail:'', myTeacherId:null, myClassId:null, roomLocked:false
 };
 function newId(){
   // Real UUIDs when talking to Postgres; simple counter in offline demo mode.
@@ -12714,8 +12752,8 @@ function newId(){
    Nothing here runs unless sbOn() is true. */
 const T = {
   teachers: {
-    toRow:   t => ({ id:t.id, name:t.name, title:t.title||null }),
-    fromRow: r => ({ id:r.id, name:r.name, title:r.title||'' }),
+    toRow:   t => ({ id:t.id, name:t.name, title:t.title||null, email:t.email||null }),
+    fromRow: r => ({ id:r.id, name:r.name, title:r.title||'', email:r.email||'' }),
   },
   students: {
     toRow:   s => ({ id:s.id, name:s.name, grade:s.grade, group:s.group||null }),
@@ -12906,7 +12944,13 @@ function instNav(page){
   ({dashboard:renderDashboard,lessonplan:renderLessonPlan,gradebook:renderGradebook,reports:initReportCards,students:renderStudents,teachers:renderTeachers,classes:renderClasses,standards:renderStandards,review:renderReviewPage,attendance:renderAttendance,profiles:renderProfiles,overview:renderAdminDashboard,compliance:renderCompliance,oversight:renderOversight,stdreport:renderStandardsReport,adminprofiles:renderAdminProfiles,adminreports:renderAdminReports})[page]?.();
 }
 
-function getCtxClass(){return document.getElementById('ctx-class').value||(DB.classes[0]?.id||'');}
+function getCtxClass(){
+  // Teacher accounts (live Supabase login only) are locked to their own
+  // room — every reader of getCtxClass() (Lesson Plans, Gradebook,
+  // Attendance, Reports, Assignments, Standards) inherits this automatically.
+  if(DB.roomLocked) return DB.myClassId||'';
+  return document.getElementById('ctx-class').value||(DB.classes[0]?.id||'');
+}
 function getCtxTrimester(){return parseInt(document.getElementById('ctx-trimester').value)||3;}
 function populateContextSelects(){
   const tc=document.getElementById('ctx-teacher');
@@ -12935,6 +12979,15 @@ function lpNextWeek(){lpCurrentWeek=new Date(lpCurrentWeek);lpCurrentWeek.setDat
 
 function renderLessonPlan(){
   const classId=getCtxClass();const wsStr=lpCurrentWeek.toISOString().split('T')[0];
+  if(DB.roomLocked&&!classId){
+    document.getElementById('lp-week-label').textContent='';
+    document.getElementById('lp-day-headers').innerHTML='';
+    document.getElementById('lp-grid').innerHTML='<div class="empty-state" style="grid-column:1/-1">No room is linked to your account yet — contact your administrator.</div>';
+    const bar=document.getElementById('lp-submit-bar');if(bar)bar.innerHTML='';
+    const statusWrap=document.getElementById('lp-status-bar-wrap');if(statusWrap)statusWrap.innerHTML='';
+    const docs=document.getElementById('lp-week-docs');if(docs)docs.innerHTML='';
+    return;
+  }
   const endDate=new Date(lpCurrentWeek);endDate.setDate(endDate.getDate()+4);
   document.getElementById('lp-week-label').textContent=`Week ${getWeekNum(lpCurrentWeek)}: ${fmtShort(lpCurrentWeek)}–${fmtShort(endDate)} ${lpCurrentWeek.getFullYear()}`;
   document.getElementById('lp-day-headers').innerHTML=DAYS.map((day,i)=>{const d=new Date(lpCurrentWeek);d.setDate(d.getDate()+i);return`<div class="lp-col-header">${day}<br><span style="font-weight:400;font-size:.7rem;opacity:.75">${fmtShort(d)}</span></div>`;}).join('');
@@ -13423,71 +13476,80 @@ function renderReviewPage(){
   const wsStr=rvCurrentWeek.toISOString().split('T')[0];
   const endDate=new Date(rvCurrentWeek);endDate.setDate(endDate.getDate()+4);
   const due=dueDateStatus(wsStr);
-  document.getElementById('rv-week-label').textContent=`Week of ${fmtShort(rvCurrentWeek)}–${fmtShort(endDate)} ${rvCurrentWeek.getFullYear()}`;
-  document.getElementById('rv-due-display').innerHTML=`<span class="due-badge ${due.cls}">Due: ${lpDueDateStr(wsStr)}</span>`;
+  const wkLbl=document.getElementById('rv-week-label');
+  if(wkLbl)wkLbl.textContent=`Week of ${fmtShort(rvCurrentWeek)}–${fmtShort(endDate)} ${rvCurrentWeek.getFullYear()}`;
+  const dueEl=document.getElementById('rv-due-display');
+  if(dueEl)dueEl.innerHTML=`<span class="due-badge ${due.cls}">Due: ${lpDueDateStr(wsStr)}</span>`;
 
-  let html='';
-  DB.classes.forEach(cls=>{
-    const teacher=DB.teachers.find(t=>t.id===cls.teacherId);
-    const lw=getLW(cls.id,wsStr);
-    const sm=STATUS_META[lw.status]||STATUS_META.draft;
-    const blocks=DB.lessonBlocks.filter(b=>b.classId===cls.id&&b.weekStart===wsStr);
-    const totalBlocks=blocks.length;
-    const commentCount=Object.values(lw.comments).reduce((s,a)=>s+a.length,0);
-    const subOrder=['Circle Time','Phonics/Handwriting','Reading/Language Arts','Math','Project Based Learning'];
+  // Classroom dropdown — admin picks one room at a time instead of scrolling
+  // past every room stacked on one page.
+  const sel=document.getElementById('rv-class-select');
+  if(sel){
+    const prevVal=sel.value;
+    sel.innerHTML=DB.classes.map(c=>`<option value="${c.id}">${escH(c.name)}</option>`).join('');
+    if(prevVal&&DB.classes.some(c=>c.id===prevVal))sel.value=prevVal;
+    else if(DB.classes[0])sel.value=DB.classes[0].id;
+  }
+  const classId=sel?sel.value:(DB.classes[0]?.id||'');
+  const cls=DB.classes.find(c=>c.id===classId);
+  const content=document.getElementById('review-content');
+  if(!content)return;
+  if(!cls){content.innerHTML='<div class="card"><div class="empty-state">No classes found.</div></div>';return;}
 
-    // Build day columns for expanded view
-    const dayColsHtml=DAYS.map((_,dayIdx)=>{
-      if(lw.holidays.includes(dayIdx)){
-        const date=new Date(rvCurrentWeek);date.setDate(date.getDate()+dayIdx);
-        return`<div><div class="lp-col-header" style="font-size:.72rem">${DAYS[dayIdx]}<br><span style="font-weight:400;opacity:.7">${fmtShort(date)}</span></div><div style="background:var(--bpi-bistre-05);border:1.5px dashed var(--bpi-rule);border-radius:var(--radius-md);padding:20px 8px;text-align:center;margin-top:4px"><span style="font-size:.74rem;color:var(--bpi-ink-3);font-style:italic">🏖 Holiday</span></div></div>`;
-      }
-      const dayBlocks=blocks.filter(b=>b.dayIndex===dayIdx);
+  const teacher=DB.teachers.find(t=>t.id===cls.teacherId);
+  const lw=getLW(cls.id,wsStr);
+  const sm=STATUS_META[lw.status]||STATUS_META.draft;
+  const blocks=DB.lessonBlocks.filter(b=>b.classId===cls.id&&b.weekStart===wsStr);
+  const totalBlocks=blocks.length;
+  const commentCount=Object.values(lw.comments).reduce((s,a)=>s+a.length,0);
+  const subOrder=['Circle Time','Phonics/Handwriting','Reading/Language Arts','Math','Project Based Learning'];
+
+  const dayColsHtml=DAYS.map((_,dayIdx)=>{
+    if(lw.holidays.includes(dayIdx)){
       const date=new Date(rvCurrentWeek);date.setDate(date.getDate()+dayIdx);
-      const blocksHtml=subOrder.map(subj=>dayBlocks.filter(b=>b.subject===subj).map(b=>{
-        const comments=(lw.comments[b.id]||[]);
-        const commentBadge=comments.length?`<span style="font-size:.64rem;background:var(--bpi-harvest-gold);color:#fff;border-radius:10px;padding:1px 5px;margin-left:4px">${comments.length}</span>`:'';
-        const commentsHtml=comments.map(c=>`<div class="admin-comment-wrap"><div class="admin-comment-meta">${c.author} &middot; ${c.ts}</div>${escH(c.text)}</div>`).join('');
-        const stdTags=b.standardRefs.map(r=>`<span class="chip chip-std" style="font-size:.6rem">${r.grade}</span>`).join('');
-        const adminBtn=DB.role==='admin'?`<button class="btn btn-sm" style="font-size:.64rem;padding:2px 7px;margin-top:5px;background:var(--bpi-gold-10);border:1px solid var(--bpi-gold-20);color:var(--bpi-bistre)" onclick="openAdminCommentModal('${b.id}','${cls.id}','${wsStr}');event.stopPropagation()">＋ Comment${commentBadge}</button>`:(commentBadge?`<span style="font-size:.64rem;color:var(--bpi-ink-3)">${comments.length} comment(s)</span>`:'');
-        return`<div style="background:var(--bpi-paper);border:1px solid var(--bpi-rule);border-radius:var(--radius-sm);padding:7px 9px;margin-bottom:5px;font-size:.74rem">
-          <div style="font-weight:700;font-size:.72rem;color:var(--bpi-brown-sugar);text-transform:uppercase;letter-spacing:.05em">${b.subject}</div>
-          <div style="font-weight:600;margin:2px 0">${escH(b.title)}</div>
-          ${b.content?`<div style="font-size:.7rem;color:var(--bpi-ink-3);margin:2px 0">${escH(b.content.substring(0,80))}${b.content.length>80?'…':''}</div>`:''}
-          ${stdTags?`<div style="margin-top:3px">${stdTags}</div>`:''}
-          ${commentsHtml}
-          <div>${adminBtn}</div>
-        </div>`;
-      }).join('')).join('');
-      return`<div><div class="lp-col-header" style="font-size:.72rem">${DAYS[dayIdx]}<br><span style="font-weight:400;opacity:.7">${fmtShort(date)}</span></div><div style="margin-top:4px">${blocksHtml||'<div style="font-size:.72rem;color:var(--bpi-bistre-20);font-style:italic;padding:8px 4px">No activities</div>'}</div></div>`;
-    }).join('');
+      return`<div><div class="lp-col-header" style="font-size:.72rem">${DAYS[dayIdx]}<br><span style="font-weight:400;opacity:.7">${fmtShort(date)}</span></div><div style="background:var(--bpi-bistre-05);border:1.5px dashed var(--bpi-rule);border-radius:var(--radius-md);padding:20px 8px;text-align:center;margin-top:4px"><span style="font-size:.74rem;color:var(--bpi-ink-3);font-style:italic">🏖 Holiday</span></div></div>`;
+    }
+    const dayBlocks=blocks.filter(b=>b.dayIndex===dayIdx);
+    const date=new Date(rvCurrentWeek);date.setDate(date.getDate()+dayIdx);
+    const blocksHtml=subOrder.map(subj=>dayBlocks.filter(b=>b.subject===subj).map(b=>{
+      const comments=(lw.comments[b.id]||[]);
+      const commentBadge=comments.length?`<span style="font-size:.64rem;background:var(--bpi-harvest-gold);color:#fff;border-radius:10px;padding:1px 5px;margin-left:4px">${comments.length}</span>`:'';
+      const commentsHtml=comments.map(c=>`<div class="admin-comment-wrap"><div class="admin-comment-meta">${c.author} &middot; ${c.ts}</div>${escH(c.text)}</div>`).join('');
+      const stdTags=b.standardRefs.map(r=>`<span class="chip chip-std" style="font-size:.6rem">${r.grade}</span>`).join('');
+      const adminBtn=DB.role==='admin'?`<button class="btn btn-sm" style="font-size:.64rem;padding:2px 7px;margin-top:5px;background:var(--bpi-gold-10);border:1px solid var(--bpi-gold-20);color:var(--bpi-bistre)" onclick="openAdminCommentModal('${b.id}','${cls.id}','${wsStr}');event.stopPropagation()">＋ Comment${commentBadge}</button>`:(commentBadge?`<span style="font-size:.64rem;color:var(--bpi-ink-3)">${comments.length} comment(s)</span>`:'');
+      return`<div style="background:var(--bpi-paper);border:1px solid var(--bpi-rule);border-radius:var(--radius-sm);padding:7px 9px;margin-bottom:5px;font-size:.74rem">
+        <div style="font-weight:700;font-size:.72rem;color:var(--bpi-brown-sugar);text-transform:uppercase;letter-spacing:.05em">${b.subject}</div>
+        <div style="font-weight:600;margin:2px 0">${escH(b.title)}</div>
+        ${b.content?`<div style="font-size:.7rem;color:var(--bpi-ink-3);margin:2px 0">${escH(b.content.substring(0,80))}${b.content.length>80?'…':''}</div>`:''}
+        ${stdTags?`<div style="margin-top:3px">${stdTags}</div>`:''}
+        ${commentsHtml}
+        <div>${adminBtn}</div>
+      </div>`;
+    }).join('')).join('');
+    return`<div><div class="lp-col-header" style="font-size:.72rem">${DAYS[dayIdx]}<br><span style="font-weight:400;opacity:.7">${fmtShort(date)}</span></div><div style="margin-top:4px">${blocksHtml||'<div style="font-size:.72rem;color:var(--bpi-bistre-20);font-style:italic;padding:8px 4px">No activities</div>'}</div></div>`;
+  }).join('');
 
-    const adminActions=DB.role==='admin'&&lw.status==='pending'?`
-      <div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bpi-rule)">
-        <button class="btn btn-sm" style="background:var(--intent-danger);color:#fff" onclick="setLPStatusFor('${cls.id}','${wsStr}','revisions')">Request Revisions</button>
-        <button class="btn btn-sm" style="background:var(--intent-success);color:#fff" onclick="setLPStatusFor('${cls.id}','${wsStr}','approved')">Approve Plan</button>
-      </div>`:'';
+  const adminActions=DB.role==='admin'&&lw.status==='pending'?`
+    <div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bpi-rule)">
+      <button class="btn btn-sm" style="background:var(--intent-danger);color:#fff" onclick="setLPStatusFor('${cls.id}','${wsStr}','revisions')">Request Revisions</button>
+      <button class="btn btn-sm" style="background:var(--intent-success);color:#fff" onclick="setLPStatusFor('${cls.id}','${wsStr}','approved')">Approve Plan</button>
+    </div>`:'';
 
-    html+=`<div class="review-class-card">
-      <div class="review-card-header" onclick="toggleReviewCard('rv-body-${cls.id}',this)">
-        <div style="flex:1">
-          <div style="font-family:var(--font-display);font-weight:700;font-size:.95rem;color:var(--bpi-bistre)">${escH(cls.name)}</div>
-          <div style="font-size:.74rem;color:var(--bpi-ink-3);margin-top:2px">${escH(teacher?.name||'No teacher')} &middot; ${totalBlocks} activit${totalBlocks===1?'y':'ies'}${commentCount?' &middot; '+commentCount+' comment'+(commentCount>1?'s':''):''}</div>
-        </div>
-        <span class="status-chip ${sm.cls}">${sm.icon} ${sm.label}</span>
-        <svg style="margin-left:8px;transition:transform 200ms" class="rv-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  content.innerHTML=`<div class="review-class-card">
+    <div class="review-card-header">
+      <div style="flex:1">
+        <div style="font-family:var(--font-display);font-weight:700;font-size:1rem;color:var(--bpi-bistre)">${escH(cls.name)}</div>
+        <div style="font-size:.78rem;color:var(--bpi-ink-3);margin-top:2px">${escH(teacher?.name||'No teacher')} &middot; ${totalBlocks} activit${totalBlocks===1?'y':'ies'}${commentCount?' &middot; '+commentCount+' comment'+(commentCount>1?'s':''):''}</div>
       </div>
-      <div class="review-card-body" id="rv-body-${cls.id}">
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
-          ${dayColsHtml}
-        </div>
-        ${adminActions}
+      <span class="status-chip ${sm.cls}">${sm.icon} ${sm.label}</span>
+    </div>
+    <div class="review-card-body open" style="display:block">
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
+        ${dayColsHtml}
       </div>
-    </div>`;
-  });
-
-  if(!html)html='<div class="card"><div class="empty-state">No classes found.</div></div>';
-  document.getElementById('review-content').innerHTML=html;
+      ${adminActions}
+    </div>
+  </div>`;
 }
 
 function toggleReviewCard(bodyId,header){
@@ -13892,18 +13954,21 @@ function deleteStudent(id){if(!confirm('Delete student?'))return;DB.students=DB.
 function renderTeachers(){
   const q=(document.getElementById('teacher-search')?.value||'').toLowerCase();
   let teachers=DB.teachers;if(q)teachers=teachers.filter(t=>t.name.toLowerCase().includes(q)||t.title?.toLowerCase().includes(q));
-  document.getElementById('teachers-tbody').innerHTML=teachers.map(t=>{const classes=DB.classes.filter(c=>c.teacherId===t.id).map(c=>c.name).join(', ')||'—';return`<tr><td><strong>${t.name}</strong></td><td style="color:var(--bpi-ink-2);font-size:.81rem">${t.title||'—'}</td><td style="font-size:.8rem">${classes}</td><td><button class="btn btn-secondary btn-sm" onclick="openTeacherModal('${t.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteTeacher('${t.id}')">Delete</button></td></tr>`;}).join('')||'<tr><td colspan="4" class="empty-state">No teachers found</td></tr>';
+  document.getElementById('teachers-tbody').innerHTML=teachers.map(t=>{const classes=DB.classes.filter(c=>c.teacherId===t.id).map(c=>c.name).join(', ')||'—';return`<tr><td><strong>${t.name}</strong></td><td style="color:var(--bpi-ink-2);font-size:.81rem">${t.title||'—'}</td><td style="font-size:.8rem">${t.email?escH(t.email):'<span style="color:var(--bpi-ink-3);font-style:italic">not linked</span>'}</td><td style="font-size:.8rem">${classes}</td><td><button class="btn btn-secondary btn-sm" onclick="openTeacherModal('${t.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteTeacher('${t.id}')">Delete</button></td></tr>`;}).join('')||'<tr><td colspan="5" class="empty-state">No teachers found</td></tr>';
 }
 function openTeacherModal(id){
   const t=id?DB.teachers.find(x=>x.id===id):null;
   showModal(`<div class="modal-title">${t?'Edit':'Add'} Teacher</div>
     <div class="form-row cols-2"><div><label>Full Name</label><input type="text" id="tc-name" value="${t?escH(t.name):''}"></div><div><label>Title</label><input type="text" id="tc-title" value="${t?escH(t.title||''):''}"></div></div>
+    <div class="form-row"><label>Login Email</label><input type="email" id="tc-email" placeholder="must match their Supabase login email" value="${t?escH(t.email||''):''}"></div>
+    <div style="font-size:.74rem;color:var(--bpi-ink-3);margin-top:-8px;margin-bottom:10px">Used to automatically show this teacher only their own room in Lesson Plans and Attendance. Must exactly match the email they log in with.</div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveTeacher('${id||''}')">Save</button></div>`);
 }
 function saveTeacher(id){
-  const name=document.getElementById('tc-name').value.trim();const title=document.getElementById('tc-title').value.trim();if(!name){alert('Enter a name');return;}
+  const name=document.getElementById('tc-name').value.trim();const title=document.getElementById('tc-title').value.trim();const email=(document.getElementById('tc-email')?.value||'').trim().toLowerCase();if(!name){alert('Enter a name');return;}
+  if(email&&DB.teachers.some(x=>x.id!==id&&(x.email||'').toLowerCase()===email)){alert('Another teacher is already linked to that email.');return;}
   let t;
-  if(id){t=DB.teachers.find(x=>x.id===id);t.name=name;t.title=title;}else{t={id:newId(),name,title};DB.teachers.push(t);}
+  if(id){t=DB.teachers.find(x=>x.id===id);t.name=name;t.title=title;t.email=email;}else{t={id:newId(),name,title,email};DB.teachers.push(t);}
   sbUpsert('teachers',T.teachers.toRow(t));
   closeModal();renderTeachers();populateContextSelects();toast('Teacher saved');
 }
@@ -14304,6 +14369,14 @@ function attNextDay(){
 function renderAttendance(){
   const classId=getCtxClass();
   const dateStr=attCurrentDate.toISOString().split('T')[0];
+  if(DB.roomLocked&&!classId){
+    const grid=document.getElementById('att-grid');
+    if(grid) grid.innerHTML='<div class="empty-state">No room is linked to your account yet — contact your administrator.</div>';
+    const lbl0=document.getElementById('att-date-label');if(lbl0)lbl0.textContent='';
+    const badge0=document.getElementById('att-status-badge');if(badge0)badge0.textContent='';
+    const submitBtn0=document.getElementById('att-submit-btn');if(submitBtn0)submitBtn0.disabled=true;
+    return;
+  }
   const lbl=document.getElementById('att-date-label');
   if(lbl) lbl.textContent=attCurrentDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   const att=getAtt(classId,dateStr);
@@ -14396,7 +14469,15 @@ function submitAttendance(){
 // ═══════════════════════════════════════════════════════════════
 // TEACHER DASHBOARD (enhanced)
 // ═══════════════════════════════════════════════════════════════
-function renderDashboard(){
+// NOTE: renamed from renderDashboard → renderTeacherDashboard. Two
+// `function renderDashboard(){}` declarations used to exist in this same
+// scope (this one, plus the role-branching override below) — JS hoists
+// same-name function declarations to whichever is declared LAST, so
+// `const _prevRenderDash = renderDashboard` below was already binding to
+// the override itself, not this original. Any teacher landing on the
+// Dashboard blew the call stack (infinite self-recursion). Fixed by
+// giving this one its own name so the alias below is unambiguous.
+function renderTeacherDashboard(){
   const classId=getCtxClass();
   const cls=DB.classes.find(c=>c.id===classId);
   const isTeacher=DB.role==='teacher';
@@ -15730,11 +15811,11 @@ function _buildAdminProfileBody(s,cls,asns,prof,avg,score,missing,abs,tard){
   </div>`;
 }
 
-// override renderDashboard to branch on role
-const _prevRenderDash=renderDashboard;
+// renderDashboard branches on role: admin gets the schoolwide dashboard,
+// teacher gets their own room's dashboard (renderTeacherDashboard above).
 function renderDashboard(){
   if(DB.role==='admin'){renderAdminDashboard();}
-  else{_prevRenderDash();}
+  else{renderTeacherDashboard();}
 }
 
 
@@ -15776,6 +15857,25 @@ async function instBootstrap(loginRole) {
   }
   var role = (loginRole==='teacher'||loginRole==='operations') ? 'teacher' : 'admin';
   DB.role = role;
+
+  // Resolve this teacher's own room: match the signed-in email against
+  // teachers.email, then find the one class owned by that teacher.
+  // Only in live Supabase mode — demo/legacy mode (no keys configured yet)
+  // keeps the old unrestricted picker behavior since there's no real login
+  // email to match against.
+  DB.myTeacherId = null;
+  DB.myClassId = null;
+  DB.roomLocked = sbOn() && role === 'teacher';
+  if (DB.roomLocked && DB.myEmail) {
+    var myEmailLc = DB.myEmail.trim().toLowerCase();
+    var myTeacher = (DB.teachers||[]).find(function(t){ return (t.email||'').trim().toLowerCase() === myEmailLc; });
+    if (myTeacher) {
+      DB.myTeacherId = myTeacher.id;
+      var myClass = (DB.classes||[]).find(function(c){ return c.teacherId === myTeacher.id; });
+      if (myClass) DB.myClassId = myClass.id;
+    }
+  }
+
   if (typeof instSetRole === 'function') instSetRole(role);
   if (typeof populateContextSelects === 'function') populateContextSelects();
   instPopulateCtx();
@@ -15786,7 +15886,37 @@ async function instBootstrap(loginRole) {
   document.querySelectorAll('.inst-admin-only').forEach(function(el) {
     el.style.display = role === 'admin' ? '' : 'none';
   });
+  // Teacher accounts: hide the teacher/class pickers and swap in a static
+  // room label instead — the underlying selectors are irrelevant once
+  // getCtxClass() ignores them, but leaving them visible+editable would be
+  // confusing (looks like it does something; it doesn't).
+  applyTeacherRoomLock();
   // Do NOT auto-navigate — login always lands on Dashboard regardless of role
+}
+
+function applyTeacherRoomLock() {
+  var locked = DB.roomLocked;
+  ['ctx-teacher','ctx-class','ctx-teacher-gb','ctx-class-gradebook'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.style.display = locked ? 'none' : '';
+  });
+  if (locked) {
+    // Keep the underlying selects' values correct too, in case any older
+    // code path reads .value directly instead of going through getCtxClass().
+    var cc = document.getElementById('ctx-class');
+    var ccgb = document.getElementById('ctx-class-gradebook');
+    if (cc && DB.myClassId) cc.value = DB.myClassId;
+    if (ccgb && DB.myClassId) ccgb.value = DB.myClassId;
+  }
+  var roomName = '';
+  if (locked && DB.myClassId) {
+    var myClass = (DB.classes||[]).find(function(c){ return c.id === DB.myClassId; });
+    roomName = myClass ? myClass.name : '';
+  }
+  document.querySelectorAll('.ctx-room-label').forEach(function(el){
+    el.style.display = locked ? '' : 'none';
+    if (locked) el.textContent = roomName ? ('Room: ' + roomName) : 'No room linked — contact your administrator';
+  });
 }
 
 /* ── showInstSection: called from sidebar items ── */
