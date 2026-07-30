@@ -10029,9 +10029,14 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
           <button class="inst-anav-btn inst-admin-only" onclick="instSectionNav('lesson-plans','overview',this)" style="display:none;">Overview</button>
           <button class="inst-anav-btn inst-admin-only" onclick="instSectionNav('lesson-plans','compliance',this)" style="display:none;">Compliance</button>
           <div style="margin-left:auto;display:flex;align-items:center;gap:8px;padding:8px 0;flex-shrink:0;">
-            <span class="ctx-room-label" style="display:none;font-size:.75rem;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--bpi-bistre-10);color:var(--bpi-bistre);border:1px solid var(--bpi-bistre-20);"></span>
-            <select id="ctx-teacher" onchange="instOnCtxChange()" style="font-size:.75rem;padding:4px 8px;border:1px solid var(--bpi-bistre-20);border-radius:var(--radius-sm);background:var(--bg-1);color:var(--bpi-ink);max-width:130px;"></select>
-            <select id="ctx-class" onchange="instOnCtxChange()" style="font-size:.75rem;padding:4px 8px;border:1px solid var(--bpi-bistre-20);border-radius:var(--radius-sm);background:var(--bg-1);color:var(--bpi-ink);max-width:160px;"></select>
+            <span class="ctx-room-label" style="font-size:.75rem;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--bpi-bistre-10);color:var(--bpi-bistre);border:1px solid var(--bpi-bistre-20);"></span>
+            <!-- Classroom pickers: hidden site-wide by design — the only place anyone
+                 picks a classroom is the Weekly Review dropdown (admin-only). These
+                 selects still exist and still drive getCtxClass() under the hood
+                 (kept in sync from Weekly Review via rvOnClassChange()); they're just
+                 never shown. -->
+            <select id="ctx-teacher" onchange="instOnCtxChange()" style="display:none;"></select>
+            <select id="ctx-class" onchange="instOnCtxChange()" style="display:none;"></select>
             <select id="ctx-trimester" onchange="instOnCtxChange()" style="font-size:.75rem;padding:4px 8px;border:1px solid var(--bpi-bistre-20);border-radius:var(--radius-sm);background:var(--bg-1);color:var(--bpi-ink);">
               <option value="1">T1</option><option value="2">T2</option><option value="3" selected>T3</option>
             </select>
@@ -10047,9 +10052,9 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
           <button class="inst-anav-btn" onclick="instSectionNav('gradebook','attendance',this)">Attendance</button>
           <button class="inst-anav-btn inst-admin-only" onclick="instSectionNav('gradebook','dashboard',this)" style="display:none;">Dashboard</button>
           <div style="margin-left:auto;display:flex;align-items:center;gap:8px;padding:8px 0;flex-shrink:0;">
-            <span class="ctx-room-label" style="display:none;font-size:.75rem;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--bpi-bistre-10);color:var(--bpi-bistre);border:1px solid var(--bpi-bistre-20);"></span>
-            <select id="ctx-teacher-gb" onchange="instOnCtxChange()" style="font-size:.75rem;padding:4px 8px;border:1px solid var(--bpi-bistre-20);border-radius:var(--radius-sm);background:var(--bg-1);color:var(--bpi-ink);max-width:130px;"></select>
-            <select id="ctx-class-gradebook" onchange="instSyncCtx()" style="font-size:.75rem;padding:4px 8px;border:1px solid var(--bpi-bistre-20);border-radius:var(--radius-sm);background:var(--bg-1);color:var(--bpi-ink);max-width:160px;"></select>
+            <span class="ctx-room-label" style="font-size:.75rem;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--bpi-bistre-10);color:var(--bpi-bistre);border:1px solid var(--bpi-bistre-20);"></span>
+            <select id="ctx-teacher-gb" onchange="instOnCtxChange()" style="display:none;"></select>
+            <select id="ctx-class-gradebook" onchange="instSyncCtx()" style="display:none;"></select>
             <select id="ctx-trimester-gradebook" onchange="instSyncCtx()" style="font-size:.75rem;padding:4px 8px;border:1px solid var(--bpi-bistre-20);border-radius:var(--radius-sm);background:var(--bg-1);color:var(--bpi-ink);">
               <option value="1">T1</option><option value="2">T2</option><option value="3" selected>T3</option>
             </select>
@@ -10105,7 +10110,7 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
       <span class="week-label" id="rv-week-label"></span>
       <button onclick="rvNextWeek()">&#8594;</button>
     </div>
-    <select id="rv-class-select" onchange="renderReviewPage()" style="font-family:var(--font-body);font-size:.8rem;padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);background:#fff;color:var(--bpi-ink);cursor:pointer;max-width:240px;"></select>
+    <select id="rv-class-select" onchange="rvOnClassChange()" style="font-family:var(--font-body);font-size:.8rem;padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);background:#fff;color:var(--bpi-ink);cursor:pointer;max-width:240px;"></select>
     <div id="rv-due-display"></div>
   </div>
   <div id="review-content"></div>
@@ -12942,6 +12947,24 @@ function instNav(page){
   if(instSidebar) instSidebar.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+page+"'"))n.classList.add('active');});
   if(page==='review'){rvCurrentWeek=new Date(lpCurrentWeek);}
   ({dashboard:renderDashboard,lessonplan:renderLessonPlan,gradebook:renderGradebook,reports:initReportCards,students:renderStudents,teachers:renderTeachers,classes:renderClasses,standards:renderStandards,review:renderReviewPage,attendance:renderAttendance,profiles:renderProfiles,overview:renderAdminDashboard,compliance:renderCompliance,oversight:renderOversight,stdreport:renderStandardsReport,adminprofiles:renderAdminProfiles,adminreports:renderAdminReports})[page]?.();
+  updateRoomLabel();
+}
+
+// The classroom-name chip shown in the Lesson Plans / Gradebook nav bars,
+// now that there's no visible dropdown there to imply it. Reflects
+// whatever getCtxClass() currently resolves to for EITHER role — for a
+// room-locked teacher that's always their own room; for admin it's
+// whatever they last picked in the Weekly Review dropdown (or the first
+// class, before they've picked anything).
+function updateRoomLabel(){
+  if(typeof DB==='undefined')return;
+  const classId=getCtxClass();
+  const cls=(DB.classes||[]).find(c=>c.id===classId);
+  let text;
+  if(cls) text='Room: '+cls.name;
+  else if(DB.roomLocked) text='No room linked — contact your administrator';
+  else text='No room selected';
+  document.querySelectorAll('.ctx-room-label').forEach(function(el){ el.textContent=text; });
 }
 
 function getCtxClass(){
@@ -13471,6 +13494,23 @@ let rvCurrentWeek=new Date();
 
 function rvPrevWeek(){rvCurrentWeek=new Date(rvCurrentWeek);rvCurrentWeek.setDate(rvCurrentWeek.getDate()-7);renderReviewPage();}
 function rvNextWeek(){rvCurrentWeek=new Date(rvCurrentWeek);rvCurrentWeek.setDate(rvCurrentWeek.getDate()+7);renderReviewPage();}
+
+// Weekly Review's dropdown is now the ONLY visible classroom picker on the
+// whole site (admin-only). Selecting a room here also becomes the shared
+// site-wide classroom context (the hidden #ctx-class / #ctx-class-gradebook
+// selects that getCtxClass() reads), so if admin then navigates to Plans,
+// Grades, or Attendance, they land on the same room they just picked here.
+function rvOnClassChange(){
+  const sel=document.getElementById('rv-class-select');
+  const cc=document.getElementById('ctx-class');
+  const ccgb=document.getElementById('ctx-class-gradebook');
+  if(sel){
+    if(cc)cc.value=sel.value;
+    if(ccgb)ccgb.value=sel.value;
+  }
+  renderReviewPage();
+  updateRoomLabel();
+}
 
 function renderReviewPage(){
   const wsStr=rvCurrentWeek.toISOString().split('T')[0];
@@ -15894,29 +15934,21 @@ async function instBootstrap(loginRole) {
   // Do NOT auto-navigate — login always lands on Dashboard regardless of role
 }
 
+// Classroom pickers (#ctx-teacher, #ctx-class, #ctx-teacher-gb,
+// #ctx-class-gradebook) are hidden site-wide in the HTML itself now — the
+// only visible classroom picker anywhere is the Weekly Review dropdown
+// (admin-only). This function just keeps the hidden selects' *values*
+// correct for a room-locked teacher, in case any code path reads
+// .value directly instead of going through getCtxClass(); the visible
+// room-name chip is handled separately by updateRoomLabel().
 function applyTeacherRoomLock() {
-  var locked = DB.roomLocked;
-  ['ctx-teacher','ctx-class','ctx-teacher-gb','ctx-class-gradebook'].forEach(function(id){
-    var el = document.getElementById(id);
-    if (el) el.style.display = locked ? 'none' : '';
-  });
-  if (locked) {
-    // Keep the underlying selects' values correct too, in case any older
-    // code path reads .value directly instead of going through getCtxClass().
+  if (DB.roomLocked && DB.myClassId) {
     var cc = document.getElementById('ctx-class');
     var ccgb = document.getElementById('ctx-class-gradebook');
-    if (cc && DB.myClassId) cc.value = DB.myClassId;
-    if (ccgb && DB.myClassId) ccgb.value = DB.myClassId;
+    if (cc) cc.value = DB.myClassId;
+    if (ccgb) ccgb.value = DB.myClassId;
   }
-  var roomName = '';
-  if (locked && DB.myClassId) {
-    var myClass = (DB.classes||[]).find(function(c){ return c.id === DB.myClassId; });
-    roomName = myClass ? myClass.name : '';
-  }
-  document.querySelectorAll('.ctx-room-label').forEach(function(el){
-    el.style.display = locked ? '' : 'none';
-    if (locked) el.textContent = roomName ? ('Room: ' + roomName) : 'No room linked — contact your administrator';
-  });
+  updateRoomLabel();
 }
 
 /* ── showInstSection: called from sidebar items ── */
