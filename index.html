@@ -10037,7 +10037,12 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
                  never shown. -->
             <select id="ctx-teacher" onchange="instOnCtxChange()" style="display:none;"></select>
             <select id="ctx-class" onchange="instOnCtxChange()" style="display:none;"></select>
-            <select id="ctx-trimester" onchange="instOnCtxChange()" style="font-size:.75rem;padding:4px 8px;border:1px solid var(--bpi-bistre-20);border-radius:var(--radius-sm);background:var(--bg-1);color:var(--bpi-ink);">
+            <!-- Trimester picker removed from this page per request — the only
+                 place trimester is still chosen is the gradebook assignment
+                 editor (#asn-trimester). This select stays in the DOM (hidden)
+                 since getCtxTrimester()/instSyncCtx() still read it; it's
+                 just never shown, so it stays fixed at its default (T3). -->
+            <select id="ctx-trimester" onchange="instOnCtxChange()" style="display:none;">
               <option value="1">T1</option><option value="2">T2</option><option value="3" selected>T3</option>
             </select>
             <div id="inst-role-badge" style="font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:20px;background:var(--bpi-bistre-10);color:var(--bpi-bistre);border:1px solid var(--bpi-bistre-20);"></div>
@@ -10055,7 +10060,7 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
             <span class="ctx-room-label" style="font-size:.75rem;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--bpi-bistre-10);color:var(--bpi-bistre);border:1px solid var(--bpi-bistre-20);"></span>
             <select id="ctx-teacher-gb" onchange="instOnCtxChange()" style="display:none;"></select>
             <select id="ctx-class-gradebook" onchange="instSyncCtx()" style="display:none;"></select>
-            <select id="ctx-trimester-gradebook" onchange="instSyncCtx()" style="font-size:.75rem;padding:4px 8px;border:1px solid var(--bpi-bistre-20);border-radius:var(--radius-sm);background:var(--bg-1);color:var(--bpi-ink);">
+            <select id="ctx-trimester-gradebook" onchange="instSyncCtx()" style="display:none;">
               <option value="1">T1</option><option value="2">T2</option><option value="3" selected>T3</option>
             </select>
           </div>
@@ -12573,7 +12578,18 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
     // Stash the login email — used to resolve this teacher's own room
     // (teachers.email match) once instBootstrap runs.
     DB.myEmail = email;
-    await finishLogin(profRes.data.role, profRes.data.full_name || email.split('@')[0]);
+    // Display name: prefer the LIVE full_name from Supabase Auth's own user
+    // record (Authentication → Users → [user] → User Metadata → full_name),
+    // not the profiles.full_name copy. profiles.full_name is only ever set
+    // once, by the on-signup trigger in schema.sql, at the moment the
+    // account is first created — editing "User Metadata" in the dashboard
+    // afterward does NOT update profiles.full_name (no trigger fires on
+    // update), so it goes stale the moment an admin corrects a name there.
+    // signInRes.data.user.user_metadata mirrors auth.users.raw_user_meta_data
+    // for the current session, so this is always in sync with the dashboard.
+    var metaFullName = signInRes.data.user?.user_metadata?.full_name;
+    var displayName = (metaFullName && metaFullName.trim()) || profRes.data.full_name || email.split('@')[0];
+    await finishLogin(profRes.data.role, displayName);
   }
 
   /* ── Fallback path: used only when Supabase isn't configured yet.
@@ -12788,8 +12804,14 @@ const T = {
   },
   lesson_weeks: {
     // keyed by "classId||weekStart" in DB.lessonWeeks — toRow needs both parts passed in explicitly
-    toRow:   (classId, wsStr, lw) => ({ class_id:classId, week_start:wsStr, status:lw.status||'draft', comments:lw.comments||{}, holidays:lw.holidays||[] }),
-    fromRow: r => ({ status:r.status||'draft', comments:r.comments||{}, holidays:r.holidays||[] }),
+    // REQUIRES a one-time migration adding a `docs` jsonb column to
+    // lesson_weeks (Week Documents links weren't persisted at all before —
+    // this both adds and finally FIXES that). Run the migration before
+    // shipping this file, or every lesson_weeks save (status, holidays,
+    // comments — not just docs) will fail with a "column docs does not
+    // exist" error until it's run.
+    toRow:   (classId, wsStr, lw) => ({ class_id:classId, week_start:wsStr, status:lw.status||'draft', comments:lw.comments||{}, holidays:lw.holidays||[], docs:lw.docs||{} }),
+    fromRow: r => ({ status:r.status||'draft', comments:r.comments||{}, holidays:r.holidays||[], docs:r.docs||{} }),
   },
   student_profiles: {
     toRow:   (studentId, p) => ({ student_id:studentId, intervention_notes:p.interventionNotes||null, teacher_comments:p.teacherComments||null, parent_notes:p.parentNotes||null }),
@@ -13091,23 +13113,7 @@ function openBlockModal(dayIdx){
       </div>
       <div style="max-height:160px;overflow-y:auto;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);padding:10px" id="blk-std-wrap">${buildStdCheckboxes(classId,[])}</div>
     </div>
-    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bpi-rule)">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <span style="font-weight:700;font-size:.84rem;color:var(--bpi-bistre)">Attachments</span>
-        <div style="display:flex;gap:6px">
-          <label class="btn btn-secondary btn-sm" style="cursor:pointer">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            Upload File
-            <input type="file" multiple style="display:none" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.mp4,.mov" onchange="blkAddFiles(event)">
-          </label>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="blkAddLink()">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-            Add Link
-          </button>
-        </div>
-      </div>
-      <div id="blk-attach-list"></div>
-    </div>
+    ${blkAttachSectionHtml('')}
     <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bpi-rule)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <span style="font-weight:700;font-size:.84rem;color:var(--bpi-bistre)">Graded Assignments</span>
@@ -13250,23 +13256,7 @@ function editBlockModal(blockId){
       </div>
       <div style="max-height:220px;overflow-y:auto;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);padding:10px" id="blk-std-wrap">${buildStdCheckboxes(getCtxClass(),b.standardRefs)}</div>
     </div>
-    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bpi-rule)">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <span style="font-weight:700;font-size:.84rem;color:var(--bpi-bistre)">Attachments</span>
-        <div style="display:flex;gap:6px">
-          <label class="btn btn-secondary btn-sm" style="cursor:pointer">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            Upload File
-            <input type="file" multiple style="display:none" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.mp4,.mov" onchange="blkAddFiles(event)">
-          </label>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="blkAddLink()">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-            Add Link
-          </button>
-        </div>
-      </div>
-      <div id="blk-attach-list">${buildAttachHtml(b.attachments||[])}</div>
-    </div>
+    ${blkAttachSectionHtml(buildAttachHtml(b.attachments||[]))}
     <div class="modal-footer"><button class="btn btn-danger btn-sm" onclick="deleteBlock('${blockId}')">Delete</button><button class="btn btn-secondary" onclick="openCopyBlockModal('${blockId}')">Copy to Day&hellip;</button><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveBlock('${blockId}')">Save</button></div>`);
   blkAttachInit(b.attachments||[]);
 }
@@ -13317,7 +13307,8 @@ function saveBlock(existingId){
 function lwKey(classId,wsStr){return classId+'||'+wsStr;}
 function getLW(classId,wsStr){
   const k=lwKey(classId,wsStr);
-  if(!DB.lessonWeeks[k])DB.lessonWeeks[k]={status:'draft',comments:{},holidays:[]};
+  if(!DB.lessonWeeks[k])DB.lessonWeeks[k]={status:'draft',comments:{},holidays:[],docs:{}};
+  if(!DB.lessonWeeks[k].docs)DB.lessonWeeks[k].docs={}; // back-compat for weeks loaded before `docs` existed
   return DB.lessonWeeks[k];
 }
 
@@ -13459,13 +13450,10 @@ function openAdminCommentModal(blockId,classId,wsStr){
     <div style="margin-top:${existing.length?'12px':'0'}">
       <label style="font-size:.78rem;font-weight:600;margin-bottom:6px;display:block">Add Comment</label>
       <textarea id="admin-comment-text" rows="3" placeholder="Note for the teacher about this activity…" style="width:100%;font-family:var(--font-body);padding:8px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);font-size:.84rem;resize:vertical"></textarea>
-      <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
-        <label class="btn btn-secondary btn-sm" style="cursor:pointer">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Attach File
-          <input type="file" multiple style="display:none" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" onchange="commentAddFiles(event)">
-        </label>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="commentAddLink()">
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center">
+        <input type="url" id="comment-link-url" placeholder="https://…" style="flex:2;min-width:140px;font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);font-size:.8rem">
+        <input type="text" id="comment-link-title" placeholder="Link title" style="flex:1;min-width:100px;font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);font-size:.8rem">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="commentAddLink()" style="flex-shrink:0">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
           Add Link
         </button>
@@ -14201,26 +14189,23 @@ function renderWeekDocs(){
 
   DOC_SLOTS.forEach(slot=>{
     const doc=lw.docs[slot.key];
-    const hasFile=!!(doc&&doc.name);
-    html+=`<div class="doc-slot ${hasFile?'has-file':''}">
+    const hasLink=!!(doc&&doc.url);
+    html+=`<div class="doc-slot ${hasLink?'has-file':''}">
       <div class="doc-slot-label">${slot.icon} ${slot.label}</div>`;
-    if(hasFile){
-      html+=`<div class="doc-slot-name" title="${escH(doc.name)}">${escH(doc.name)}</div>
+    if(hasLink){
+      html+=`<div class="doc-slot-name" title="${escH(doc.url)}"><a href="${escH(doc.url)}" target="_blank" rel="noopener">${escH(doc.name||doc.url)}</a></div>
         <div class="doc-slot-actions">
-          <a class="doc-download-link" href="${doc.dataUrl}" download="${escH(doc.name)}">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Download
-          </a>
           <button class="doc-remove-btn" onclick="removeWeekDoc('${classId}','${wsStr}','${slot.key}')">Remove</button>
         </div>`;
     } else {
-      html+=`<div class="doc-empty-hint">No file uploaded</div>
-        <div class="doc-slot-actions">
-          <label class="doc-upload-btn">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            Upload
-            <input type="file" style="display:none" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" onchange="handleWeekDocUpload(event,'${classId}','${wsStr}','${slot.key}')">
-          </label>
+      html+=`<div class="doc-empty-hint">No link added</div>
+        <div class="doc-slot-actions" style="display:flex;flex-direction:column;gap:4px;width:100%">
+          <input type="url" id="doc-url-${slot.key}" placeholder="https://…" style="width:100%;font-family:var(--font-body);padding:5px 8px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-sm);font-size:.74rem">
+          <input type="text" id="doc-title-${slot.key}" placeholder="Link title" style="width:100%;font-family:var(--font-body);padding:5px 8px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-sm);font-size:.74rem">
+          <button class="doc-upload-btn" onclick="handleWeekDocLink('${classId}','${wsStr}','${slot.key}')" style="justify-content:center">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+            Add Link
+          </button>
         </div>`;
     }
     html+=`</div>`;
@@ -14230,26 +14215,28 @@ function renderWeekDocs(){
   wrap.innerHTML=html;
 }
 
-function handleWeekDocUpload(event,classId,wsStr,slotKey){
-  const file=event.target.files[0]; if(!file)return;
-  const maxMB=10;
-  if(file.size>maxMB*1024*1024){toast('File too large (max 10 MB)');return;}
-  const reader=new FileReader();
-  reader.onload=function(e){
-    const lw=getLW(classId,wsStr);
-    if(!lw.docs)lw.docs={};
-    lw.docs[slotKey]={name:file.name, dataUrl:e.target.result, uploadedAt:new Date().toLocaleString()};
-    renderWeekDocs();
-    toast('File uploaded!');
-  };
-  reader.readAsDataURL(file);
+function handleWeekDocLink(classId,wsStr,slotKey){
+  const urlInput=document.getElementById('doc-url-'+slotKey);
+  const titleInput=document.getElementById('doc-title-'+slotKey);
+  const url=(urlInput?.value||'').trim();
+  let title=(titleInput?.value||'').trim();
+  if(!url){toast('Enter a URL first');return;}
+  if(!/^https?:\/\//i.test(url)){toast('URL must start with http:// or https://');return;}
+  if(!title)title=url.replace(/^https?:\/\//,'').split('/')[0];
+  const lw=getLW(classId,wsStr);
+  if(!lw.docs)lw.docs={};
+  lw.docs[slotKey]={name:title, url, uploadedAt:new Date().toLocaleString()};
+  sbUpsertLessonWeek(classId,wsStr,lw);
+  renderWeekDocs();
+  toast('Link added');
 }
 
 function removeWeekDoc(classId,wsStr,slotKey){
   const lw=getLW(classId,wsStr);
   if(lw.docs)delete lw.docs[slotKey];
+  sbUpsertLessonWeek(classId,wsStr,lw);
   renderWeekDocs();
-  toast('File removed');
+  toast('Link removed');
 }
 
 
@@ -14301,6 +14288,26 @@ function blkRenderAttachList(){
   list.innerHTML = buildAttachHtml(_blkAttachments);
 }
 
+// Shared markup for the "Linked Resources" section in the Add/Edit Activity
+// modals — a URL + link title form, no native file upload. prefillHtml is
+// the already-rendered list (for Edit) or '' (for Add, filled in on open).
+function blkAttachSectionHtml(prefillHtml){
+  return `<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bpi-rule)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font-weight:700;font-size:.84rem;color:var(--bpi-bistre)">Linked Resources</span>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+      <input type="url" id="blk-link-url" placeholder="https://…" style="flex:2;min-width:160px;font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);font-size:.8rem">
+      <input type="text" id="blk-link-title" placeholder="Link title" style="flex:1;min-width:110px;font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);font-size:.8rem">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="blkAddLink()" style="flex-shrink:0">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+        Add Link
+      </button>
+    </div>
+    <div id="blk-attach-list">${prefillHtml||''}</div>
+  </div>`;
+}
+
 function buildAttachHtml(attachments){
   if(!attachments || !attachments.length){
     return '<div style="font-size:.75rem;color:var(--bpi-ink-3);font-style:italic;padding:2px 0">No attachments yet</div>';
@@ -14324,31 +14331,22 @@ function blkRemoveAttach(idx){
   blkRenderAttachList();
 }
 
+// Reads the URL + title inputs in the Linked Resources form, validates,
+// and appends a {type:'link', name, url} entry. Shared shape by design —
+// old {type:'file', dataUrl} entries from before this change still render
+// fine via buildAttachHtml() (backward-compat only; nothing new creates them).
 function blkAddLink(){
-  const url = prompt('Enter URL (e.g. https://docs.google.com/…):','https://');
-  if(!url || url==='https://') return;
-  let name = prompt('Label for this link:', url.replace(/^https?:\/\//,'').split('/')[0]);
-  if(name===null) return;
-  if(!name.trim()) name = url;
-  _blkAttachments.push({type:'link', name:name.trim(), url:url.trim()});
+  const urlInput=document.getElementById('blk-link-url');
+  const titleInput=document.getElementById('blk-link-title');
+  const url=(urlInput?.value||'').trim();
+  let title=(titleInput?.value||'').trim();
+  if(!url){toast('Enter a URL first');return;}
+  if(!/^https?:\/\//i.test(url)){toast('URL must start with http:// or https://');return;}
+  if(!title)title=url.replace(/^https?:\/\//,'').split('/')[0];
+  _blkAttachments.push({type:'link', name:title, url});
+  if(urlInput)urlInput.value='';
+  if(titleInput)titleInput.value='';
   blkRenderAttachList();
-}
-
-function blkAddFiles(event){
-  const files = Array.from(event.target.files);
-  const maxMB = 10;
-  let loaded = 0;
-  files.forEach(file => {
-    if(file.size > maxMB*1024*1024){ toast(`${file.name} too large (max 10 MB)`); return; }
-    const reader = new FileReader();
-    reader.onload = e => {
-      _blkAttachments.push({type:'file', name:file.name, dataUrl:e.target.result});
-      loaded++;
-      if(loaded===files.length) blkRenderAttachList();
-    };
-    reader.readAsDataURL(file);
-  });
-  event.target.value=''; // reset input
 }
 
 function blkGetAttachments(){
@@ -14357,32 +14355,19 @@ function blkGetAttachments(){
 
 // ── Comment Attachments ──────────────────────────────────────────────────────
 let _commentAttachments=[];
-function commentAddFiles(event){
-  const files=Array.from(event.target.files);
-  const maxMB=10;
-  let loaded=0;
-  files.forEach(file=>{
-    if(file.size>maxMB*1024*1024){toast(file.name+' too large (max 10 MB)');return;}
-    const reader=new FileReader();
-    reader.onload=e=>{
-      _commentAttachments.push({type:'file',name:file.name,dataUrl:e.target.result});
-      loaded++;
-      const ct=document.getElementById('comment-attach-count');
-      if(ct)ct.textContent=_commentAttachments.length+' file'+(  _commentAttachments.length!==1?'s':'') +' attached';
-    };
-    reader.readAsDataURL(file);
-  });
-  event.target.value='';
-}
 function commentAddLink(){
-  const url=prompt('Enter URL:','https://');
-  if(!url||url==='https://')return;
-  let name=prompt('Label for this link:',url.replace(/^https?:\/\//,'').split('/')[0]);
-  if(name===null)return;
-  if(!name.trim())name=url;
-  _commentAttachments.push({type:'link',name:name.trim(),url:url.trim()});
+  const urlInput=document.getElementById('comment-link-url');
+  const titleInput=document.getElementById('comment-link-title');
+  const url=(urlInput?.value||'').trim();
+  let title=(titleInput?.value||'').trim();
+  if(!url){toast('Enter a URL first');return;}
+  if(!/^https?:\/\//i.test(url)){toast('URL must start with http:// or https://');return;}
+  if(!title)title=url.replace(/^https?:\/\//,'').split('/')[0];
+  _commentAttachments.push({type:'link',name:title,url});
+  if(urlInput)urlInput.value='';
+  if(titleInput)titleInput.value='';
   const ct=document.getElementById('comment-attach-count');
-  if(ct)ct.textContent=_commentAttachments.length+' attachment'+(_commentAttachments.length!==1?'s':'');
+  if(ct)ct.textContent=_commentAttachments.length+' link'+(_commentAttachments.length!==1?'s':'')+' added';
 }
 
 
