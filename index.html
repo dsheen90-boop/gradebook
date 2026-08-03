@@ -13015,10 +13015,18 @@ function onClassChange(){renderDashboard();}
 // renderDashboard defined below (teacher/admin aware version)
 
 const DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday'];
-let lpCurrentWeek=new Date('2026-01-05');
+// School-year Week 1 = the week of Mon 8/10/2026 (confirmed a Monday).
+// Lesson Plans opens here by default and week numbers count forward from
+// this date — replaces the old calendar-year week-of-year numbering (which
+// reset to Week 1 every January 1st regardless of school calendar).
+const SCHOOL_WEEK1_START=new Date('2026-08-10T00:00:00');
+let lpCurrentWeek=new Date(SCHOOL_WEEK1_START);
 function weekStartFor(d){const dt=new Date(d);const day=dt.getDay();dt.setDate(dt.getDate()-day+(day===0?-6:1));dt.setHours(0,0,0,0);return dt;}
 function fmtShort(d){return d.toLocaleDateString('en-US',{month:'numeric',day:'numeric'});}
-function getWeekNum(d){const s=new Date(d.getFullYear(),0,1);return Math.ceil(((d-s)/86400000+s.getDay()+1)/7);}
+function getWeekNum(d){
+  const diffDays=Math.round((weekStartFor(d)-weekStartFor(SCHOOL_WEEK1_START))/86400000);
+  return Math.floor(diffDays/7)+1;
+}
 function lpPrevWeek(){lpCurrentWeek=new Date(lpCurrentWeek);lpCurrentWeek.setDate(lpCurrentWeek.getDate()-7);renderLessonPlan();}
 function lpNextWeek(){lpCurrentWeek=new Date(lpCurrentWeek);lpCurrentWeek.setDate(lpCurrentWeek.getDate()+7);renderLessonPlan();}
 
