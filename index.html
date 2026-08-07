@@ -10037,11 +10037,13 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
                  never shown. -->
             <select id="ctx-teacher" onchange="instOnCtxChange()" style="display:none;"></select>
             <select id="ctx-class" onchange="instOnCtxChange()" style="display:none;"></select>
-            <!-- Trimester picker removed from this page per request — the only
-                 place trimester is still chosen is the gradebook assignment
-                 editor (#asn-trimester). This select stays in the DOM (hidden)
-                 since getCtxTrimester()/instSyncCtx() still read it; it's
-                 just never shown, so it stays fixed at its default (T3). -->
+            <!-- Trimester picker removed from this page per request — an
+                 assignment's trimester is now calculated automatically from
+                 its due date (see computeTrimesterForDate()), so it's never
+                 chosen manually anywhere. The only visible trimester picker
+                 anywhere is the Gradebook's viewing filter
+                 (#ctx-trimester-gradebook), which this hidden select stays
+                 in sync with via getCtxTrimester()/instSyncCtx(). -->
             <select id="ctx-trimester" onchange="instOnCtxChange()" style="display:none;">
               <option value="1">T1</option><option value="2">T2</option><option value="3" selected>T3</option>
             </select>
@@ -10060,7 +10062,12 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
             <span class="ctx-room-label" style="font-size:.75rem;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--bpi-bistre-10);color:var(--bpi-bistre);border:1px solid var(--bpi-bistre-20);"></span>
             <select id="ctx-teacher-gb" onchange="instOnCtxChange()" style="display:none;"></select>
             <select id="ctx-class-gradebook" onchange="instSyncCtx()" style="display:none;"></select>
-            <select id="ctx-trimester-gradebook" onchange="instSyncCtx()" style="display:none;">
+            <!-- Trimester filter: which trimester's assignments/grades to
+                 view in the gradebook. This does NOT set an assignment's
+                 trimester — that's calculated automatically from its due
+                 date (see computeTrimesterForDate()). -->
+            <span style="font-size:.72rem;font-weight:600;color:var(--bpi-ink-3)">Trimester:</span>
+            <select id="ctx-trimester-gradebook" onchange="instSyncCtx()" title="Viewing trimester" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);font-size:.8rem">
               <option value="1">T1</option><option value="2">T2</option><option value="3" selected>T3</option>
             </select>
           </div>
@@ -10075,6 +10082,7 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
           <button class="inst-anav-btn inst-admin-only" onclick="instSectionNav('roster','adminprofiles',this)" style="display:none;">Admin Profiles</button>
           <button class="inst-anav-btn inst-admin-only" onclick="instSectionNav('roster','adminreports',this)" style="display:none;">Reports</button>
           <button class="inst-anav-btn inst-admin-only" onclick="instSectionNav('roster','stdreport',this)" style="display:none;">Standards Report</button>
+          <button class="inst-anav-btn inst-admin-only" onclick="instSectionNav('roster','settings',this)" style="display:none;">Settings</button>
         </div>
 
         <!-- ── SHARED PAGE CONTENT ── -->
@@ -10180,6 +10188,28 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
 <div id="inst-page-adminreports" class="inst-page">
   <div class="page-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Reports</div>
   <div id="admin-reports-content"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ GLOBAL SETTINGS PAGE -->
+<div id="inst-page-settings" class="inst-page">
+  <div class="page-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Global Settings</div>
+  <div class="card" style="max-width:640px">
+    <div class="card-title">Trimester Dates</div>
+    <div class="alert alert-info" style="margin-bottom:14px">These date ranges control which trimester an assignment is automatically filed under, based on its due date — teachers and admins no longer pick a trimester manually when creating an assignment. Changing these and saving will recalculate the trimester on every existing assignment.</div>
+    <div class="form-row cols-2">
+      <div><label>1st Trimester Start</label><input type="date" id="set-t1-start"></div>
+      <div><label>1st Trimester End</label><input type="date" id="set-t1-end"></div>
+    </div>
+    <div class="form-row cols-2">
+      <div><label>2nd Trimester Start</label><input type="date" id="set-t2-start"></div>
+      <div><label>2nd Trimester End</label><input type="date" id="set-t2-end"></div>
+    </div>
+    <div class="form-row cols-2">
+      <div><label>3rd Trimester Start</label><input type="date" id="set-t3-start"></div>
+      <div><label>3rd Trimester End</label><input type="date" id="set-t3-end"></div>
+    </div>
+    <div style="margin-top:14px"><button class="btn btn-primary" onclick="saveTrimesterDates()">Save Trimester Dates</button></div>
+  </div>
 </div>
 
 <div id="inst-page-students" class="inst-page">
@@ -12758,8 +12788,20 @@ let DB={
   // Teacher room-scoping (live Supabase login only) — resolved in instBootstrap()
   // by matching the signed-in email against teachers.email, then that
   // teacher's one class. roomLocked=true means getCtxClass() ignores the
-  // header selectors entirely and always returns myClassId.
-  myEmail:'', myTeacherId:null, myClassId:null, roomLocked:false
+  // header selectors entirely and always returns myClassId. myTeacherId/
+  // myClassId are resolved for ANY role (including admin) so an
+  // admin-who-is-also-a-teacher can still be recognized as the owner of
+  // their own room (see renderLPStatusBar()).
+  myEmail:'', myTeacherId:null, myClassId:null, roomLocked:false,
+  // Global trimester date ranges — editable by admins in Roster > Settings.
+  // Assignment due dates are matched against these ranges to automatically
+  // file each assignment under the correct trimester; teachers no longer
+  // pick a trimester manually. Seeded with the 2026–27 school year.
+  trimesterDates:{
+    1:{start:'2026-08-10',end:'2026-11-06'},
+    2:{start:'2026-11-09',end:'2027-02-12'},
+    3:{start:'2027-02-16',end:'2027-05-14'}
+  }
 };
 function newId(){
   // Real UUIDs when talking to Postgres; simple counter in offline demo mode.
@@ -12817,6 +12859,13 @@ const T = {
     toRow:   (studentId, p) => ({ student_id:studentId, intervention_notes:p.interventionNotes||null, teacher_comments:p.teacherComments||null, parent_notes:p.parentNotes||null }),
     fromRow: r => ({ interventionNotes:r.intervention_notes||'', teacherComments:r.teacher_comments||'', parentNotes:r.parent_notes||'' }),
   },
+  // Generic global key/value settings store. Currently used for one key,
+  // 'trimester_dates' — value is DB.trimesterDates verbatim ({1:{start,end},...}).
+  // REQUIRES a one-time migration creating the app_settings table.
+  app_settings: {
+    toRow:   (key, value) => ({ key, value }),
+    fromRow: r => r,
+  },
 };
 
 /* Lesson weeks and student profiles are keyed objects, not arrays — small
@@ -12830,6 +12879,11 @@ async function sbUpsertStudentProfile(studentId, profile){
   if(!sbOn()) return;
   const { error } = await sb.from('student_profiles').upsert(T.student_profiles.toRow(studentId, profile));
   if(error) console.error('[data-layer] upsert failed on student_profiles', error);
+}
+async function sbSaveTrimesterDates(){
+  if(!sbOn()) return;
+  const { error } = await sb.from('app_settings').upsert(T.app_settings.toRow('trimester_dates', DB.trimesterDates));
+  if(error) console.error('[data-layer] upsert failed on app_settings', error);
 }
 
 async function sbUpsert(table, row){
@@ -12849,7 +12903,7 @@ async function sbUpsertAttendance(classId, dateStr, att){
 }
 
 async function loadAllFromSupabase(){
-  const [teachersR, studentsR, classesR, assignmentsR, attendanceR, announcementsR, lessonBlocksR, lessonWeeksR, studentProfilesR] = await Promise.all([
+  const [teachersR, studentsR, classesR, assignmentsR, attendanceR, announcementsR, lessonBlocksR, lessonWeeksR, studentProfilesR, appSettingsR] = await Promise.all([
     sb.from('teachers').select('*'),
     sb.from('students').select('*'),
     sb.from('classes').select('*'),
@@ -12859,8 +12913,9 @@ async function loadAllFromSupabase(){
     sb.from('lesson_blocks').select('*'),
     sb.from('lesson_weeks').select('*'),
     sb.from('student_profiles').select('*'),
+    sb.from('app_settings').select('*'),
   ]);
-  [teachersR, studentsR, classesR, assignmentsR, attendanceR, announcementsR, lessonBlocksR, lessonWeeksR, studentProfilesR].forEach(r => {
+  [teachersR, studentsR, classesR, assignmentsR, attendanceR, announcementsR, lessonBlocksR, lessonWeeksR, studentProfilesR, appSettingsR].forEach(r => {
     if (r.error) console.error('[data-layer] load failed', r.error);
   });
   DB.teachers      = (teachersR.data||[]).map(T.teachers.fromRow);
@@ -12875,6 +12930,12 @@ async function loadAllFromSupabase(){
   (lessonWeeksR.data||[]).forEach(r => { DB.lessonWeeks[r.class_id+'||'+r.week_start] = T.lesson_weeks.fromRow(r); });
   DB.studentProfiles = {};
   (studentProfilesR.data||[]).forEach(r => { DB.studentProfiles[r.student_id] = T.student_profiles.fromRow(r); });
+  const trimesterRow = (appSettingsR.data||[]).find(r => r.key === 'trimester_dates');
+  if (trimesterRow && trimesterRow.value) {
+    // Merge over the defaults rather than replacing outright, in case an
+    // older row is missing a trimester key.
+    DB.trimesterDates = Object.assign({}, DB.trimesterDates, trimesterRow.value);
+  }
 }
 
 function seedData(){
@@ -12968,7 +13029,7 @@ function instNav(page){
   if(pageEl) pageEl.classList.add('inst-page-active');
   if(instSidebar) instSidebar.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+page+"'"))n.classList.add('active');});
   if(page==='review'){rvCurrentWeek=new Date(lpCurrentWeek);}
-  ({dashboard:renderDashboard,lessonplan:renderLessonPlan,gradebook:renderGradebook,reports:initReportCards,students:renderStudents,teachers:renderTeachers,classes:renderClasses,standards:renderStandards,review:renderReviewPage,attendance:renderAttendance,profiles:renderProfiles,overview:renderAdminDashboard,compliance:renderCompliance,oversight:renderOversight,stdreport:renderStandardsReport,adminprofiles:renderAdminProfiles,adminreports:renderAdminReports})[page]?.();
+  ({dashboard:renderDashboard,lessonplan:renderLessonPlan,gradebook:renderGradebook,reports:initReportCards,students:renderStudents,teachers:renderTeachers,classes:renderClasses,standards:renderStandards,review:renderReviewPage,attendance:renderAttendance,profiles:renderProfiles,overview:renderAdminDashboard,compliance:renderCompliance,oversight:renderOversight,stdreport:renderStandardsReport,adminprofiles:renderAdminProfiles,adminreports:renderAdminReports,settings:renderSettingsPage})[page]?.();
   updateRoomLabel();
 }
 
@@ -12997,6 +13058,61 @@ function getCtxClass(){
   return document.getElementById('ctx-class').value||(DB.classes[0]?.id||'');
 }
 function getCtxTrimester(){return parseInt(document.getElementById('ctx-trimester').value)||3;}
+// Automatically determines which trimester an assignment belongs to from
+// its due date, using the admin-configured ranges in DB.trimesterDates
+// (Roster > Settings). Replaces manual trimester selection on assignments.
+function computeTrimesterForDate(dateStr){
+  const td=DB.trimesterDates||{};
+  if(!dateStr) return 3;
+  for(const n of [1,2,3]){
+    const r=td[n];
+    if(r && r.start && r.end && dateStr>=r.start && dateStr<=r.end) return n;
+  }
+  // Outside all defined ranges (before the school year starts, after it
+  // ends, or in a gap between trimesters e.g. a break) — fall back to the
+  // latest trimester whose start date has already passed, defaulting to T1
+  // for anything before the first trimester begins.
+  let best=1;
+  [1,2,3].forEach(n=>{ if(td[n] && td[n].start && dateStr>=td[n].start) best=n; });
+  return best;
+}
+
+// ── Global Settings page (Roster > Settings, admin-only) ────────────────────
+function renderSettingsPage(){
+  const td=DB.trimesterDates||{};
+  [1,2,3].forEach(n=>{
+    const s=document.getElementById('set-t'+n+'-start');
+    const e=document.getElementById('set-t'+n+'-end');
+    if(s)s.value=(td[n]&&td[n].start)||'';
+    if(e)e.value=(td[n]&&td[n].end)||'';
+  });
+}
+async function saveTrimesterDates(){
+  const vals={};
+  for(const n of [1,2,3]){
+    const start=document.getElementById('set-t'+n+'-start')?.value;
+    const end=document.getElementById('set-t'+n+'-end')?.value;
+    if(!start||!end){alert('Please fill in all six trimester dates.');return;}
+    if(start>end){alert(`Trimester ${n}'s start date must be before its end date.`);return;}
+    vals[n]={start,end};
+  }
+  if(!(vals[1].end<vals[2].start&&vals[2].end<vals[3].start)){
+    if(!confirm('These trimester date ranges overlap or are out of order. Save anyway?'))return;
+  }
+  DB.trimesterDates=vals;
+  await sbSaveTrimesterDates();
+  // "Automatic" should hold even after the calendar changes mid-year —
+  // recalculate every existing assignment's trimester from its due date
+  // using the new ranges, and re-save any that changed.
+  let changed=0;
+  DB.assignments.forEach(a=>{
+    const t=computeTrimesterForDate(a.date);
+    if(t!==a.trimester){a.trimester=t;changed++;sbUpsert('assignments',T.assignments.toRow(a));}
+  });
+  toast('Trimester dates saved'+(changed?` — ${changed} assignment${changed===1?'':'s'} recalculated`:''));
+  const active=document.querySelector('.inst-page.inst-page-active');
+  if(active&&typeof instNav==='function')instNav(active.id.replace('inst-page-',''));
+}
 function populateContextSelects(){
   const tc=document.getElementById('ctx-teacher');
   tc.innerHTML='<option value="">All</option>'+DB.teachers.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
@@ -13106,7 +13222,6 @@ function buildStdCheckboxes(classId,existingRefs){
 function openBlockModal(dayIdx){
   const classId=getCtxClass();if(!DB.classes.find(c=>c.id===classId)){toast('Select a class first');return;}
   const dayDate=new Date(lpCurrentWeek);dayDate.setDate(dayDate.getDate()+(dayIdx||0));const dayDateStr=dayDate.toISOString().split('T')[0];
-  const trimester=getCtxTrimester();
   showModal(`<div class="modal-title">Add Lesson Activity</div>
     <div class="form-row cols-2"><div><label>Day</label><select id="blk-day">${DAYS.map((d,i)=>`<option value="${i}" ${i===(dayIdx||0)?'selected':''}>${d}</option>`).join('')}</select></div><div><label>Subject Block</label><select id="blk-subject" onchange="refreshBlkStds()">${SUBJECTS.map(s=>`<option>${s}</option>`).join('')}</select></div></div>
     <div class="form-row"><div><label>Activity Title</label><input type="text" id="blk-title" placeholder="e.g. Parts of a Story Day 1" oninput="syncAsnTitles()"></div></div>
@@ -13125,7 +13240,7 @@ function openBlockModal(dayIdx){
     <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bpi-rule)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <span style="font-weight:700;font-size:.84rem;color:var(--bpi-bistre)">Graded Assignments</span>
-        <button type="button" class="btn btn-secondary btn-sm" id="blk-add-asn-btn" onclick="addAsnSubform('${dayDateStr}',${trimester})">
+        <button type="button" class="btn btn-secondary btn-sm" id="blk-add-asn-btn" onclick="addAsnSubform('${dayDateStr}')">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Add Graded Assignment
         </button>
@@ -13137,7 +13252,7 @@ function openBlockModal(dayIdx){
 }
 
 let _blkAsnCount=0;
-function addAsnSubform(defaultDate,defaultTrimester){
+function addAsnSubform(defaultDate){
   const list=document.getElementById('blk-asn-list');
   const existing=list.querySelectorAll('.blk-asn-item').length;
   if(existing>=3){toast('Max 3 assignments per activity');return;}
@@ -13164,18 +13279,20 @@ function addAsnSubform(defaultDate,defaultTrimester){
     </div>
     <div class="form-row cols-2">
       <div><label style="font-size:.74rem">Due Date</label>
-        <input type="date" class="blk-asn-date" data-idx="${idx}" value="${defaultDate}" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"></div>
+        <input type="date" class="blk-asn-date" data-idx="${idx}" value="${defaultDate}" oninput="updateBlkAsnTrimesterDisplay(${idx})" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"></div>
       <div><label style="font-size:.74rem">Trimester</label>
-        <select class="blk-asn-trimester" data-idx="${idx}" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem">
-          <option value="1" ${defaultTrimester===1?'selected':''}>T1</option>
-          <option value="2" ${defaultTrimester===2?'selected':''}>T2</option>
-          <option value="3" ${defaultTrimester===3?'selected':''}>T3</option>
-        </select></div>
+        <div class="blk-asn-trimester-display" data-idx="${idx}" style="padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem;background:var(--bpi-canvas,#f5f0eb);color:var(--bpi-ink-2);box-sizing:border-box">T${computeTrimesterForDate(defaultDate)} <span style="font-weight:400;font-size:.68rem;opacity:.7">(auto, from due date)</span></div></div>
     </div>`;
   list.appendChild(item);
   // disable button at 3
   const btn=document.getElementById('blk-add-asn-btn');
   if(btn&&list.querySelectorAll('.blk-asn-item').length>=3){btn.disabled=true;btn.style.opacity='.45';}
+}
+function updateBlkAsnTrimesterDisplay(idx){
+  const dateInput=document.querySelector(`.blk-asn-date[data-idx="${idx}"]`);
+  const display=document.querySelector(`.blk-asn-trimester-display[data-idx="${idx}"]`);
+  if(!dateInput||!display)return;
+  display.innerHTML=`T${computeTrimesterForDate(dateInput.value)} <span style="font-weight:400;font-size:.68rem;opacity:.7">(auto, from due date)</span>`;
 }
 function removeAsnSubform(btn){
   const item=btn.closest('.blk-asn-item');if(item)item.remove();
@@ -13289,7 +13406,7 @@ function saveBlock(existingId){
     const asnTitle=asnRawTitle||title;
     const totalPoints=parseInt(item.querySelector('.blk-asn-points')?.value)||100;
     const date=item.querySelector('.blk-asn-date')?.value||wsStr;
-    const trimester=parseInt(item.querySelector('.blk-asn-trimester')?.value)||getCtxTrimester();
+    const trimester=computeTrimesterForDate(date);
     const asnGroup=item.querySelector('.blk-asn-group')?.value||'';const asnCat=item.querySelector('.blk-asn-category')?.value||'classwork';newAssignments.push({id:newId(),classId,title:asnTitle,date,subject,trimester,standardRefs:stdRefs,grades:{},totalPoints,blockId,group:asnGroup,category:asnCat});
   });
   newAssignments.forEach(a=>{DB.assignments.push(a);sbUpsert('assignments',T.assignments.toRow(a));});
@@ -13388,8 +13505,12 @@ function renderLPStatusBar(){
   const bar=document.getElementById('lp-submit-bar');
   if(!bar)return;
 
-  // Admin view on LP page
-  if(DB.role==='admin'){
+  // Admin view on LP page — unless this admin is also the teacher assigned
+  // to the room currently being viewed (a dual-role admin/teacher account),
+  // in which case they get the normal teacher submit/withdraw controls for
+  // their own room below instead of the approve/revise controls.
+  const viewingOwnRoom = !!(DB.myClassId && classId===DB.myClassId);
+  if(DB.role==='admin' && !viewingOwnRoom){
     if(lw.status==='pending'){
       bar.innerHTML=`<div class="lp-status-bar pending" style="justify-content:space-between"><span>📋 <strong>Pending your review</strong> — add comments to individual activities, then approve or request revisions.</span><div style="display:flex;gap:8px"><button class="btn btn-sm" style="background:var(--intent-danger);color:#fff" onclick="setLPStatus('revisions')">Request Revisions</button><button class="btn btn-sm" style="background:var(--intent-success);color:#fff" onclick="setLPStatus('approved')">Approve Plan</button></div></div>`;
     } else if(lw.status==='approved'){
@@ -13737,7 +13858,7 @@ function openAssignmentModal(){
   const defaultSubject='Reading/Language Arts';
   const stdHtml=suggestedHtml+buildStdCheckboxesFiltered(classId,[],defaultSubject);
   showModal(`<div class="modal-title">New Assignment</div>
-    <div class="form-row cols-2"><div><label>Title</label><input type="text" id="asn-title" placeholder="e.g. Parts of a Story Quiz"></div><div><label>Date</label><input type="date" id="asn-date" value="${new Date().toISOString().split('T')[0]}"></div></div>
+    <div class="form-row cols-2"><div><label>Title</label><input type="text" id="asn-title" placeholder="e.g. Parts of a Story Quiz"></div><div><label>Date</label><input type="date" id="asn-date" value="${new Date().toISOString().split('T')[0]}" oninput="updateAsnTrimesterDisplay()"></div></div>
     <div class="form-row cols-3">
       <div><label>Subject</label><select id="asn-subject" onchange="refreshAsnStandards()">
         <option>Reading/Language Arts</option><option>Math</option><option>Phonics/Handwriting</option>
@@ -13747,7 +13868,7 @@ function openAssignmentModal(){
         <option value="classwork">Classwork</option><option value="homework">Homework</option>
         <option value="assessment">Assessment</option><option value="project">Project</option>
       </select></div>
-      <div><label>Trimester</label><select id="asn-trimester"><option value="1">T1</option><option value="2">T2</option><option value="3" selected>T3</option></select></div>
+      <div><label>Trimester</label><div id="asn-trimester-display" style="padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem;background:var(--bpi-canvas,#f5f0eb);color:var(--bpi-ink-2);box-sizing:border-box">T${computeTrimesterForDate(new Date().toISOString().split('T')[0])} <span style="font-weight:400;font-size:.68rem;opacity:.7">(auto)</span></div></div>
       <div><label>Total Points</label><input type="number" id="asn-points" value="100" min="1" placeholder="100" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"></div>
     </div>
     <input type="hidden" id="asn-block-id" value="">
@@ -13755,6 +13876,13 @@ function openAssignmentModal(){
       <div id="asn-std-container" style="max-height:240px;overflow-y:auto;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);padding:10px">${stdHtml}</div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveAssignment()">Create &amp; Enter Grades</button></div>`,'large');
+}
+
+function updateAsnTrimesterDisplay(){
+  const dateInput=document.getElementById('asn-date');
+  const display=document.getElementById('asn-trimester-display');
+  if(!dateInput||!display)return;
+  display.innerHTML=`T${computeTrimesterForDate(dateInput.value)} <span style="font-weight:400;font-size:.68rem;opacity:.7">(auto)</span>`;
 }
 
 function refreshAsnStandards(){
@@ -13765,7 +13893,7 @@ function refreshAsnStandards(){
 }
 
 function saveAssignment(){
-  const classId=getCtxClass();const title=document.getElementById('asn-title').value.trim();const date=document.getElementById('asn-date').value;const subject=document.getElementById('asn-subject').value;const trimester=parseInt(document.getElementById('asn-trimester').value);
+  const classId=getCtxClass();const title=document.getElementById('asn-title').value.trim();const date=document.getElementById('asn-date').value;const subject=document.getElementById('asn-subject').value;const trimester=computeTrimesterForDate(date);
   if(!title){alert('Enter a title');return;}
   const stdRefs=[];document.querySelectorAll('.std-ref-cb:checked').forEach(cb=>{const[grade,section,stdi]=cb.dataset.key.split('||');if(!stdRefs.find(r=>r.grade===grade&&r.section===section&&r.stdIndex===parseInt(stdi)))stdRefs.push({grade,section,stdIndex:parseInt(stdi)});});
   const blockId=document.getElementById('asn-block-id')?.value||null;
@@ -13793,11 +13921,10 @@ function openAssignmentFromBlock(blockId,dateStr){
     stdHtml+=`<div class="eyebrow" style="margin:12px 0 6px">Additional Standards</div>`;
     stdHtml+=buildStdCheckboxesFiltered(classId,block.standardRefs,subject);
   }
-  const trimester=getCtxTrimester();
   showModal(`<div class="modal-title">New Assignment</div>
     <div class="alert alert-info" style="margin-bottom:12px">Linked to: <strong>${escH(block.title)}</strong> &middot; ${escH(block.subject)}</div>
     <input type="hidden" id="asn-block-id" value="${blockId}">
-    <div class="form-row cols-2"><div><label>Title</label><input type="text" id="asn-title" placeholder="e.g. ${escH(block.title)} Quiz" value="${escH(block.title)}"></div><div><label>Date</label><input type="date" id="asn-date" value="${dateStr}"></div></div>
+    <div class="form-row cols-2"><div><label>Title</label><input type="text" id="asn-title" placeholder="e.g. ${escH(block.title)} Quiz" value="${escH(block.title)}"></div><div><label>Date</label><input type="date" id="asn-date" value="${dateStr}" oninput="updateAsnTrimesterDisplay()"></div></div>
     <div class="form-row cols-3">
       <div><label>Subject</label><select id="asn-subject" onchange="refreshAsnStandards()">
         <option>Reading/Language Arts</option><option>Math</option><option>Phonics/Handwriting</option>
@@ -13807,7 +13934,7 @@ function openAssignmentFromBlock(blockId,dateStr){
         <option value="classwork">Classwork</option><option value="homework">Homework</option>
         <option value="assessment">Assessment</option><option value="project">Project</option>
       </select></div>
-      <div><label>Trimester</label><select id="asn-trimester"><option value="1" ${trimester===1?'selected':''}>T1</option><option value="2" ${trimester===2?'selected':''}>T2</option><option value="3" ${trimester===3?'selected':''}>T3</option></select></div>
+      <div><label>Trimester</label><div id="asn-trimester-display" style="padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem;background:var(--bpi-canvas,#f5f0eb);color:var(--bpi-ink-2);box-sizing:border-box">T${computeTrimesterForDate(dateStr)} <span style="font-weight:400;font-size:.68rem;opacity:.7">(auto)</span></div></div>
       <div><label>Total Points</label><input type="number" id="asn-points" value="100" min="1" placeholder="100" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem"></div>
     </div>
     <div><label style="margin-bottom:8px">Standards Assessed</label>
@@ -15891,15 +16018,22 @@ async function instBootstrap(loginRole) {
   var role = (loginRole==='teacher'||loginRole==='operations') ? 'teacher' : 'admin';
   DB.role = role;
 
-  // Resolve this teacher's own room: match the signed-in email against
-  // teachers.email, then find the one class owned by that teacher.
+  // Resolve this signed-in user's own room: match their email against
+  // teachers.email, then find the one class owned by that teacher. Done
+  // for EVERY role, not just 'teacher' — an admin account whose email is
+  // also linked to a teacher row (a dual-role admin/teacher, e.g. a
+  // principal who also runs a classroom) still needs myClassId resolved so
+  // the Lesson Plans submit button and other teacher-only controls appear
+  // when they're viewing their own room. roomLocked (which hides the
+  // classroom picker entirely) stays true ONLY for role 'teacher' — admins
+  // still pick rooms via the Weekly Review dropdown.
   // Only in live Supabase mode — demo/legacy mode (no keys configured yet)
   // keeps the old unrestricted picker behavior since there's no real login
   // email to match against.
   DB.myTeacherId = null;
   DB.myClassId = null;
   DB.roomLocked = sbOn() && role === 'teacher';
-  if (DB.roomLocked && DB.myEmail) {
+  if (sbOn() && DB.myEmail) {
     var myEmailLc = DB.myEmail.trim().toLowerCase();
     var myTeacher = (DB.teachers||[]).find(function(t){ return (t.email||'').trim().toLowerCase() === myEmailLc; });
     if (myTeacher) {
