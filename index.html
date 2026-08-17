@@ -14509,7 +14509,10 @@ function commentAddLink(){
 // ═══════════════════════════════════════════════════════════════
 // ATTENDANCE
 // ═══════════════════════════════════════════════════════════════
-let attCurrentDate = new Date('2026-01-12');
+// Attendance opens on today's actual date (checked at page load) and pages
+// day-by-day from there via attPrevDay()/attNextDay() — previously this was
+// hardcoded to a fixed demo date, so it never reflected the real calendar.
+let attCurrentDate = new Date();
 function attKey(classId, dateStr){ return classId+'||'+dateStr; }
 function getAtt(classId, dateStr){
   const k=attKey(classId,dateStr);
