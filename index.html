@@ -10024,17 +10024,18 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
         <!-- ── LESSON PLANS NAV BAR ── -->
         <div id="inst-nav-lesson-plans" class="inst-section-nav" style="display:none;background:var(--bpi-paper);border-bottom:2px solid var(--bpi-bistre-10);padding:0 20px;flex-direction:row;align-items:center;gap:0;flex-shrink:0;">
           <button class="inst-anav-btn active" onclick="instSectionNav('lesson-plans','lessonplan',this)">Plans</button>
-          <button class="inst-anav-btn inst-admin-only" onclick="instSectionNav('lesson-plans','review',this)" style="display:none;">Weekly Review</button>
           <button class="inst-anav-btn" onclick="instSectionNav('lesson-plans','standards',this)">Standards</button>
           <button class="inst-anav-btn inst-admin-only" onclick="instSectionNav('lesson-plans','overview',this)" style="display:none;">Overview</button>
           <button class="inst-anav-btn inst-admin-only" onclick="instSectionNav('lesson-plans','compliance',this)" style="display:none;">Compliance</button>
           <div style="margin-left:auto;display:flex;align-items:center;gap:8px;padding:8px 0;flex-shrink:0;">
             <span class="ctx-room-label" style="font-size:.75rem;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--bpi-bistre-10);color:var(--bpi-bistre);border:1px solid var(--bpi-bistre-20);"></span>
-            <!-- Classroom pickers: hidden site-wide by design — the only place anyone
-                 picks a classroom is the Weekly Review dropdown (admin-only). These
-                 selects still exist and still drive getCtxClass() under the hood
-                 (kept in sync from Weekly Review via rvOnClassChange()); they're just
-                 never shown. -->
+            <!-- Classroom pickers: hidden site-wide by design. The one visible picker
+                 for admin is #lp-class-select in the Plans toolbar itself (see
+                 inst-page-lessonplan below) — it's what drives these hidden selects
+                 via lpOnClassChange(), which is what getCtxClass() actually reads.
+                 The old separate "Weekly Review" tab/page is gone (merged into
+                 Plans) but its render function/vars are still in the file, unused,
+                 in case this ever needs to be rolled back. -->
             <select id="ctx-teacher" onchange="instOnCtxChange()" style="display:none;"></select>
             <select id="ctx-class" onchange="instOnCtxChange()" style="display:none;"></select>
             <!-- Trimester picker removed from this page per request — an
@@ -10111,8 +10112,14 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
       <span class="week-label" id="lp-week-label"></span>
       <button onclick="lpNextWeek()">&#8594;</button>
     </div>
-    <button class="btn btn-primary" onclick="openBlockModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Activity</button>
-    <button class="btn btn-secondary" onclick="openHolidayModal()" title="Mark a holiday day"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="15" x2="15" y2="15"/></svg>Holiday</button>
+    <!-- Classroom switcher — visible only for admin (not room-locked teachers).
+         Populated/shown in renderLessonPlan(); mirrors the old Weekly Review
+         dropdown exactly (same onchange pattern, same hidden selects it
+         drives), so this is now the one place admin picks a room. -->
+    <select id="lp-class-select" onchange="lpOnClassChange()" style="display:none;font-family:var(--font-body);font-size:.8rem;padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);background:#fff;color:var(--bpi-ink);cursor:pointer;max-width:240px;"></select>
+    <button class="btn btn-primary" id="lp-add-activity-btn" onclick="openBlockModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Activity</button>
+    <button class="btn btn-secondary" id="lp-holiday-btn" onclick="openHolidayModal()" title="Mark a holiday day"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="15" x2="15" y2="15"/></svg>Holiday</button>
+    <span id="lp-readonly-note" style="display:none;font-size:.76rem;color:var(--bpi-ink-3);font-style:italic">👁 Viewing only — this isn't your room</span>
     <div id="lp-status-bar-wrap"></div>
   </div>
   <div id="lp-submit-bar" class="no-print"></div>
@@ -13167,8 +13174,53 @@ function getWeekNum(d){
 function lpPrevWeek(){lpCurrentWeek=new Date(lpCurrentWeek);lpCurrentWeek.setDate(lpCurrentWeek.getDate()-7);renderLessonPlan();}
 function lpNextWeek(){lpCurrentWeek=new Date(lpCurrentWeek);lpCurrentWeek.setDate(lpCurrentWeek.getDate()+7);renderLessonPlan();}
 
+// Classroom switcher for admin, now that Weekly Review has been merged into
+// Plans — same onchange pattern as the old rv-class-select/rvOnClassChange
+// (writes into the same hidden #ctx-class/#ctx-class-gradebook selects
+// getCtxClass() reads everywhere else in the app: Gradebook, Attendance,
+// Reports, etc.), so switching rooms here keeps the whole app in sync too.
+function lpOnClassChange(){
+  const sel=document.getElementById('lp-class-select');
+  const cc=document.getElementById('ctx-class');
+  const ccgb=document.getElementById('ctx-class-gradebook');
+  if(sel){
+    if(cc)cc.value=sel.value;
+    if(ccgb)ccgb.value=sel.value;
+  }
+  renderLessonPlan();
+  updateRoomLabel();
+}
+
 function renderLessonPlan(){
+  // Classroom switcher — the one place admin picks a room now that Weekly
+  // Review has been merged into this page. Hidden entirely for room-locked
+  // teachers (they only ever have their own room anyway). Mirrors the old
+  // rv-class-select/rvOnClassChange pattern exactly.
+  const lpSel=document.getElementById('lp-class-select');
+  if(lpSel){
+    if(DB.roomLocked){
+      lpSel.style.display='none';
+    } else {
+      lpSel.style.display='';
+      const prevVal=lpSel.value;
+      lpSel.innerHTML=DB.classes.map(c=>`<option value="${c.id}">${escH(c.name)}</option>`).join('');
+      const cur=getCtxClass();
+      if(cur&&DB.classes.some(c=>c.id===cur))lpSel.value=cur;
+      else if(prevVal&&DB.classes.some(c=>c.id===prevVal))lpSel.value=prevVal;
+      else if(DB.classes[0])lpSel.value=DB.classes[0].id;
+    }
+  }
   const classId=getCtxClass();const wsStr=lpCurrentWeek.toISOString().split('T')[0];
+  // Admin looking at a room that ISN'T their own (or has no room of their
+  // own) gets a read-only view here — same protection Weekly Review used to
+  // provide, so browsing another teacher's week can't turn into accidentally
+  // editing or deleting their activities. A teacher (or a dual-role
+  // admin/teacher viewing their own linked room) always gets full edit
+  // access, same as before.
+  const viewingOwnRoom=DB.role!=='admin'||!!(DB.myClassId&&classId===DB.myClassId);
+  const addBtn=document.getElementById('lp-add-activity-btn');if(addBtn)addBtn.style.display=viewingOwnRoom?'':'none';
+  const holBtn=document.getElementById('lp-holiday-btn');if(holBtn)holBtn.style.display=viewingOwnRoom?'':'none';
+  const roNote=document.getElementById('lp-readonly-note');if(roNote)roNote.style.display=viewingOwnRoom?'none':'';
   if(DB.roomLocked&&!classId){
     document.getElementById('lp-week-label').textContent='';
     document.getElementById('lp-day-headers').innerHTML='';
@@ -13199,23 +13251,32 @@ function renderLessonPlan(){
       const blockComments=(lw.comments[b.id]||[]);
       const commentBadge=blockComments.length?`<span style="font-size:.62rem;background:var(--bpi-harvest-gold);color:#fff;border-radius:10px;padding:1px 5px;margin-left:4px;font-weight:700">${blockComments.length}</span>`:'';
       const adminCommentArea=DB.role==='admin'?`<button class="btn btn-sm" style="font-size:.63rem;padding:2px 6px;margin-top:4px;background:var(--bpi-gold-10);border:1px solid var(--bpi-gold-20);color:var(--bpi-bistre);width:100%" onclick="openAdminCommentModal('${b.id}','${classId2}','${wsStr}');event.stopPropagation()">＋ Comment${commentBadge}</button>`:(blockComments.length?`<div style="margin-top:4px">${blockComments.map(c=>`<div class="admin-comment-wrap"><div class="admin-comment-meta">${c.author} &middot; ${c.ts}</div>${escH(c.text)}</div>`).join('')}</div>`:'');
+      // Click-to-edit and the "create assignment from this activity" button
+      // are only wired up when viewing your own room — an admin browsing
+      // someone else's room this way can still comment and open grade entry
+      // (via asnChips above), but can't edit/delete the activity itself or
+      // spin off a new assignment on a teacher's behalf.
+      const titleBlockAttrs=viewingOwnRoom?`onclick="editBlockModal('${b.id}');event.stopPropagation()" style="flex:1;cursor:pointer"`:`style="flex:1"`;
+      const addAsnBtnHtml=viewingOwnRoom?`<button class="lp-add-asn-btn" onclick="openAssignmentFromBlock('${b.id}','${dayDateStr}');event.stopPropagation()" title="Create assignment from this activity">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>`:'';
       return`<div class="lp-block ${SUBJ_CLS[b.subject]||''}">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:4px">
-          <div onclick="editBlockModal('${b.id}');event.stopPropagation()" style="flex:1;cursor:pointer">
+          <div ${titleBlockAttrs}>
             <div class="b-title">${b.subject}${commentBadge&&DB.role!=='admin'?commentBadge:''}</div>
             <div class="b-content">${escH(b.title)}</div>
             ${b.standardRefs.length?`<div class="b-stds">${b.standardRefs.map(r=>`<span class="chip chip-std" style="font-size:.62rem">${r.grade}</span>`).join('')}</div>`:''}
           </div>
-          <button class="lp-add-asn-btn" onclick="openAssignmentFromBlock('${b.id}','${dayDateStr}');event.stopPropagation()" title="Create assignment from this activity">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </button>
+          ${addAsnBtnHtml}
         </div>
         ${asnChips?`<div style="margin-top:5px">${asnChips}</div>`:''}
         ${(b.attachments&&b.attachments.length)?`<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:2px">${b.attachments.map(a=>{const href=a.type==='file'?a.dataUrl:a.url;const dl=a.type==='file'?`download="${escH(a.name)}"`:'target="_blank" rel="noopener"';return`<a class="lp-attach-chip ${a.type==='file'?'file':''}" href="${escH(href)}" ${dl} title="${escH(a.name)}" onclick="event.stopPropagation()">${a.type==='file'?'📎':'🔗'} ${escH(a.name)}</a>`;}).join('')}</div>`:''}
         ${adminCommentArea}
       </div>`;
     }).join('')).join('');
-    return`<div class="lp-day" onclick="openBlockModal(${dayIdx})" title="Click to add">${bHtml||`<div style="color:var(--bpi-bistre-20);font-size:.73rem;text-align:center;margin-top:36px;font-style:italic">Click to add</div>`}</div>`;
+    const dayAttrs=viewingOwnRoom?`onclick="openBlockModal(${dayIdx})" title="Click to add"`:'';
+    const emptyHint=viewingOwnRoom?'Click to add':'No activities';
+    return`<div class="lp-day" ${dayAttrs}>${bHtml||`<div style="color:var(--bpi-bistre-20);font-size:.73rem;text-align:center;margin-top:36px;font-style:italic">${emptyHint}</div>`}</div>`;
   }).join('');
   renderLPStatusBar();
   renderWeekDocs();
@@ -14380,6 +14441,10 @@ function renderWeekDocs(){
   const lw=getLW(classId,wsStr);
   if(!lw.docs)lw.docs={};
   const wrap=document.getElementById('lp-week-docs'); if(!wrap)return;
+  // Same "viewing someone else's room" guard as the rest of Lesson Plans —
+  // admin can see/open packet links for any room, but Add/Remove is only
+  // available for their own room (or for a teacher, always their own room).
+  const viewingOwnRoom=DB.role!=='admin'||!!(DB.myClassId&&classId===DB.myClassId);
 
   let html=`<div class="week-docs-section">
     <div class="week-docs-title">
@@ -14394,11 +14459,13 @@ function renderWeekDocs(){
     html+=`<div class="doc-slot ${hasLink?'has-file':''}">
       <div class="doc-slot-label">${slot.icon} ${slot.label}</div>`;
     if(hasLink){
-      html+=`<div class="doc-slot-name" title="${escH(doc.url)}"><a href="${escH(doc.url)}" target="_blank" rel="noopener">${escH(doc.name||doc.url)}</a></div>
-        <div class="doc-slot-actions">
+      html+=`<div class="doc-slot-name" title="${escH(doc.url)}"><a href="${escH(doc.url)}" target="_blank" rel="noopener">${escH(doc.name||doc.url)}</a></div>`;
+      if(viewingOwnRoom){
+        html+=`<div class="doc-slot-actions">
           <button class="doc-remove-btn" onclick="removeWeekDoc('${classId}','${wsStr}','${slot.key}')">Remove</button>
         </div>`;
-    } else {
+      }
+    } else if(viewingOwnRoom){
       html+=`<div class="doc-empty-hint">No link added</div>
         <div class="doc-slot-actions" style="display:flex;flex-direction:column;gap:4px;width:100%">
           <input type="url" id="doc-url-${slot.key}" placeholder="https://…" style="width:100%;font-family:var(--font-body);padding:5px 8px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-sm);font-size:.74rem">
@@ -14408,6 +14475,8 @@ function renderWeekDocs(){
             Add Link
           </button>
         </div>`;
+    } else {
+      html+=`<div class="doc-empty-hint">No link added</div>`;
     }
     html+=`</div>`;
   });
