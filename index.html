@@ -13702,12 +13702,21 @@ function renderReviewPage(){
       const commentBadge=comments.length?`<span style="font-size:.64rem;background:var(--bpi-harvest-gold);color:#fff;border-radius:10px;padding:1px 5px;margin-left:4px">${comments.length}</span>`:'';
       const commentsHtml=comments.map(c=>`<div class="admin-comment-wrap"><div class="admin-comment-meta">${c.author} &middot; ${c.ts}</div>${escH(c.text)}</div>`).join('');
       const stdTags=b.standardRefs.map(r=>`<span class="chip chip-std" style="font-size:.6rem">${r.grade}</span>`).join('');
+      // Linked graded assignments for this activity — Weekly Review never
+      // showed these before (only the Lesson Plans grid did), so an admin
+      // reviewing a room here had no way to see or open the assignments tied
+      // to a given activity without switching pages.
+      const linkedAsns=DB.assignments.filter(a=>a.classId===cls.id&&a.blockId===b.id);
+      const asnChips=linkedAsns.map(a=>`<div class="lp-asn-chip" onclick="openGradeEntryModal('${a.id}');event.stopPropagation()" title="Open grade entry">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>
+        ${escH(a.title)}</div>`).join('');
       const adminBtn=DB.role==='admin'?`<button class="btn btn-sm" style="font-size:.64rem;padding:2px 7px;margin-top:5px;background:var(--bpi-gold-10);border:1px solid var(--bpi-gold-20);color:var(--bpi-bistre)" onclick="openAdminCommentModal('${b.id}','${cls.id}','${wsStr}');event.stopPropagation()">＋ Comment${commentBadge}</button>`:(commentBadge?`<span style="font-size:.64rem;color:var(--bpi-ink-3)">${comments.length} comment(s)</span>`:'');
       return`<div style="background:var(--bpi-paper);border:1px solid var(--bpi-rule);border-radius:var(--radius-sm);padding:7px 9px;margin-bottom:5px;font-size:.74rem">
         <div style="font-weight:700;font-size:.72rem;color:var(--bpi-brown-sugar);text-transform:uppercase;letter-spacing:.05em">${b.subject}</div>
         <div style="font-weight:600;margin:2px 0">${escH(b.title)}</div>
         ${b.content?`<div style="font-size:.7rem;color:var(--bpi-ink-3);margin:2px 0">${escH(b.content.substring(0,80))}${b.content.length>80?'…':''}</div>`:''}
         ${stdTags?`<div style="margin-top:3px">${stdTags}</div>`:''}
+        ${asnChips?`<div style="margin-top:3px">${asnChips}</div>`:''}
         ${commentsHtml}
         <div>${adminBtn}</div>
       </div>`;
@@ -13730,7 +13739,15 @@ function renderReviewPage(){
   const packetsHtml=DOC_SLOTS.map(slot=>{
     const doc=lwDocs[slot.key];
     const has=!!(doc&&doc.url);
-    return `<span class="chip" style="font-size:.68rem;font-weight:600;background:${has?'var(--intent-success-bg)':'var(--intent-danger-bg)'};color:${has?'var(--intent-success)':'var(--intent-danger)'}" title="${has?escH(doc.name||doc.url):'Not added yet'}">${slot.icon} ${slot.label}: ${has?'✓ Added':'Missing'}</span>`;
+    const label=`${slot.icon} ${slot.label}: ${has?'✓ Added':'Missing'}`;
+    const style=`font-size:.68rem;font-weight:600;background:${has?'var(--intent-success-bg)':'var(--intent-danger-bg)'};color:${has?'var(--intent-success)':'var(--intent-danger)'}`;
+    // When a packet has actually been added, the chip is a real clickable
+    // link to the document (opens in a new tab) instead of just a status
+    // indicator — previously the chip's title attribute held the name as a
+    // tooltip only, with no way to actually open the file from here.
+    return has
+      ? `<a class="chip" href="${escH(doc.url)}" target="_blank" rel="noopener" style="${style};text-decoration:none;cursor:pointer" title="${escH(doc.name||doc.url)}">${label}</a>`
+      : `<span class="chip" style="${style}" title="Not added yet">${label}</span>`;
   }).join(' ');
 
   content.innerHTML=`<div class="review-class-card">
@@ -14090,7 +14107,14 @@ function saveGrades(aid){
     else if(earned!=null){a.grades[s.id]={status:'',earned};}
   });
   sbUpsert('assignments',T.assignments.toRow(a));
-  closeModal();renderGradebook();toast('Grades saved!');
+  closeModal();
+  // Grade entry can now be opened from Weekly Review too (admin clicking an
+  // assignment chip there), not just from Gradebook — re-render whichever
+  // page is actually visible instead of always assuming Gradebook, or the
+  // save would look like it silently did nothing on Weekly Review.
+  if(document.getElementById('inst-page-review')?.classList.contains('inst-page-active')) renderReviewPage();
+  else renderGradebook();
+  toast('Grades saved!');
 }
 
 function openStudentStdModal(studentId,classId){
