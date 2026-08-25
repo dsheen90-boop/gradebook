@@ -10057,7 +10057,14 @@ Event lead (Dylan Sheen) will be on-site from 4:45 PM. Direct any day-of issues 
           <button class="inst-anav-btn" onclick="instSectionNav('gradebook','reports',this)">Reports</button>
           <button class="inst-anav-btn inst-admin-only" onclick="instSectionNav('gradebook','oversight',this)" style="display:none;">Oversight</button>
           <button class="inst-anav-btn" onclick="instSectionNav('gradebook','attendance',this)">Attendance</button>
-          <button class="inst-anav-btn inst-admin-only" onclick="instSectionNav('gradebook','dashboard',this)" style="display:none;">Dashboard</button>
+          <!-- Points at page id 'overview' (Schoolwide Dashboard), NOT 'dashboard'.
+               The 'dashboard' page (#dash-stats/#dash-assignments/#dash-standards)
+               is only ever populated by renderTeacherDashboard() — for admin,
+               renderAdminDashboard() writes into a completely different page's
+               div (#dash-admin-content, on the 'overview' page). Pointing this
+               tab at 'dashboard' showed admins a blank page with nothing under
+               the title; 'overview' is the page that's actually built for them. -->
+          <button class="inst-anav-btn inst-admin-only" onclick="instSectionNav('gradebook','overview',this)" style="display:none;">Dashboard</button>
           <div style="margin-left:auto;display:flex;align-items:center;gap:8px;padding:8px 0;flex-shrink:0;">
             <span class="ctx-room-label" style="font-size:.75rem;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--bpi-bistre-10);color:var(--bpi-bistre);border:1px solid var(--bpi-bistre-20);"></span>
             <select id="ctx-teacher-gb" onchange="instOnCtxChange()" style="display:none;"></select>
@@ -13117,13 +13124,27 @@ function populateContextSelects(){
   const tc=document.getElementById('ctx-teacher');
   tc.innerHTML='<option value="">All</option>'+DB.teachers.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
   refreshClassSelect(document.getElementById('ctx-class'));
+  // Same fix as refreshClassSelect: this runs any time a ctx-* control
+  // changes ANYWHERE in the app (not just on the Students page), so without
+  // preserving the value it would silently clear a grade filter someone had
+  // set on Roster > Students the next time they looked at it.
   const gf=document.getElementById('student-grade-filter');
-  if(gf)gf.innerHTML='<option value="">All Grades</option>'+GRADES.map(g=>`<option>${g}</option>`).join('');
+  if(gf){ const prevGf=gf.value; gf.innerHTML='<option value="">All Grades</option>'+GRADES.map(g=>`<option>${g}</option>`).join(''); if(prevGf) gf.value=prevGf; }
 }
 function refreshClassSelect(sel){
   const tid=document.getElementById('ctx-teacher').value;
   const cls=tid?DB.classes.filter(c=>c.teacherId===tid):DB.classes;
+  // Preserve whatever room was already selected (e.g. picked via Weekly
+  // Review) instead of silently snapping back to the first class. Rebuilding
+  // a <select>'s innerHTML with no option marked "selected" makes the
+  // browser default to the first option — previously harmless because this
+  // only ran from controls nobody could reach (the classroom/trimester
+  // pickers were hidden everywhere except Weekly Review); now that the
+  // Gradebook trimester filter is a real, visible control, every toggle of
+  // it was silently bouncing admins back to the first classroom.
+  const prevVal=sel.value;
   sel.innerHTML=cls.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  if(prevVal&&cls.some(c=>c.id===prevVal)) sel.value=prevVal;
 }
 function onTeacherChange(){refreshClassSelect(document.getElementById('ctx-class'));renderDashboard();}
 function onClassChange(){renderDashboard();}
@@ -13601,7 +13622,15 @@ function saveAdminComment(blockId,classId,wsStr){
   lw.comments[blockId].push({text:text||'',author:'Admin',ts:now,attachments:JSON.parse(JSON.stringify(_commentAttachments))});
   sbUpsertLessonWeek(classId,wsStr,lw);
   _commentAttachments=[];
-  closeModal();renderLessonPlan();toast('Comment posted');
+  closeModal();
+  // This modal is opened from two different pages (Lesson Plans' own grid,
+  // and admin's Weekly Review) but used to always re-render Lesson Plans
+  // afterward — so posting a comment from Weekly Review saved correctly but
+  // left that page showing the stale comment count/list until the admin
+  // navigated away and back. Re-render whichever page is actually visible.
+  if(document.getElementById('inst-page-review')?.classList.contains('inst-page-active')) renderReviewPage();
+  else renderLessonPlan();
+  toast('Comment posted');
 }
 
 // ── Review page ──────────────────────────────────────────────────────────────
@@ -13692,11 +13721,24 @@ function renderReviewPage(){
       <button class="btn btn-sm" style="background:var(--intent-success);color:#fff" onclick="setLPStatusFor('${cls.id}','${wsStr}','approved')">Approve Plan</button>
     </div>`:'';
 
+  // Packet status (Newsletter / Homework Packet / Classwork Packet — the
+  // Week Documents links) for this class/week. Previously there was no way
+  // for admin to see whether these had been added without opening that
+  // specific classroom's own Lesson Plans page — this surfaces it right on
+  // the Weekly Review card admin already uses for oversight.
+  const lwDocs=lw.docs||{};
+  const packetsHtml=DOC_SLOTS.map(slot=>{
+    const doc=lwDocs[slot.key];
+    const has=!!(doc&&doc.url);
+    return `<span class="chip" style="font-size:.68rem;font-weight:600;background:${has?'var(--intent-success-bg)':'var(--intent-danger-bg)'};color:${has?'var(--intent-success)':'var(--intent-danger)'}" title="${has?escH(doc.name||doc.url):'Not added yet'}">${slot.icon} ${slot.label}: ${has?'✓ Added':'Missing'}</span>`;
+  }).join(' ');
+
   content.innerHTML=`<div class="review-class-card">
     <div class="review-card-header">
       <div style="flex:1">
         <div style="font-family:var(--font-display);font-weight:700;font-size:1rem;color:var(--bpi-bistre)">${escH(cls.name)}</div>
         <div style="font-size:.78rem;color:var(--bpi-ink-3);margin-top:2px">${escH(teacher?.name||'No teacher')} &middot; ${totalBlocks} activit${totalBlocks===1?'y':'ies'}${commentCount?' &middot; '+commentCount+' comment'+(commentCount>1?'s':''):''}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${packetsHtml}</div>
       </div>
       <span class="status-chip ${sm.cls}">${sm.icon} ${sm.label}</span>
     </div>
@@ -14404,7 +14446,13 @@ function doCopyBlock(blockId){
   const destWeek=document.getElementById('copy-week').value;
   const destDay=parseInt(document.getElementById('copy-day').value);
   if(destWeek===b.weekStart&&destDay===b.dayIndex){toast('Choose a different day or week');return;}
-  DB.lessonBlocks.push({id:newId(),classId,weekStart:destWeek,dayIndex:destDay,subject:b.subject,title:b.title,content:b.content,standardRefs:[...b.standardRefs]});
+  const newBlock={id:newId(),classId,weekStart:destWeek,dayIndex:destDay,subject:b.subject,title:b.title,content:b.content,standardRefs:[...b.standardRefs],attachments:[]};
+  DB.lessonBlocks.push(newBlock);
+  // Previously this only pushed into in-memory DB.lessonBlocks and never
+  // saved to Supabase — the copy looked like it worked (toast + it rendered
+  // immediately) but vanished on the next reload since it was never
+  // persisted. This is the actual fix for "can't copy the day over."
+  sbUpsert('lesson_blocks',T.lesson_blocks.toRow(newBlock));
   closeModal();renderLessonPlan();toast('Activity copied!');
 }
 
@@ -15984,11 +16032,8 @@ function renderDashboard(){
 
 
 /* ── Inst Hub Wiring ── */
-function instOnCtxChange() {
-  if (typeof populateContextSelects === 'function') populateContextSelects();
-  var active = document.querySelector('.inst-page.inst-page-active');
-  if (active && typeof instNav === 'function') instNav(active.id.replace('inst-page-',''));
-}
+// (instOnCtxChange is defined once, further down near instSyncCtx — this
+// used to be declared twice, identically; removed the duplicate here.)
 function instPopulateCtx() {
   var tc  = document.getElementById('ctx-teacher');
   var tc2 = document.getElementById('ctx-teacher-gb');
@@ -16007,6 +16052,19 @@ function instPopulateCtx() {
   });
   // Sync hidden ctx-class for engine
   if (cc && cls[0]) cc.value = cls[0].value || cls[0].id;
+  // Default every trimester select (#ctx-trimester, #ctx-trimester-gradebook)
+  // to the ACTUAL current trimester, computed from today's date, rather than
+  // the hardcoded T3 baked into their HTML. Assignments now file themselves
+  // under whichever trimester their due date really falls in — if the
+  // filter still opened on a fixed T3, the Gradebook would look empty
+  // whenever "today" isn't in T3 (which is most of the year). Runs once per
+  // login (instPopulateCtx is only called from instBootstrap), so it won't
+  // clobber a trimester a user manually picks later in the same session.
+  if (typeof computeTrimesterForDate === 'function') {
+    var todayISO = new Date().toISOString().split('T')[0];
+    var curTri = String(computeTrimesterForDate(todayISO));
+    document.querySelectorAll('[id^="ctx-trimester"]').forEach(function(s) { s.value = curTri; });
+  }
 }
 async function instBootstrap(loginRole) {
   if (!window._instBooted) {
