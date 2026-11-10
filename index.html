@@ -2096,6 +2096,7 @@
 .rc-comment-box{border:1px solid var(--bpi-rule);border-radius:var(--radius-md);padding:10px;font-size:.78rem;line-height:1.55;min-height:70px}
 .rc-comment-note{font-size:.68rem;color:var(--bpi-ink-3);margin-top:4px;font-style:italic}
 .rc-att{border:1px solid var(--bpi-rule);border-radius:var(--radius-md);padding:10px;font-size:.78rem;line-height:1.7}
+.print-only{display:none}
 .rc-sign{display:flex;justify-content:space-between;gap:12px;margin-top:20px;font-size:.76rem;color:var(--bpi-ink-2)}
 
 @media print{
@@ -2103,6 +2104,7 @@
   html,body{background:#fff!important;height:auto!important;overflow:visible!important}
   .sidebar,.topbar,.inst-section-nav,.toolbar,.report-tab-group,.page-title,.no-print,#save-error-bar,#toast,.subject-tabs,.gb-weights-note{display:none!important}
   .shell,.main,.content,#view-inst,#inst-main{display:block!important;height:auto!important;max-height:none!important;overflow:visible!important;padding:0!important;margin:0!important;background:#fff!important;position:static!important}
+  .print-only{display:block!important}
   .inst-page{display:none!important}
   .inst-page.inst-page-active{display:block!important}
   .card{box-shadow:none!important}
@@ -2389,6 +2391,12 @@
   </div>
 
   <div class="card" style="max-width:640px">
+    <div class="card-title">Lock Trimesters</div>
+    <div class="alert alert-info" style="margin-bottom:6px">Lock a trimester once it ends. Its lesson plans, grades, assignments and attendance are then frozen for everyone — teachers and admins — so report cards can't change after they're printed. Unlock it here if a correction is needed.</div>
+    <div id="set-locks"></div>
+  </div>
+
+  <div class="card" style="max-width:640px">
     <div class="card-title">Category Weights</div>
     <div class="alert alert-info" style="margin-bottom:14px">How much each kind of work counts toward a student's grade — in the Gradebook, Progress Reports and Report Cards. Weights should add up to 100%. If a student has no graded work in a category yet, that category is skipped and the others are scaled up.</div>
     <div id="set-weights" class="form-row cols-2"></div>
@@ -2649,8 +2657,14 @@
 
 /* ═══ INSTRUCTIONAL HUB ENGINE ═══ */
 const GRADES=['PK3','VPK','K','1st','2nd','3rd'];
-const SUBJECTS=['Circle Time','Phonics/Handwriting','Reading/Language Arts','Math','Project Based Learning'];
-const SUBJ_CLS={'Circle Time':'block-circle','Phonics/Handwriting':'block-phonics','Reading/Language Arts':'block-reading','Math':'block-math','Project Based Learning':'block-pbl'};
+const SUBJECTS=['Circle Time','Reading/Language Arts','Math','Project Based Learning'];
+// 2026-11-10: Phonics/Handwriting folded into Reading/Language Arts; Science
+// and Social Studies folded into Project Based Learning. Older rows that still
+// carry a retired subject are relabeled as they load (the SQL migration also
+// relabels them permanently in the database).
+const RETIRED_SUBJECTS={'Phonics/Handwriting':'Reading/Language Arts','Science':'Project Based Learning','Social Studies':'Project Based Learning'};
+function normSubject(s){ return RETIRED_SUBJECTS[s]||s; }
+const SUBJ_CLS={'Circle Time':'block-circle','Reading/Language Arts':'block-reading','Math':'block-math','Project Based Learning':'block-pbl'};
 const STANDARDS={
 'PK3':{'Language & Literacy':['Show interest in books and reading','Recognize some letters, especially in own name','Listen and respond to stories read aloud','Use pictures to tell a story'],'Math Foundations':['Count objects up to 10','Sort and classify objects by color and shape','Recognize basic shapes','Compare sizes: big/small, tall/short'],'Social/Emotional':['Follow simple classroom rules','Interact positively with peers','Express feelings with words']},
 'VPK':{'Language & Literacy':['Recognize and name all uppercase letters','Recognize and name all lowercase letters','Produce rhyming words','Identify beginning sounds in words','Write own name'],'Math Foundations':['Count to 20 by ones','Count objects up to 15 accurately','Write numbers 1–10','Recognize basic patterns','Identify 2D shapes: circle, square, triangle, rectangle'],'Social/Emotional':['Follow multi-step directions','Cooperate and take turns','Show enthusiasm for learning']},
@@ -2690,6 +2704,12 @@ let DB={
   // Editable by admins in Roster > Settings; stored in app_settings.
   categoryWeights:{ classwork:40, homework:10, assessment:40, project:10 },
   // Letter-grade cutoffs (minimum percentage), highest first. Editable in Settings.
+  // Trimester locks: { 1:{locked:true, at:'…', by:'…'} } — app_settings 'trimester_locks'.
+  trimesterLocks:{},
+  // Teacher-set standard scores: { 'studentId|tri|grade||section||idx': {level, by} }
+  standardRatings:{},
+  // Rotation teachers: [{id, teacherId, classId, subjects:[]}]
+  roomAssignments:[],
   gradingScale:[ {letter:'A',min:90},{letter:'B',min:80},{letter:'C',min:70},{letter:'D',min:60},{letter:'F',min:0} ]
 };
 function newId(){
@@ -2720,16 +2740,26 @@ function parseLocal(s){
 // Optional columns added by migration_2026-10-13.sql. Checked once per
 // login (sbCheckSchema) so that if the migration hasn't been run yet the
 // app degrades gracefully instead of every save failing.
-const SCHEMA={ assignmentGroup:true, lessonWeekDocs:true, teacherEmail:true, missing:[] };
+const SCHEMA={ assignmentGroup:true, lessonWeekDocs:true, teacherEmail:true, studentWithdraw:true, studentNames:true, trimesterComments:true, standardRatings:true, roomAssignments:true, missing:[] };
 
+/* ═══ STUDENT NAMES (2026-11-10) ═══
+   Students carry firstName + lastName (columns first_name/last_name). `name`
+   stays "First Last" for anything that needs the first name. Everywhere a
+   student is listed, they show as "Last, First" and sort by last name. */
+function _splitName(n){ n=String(n||'').trim().replace(/\s+/g,' '); const i=n.lastIndexOf(' '); return i<0?{first:n,last:''}:{first:n.slice(0,i),last:n.slice(i+1)}; }
+function withNameParts(s){ if(!s.firstName&&!s.lastName){ const p=_splitName(s.name); s.firstName=p.first; s.lastName=p.last; } return s; }
+function lf(s){ if(!s) return ''; withNameParts(s); return s.lastName?(s.lastName+', '+s.firstName):(s.firstName||s.name||''); }
+function byLastName(a,b){ withNameParts(a); withNameParts(b); return (a.lastName||a.firstName).localeCompare(b.lastName||b.firstName)||(a.firstName||'').localeCompare(b.firstName||''); }
+function sortStudents(){ DB.students.sort(byLastName); }
+function csvQ(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; }
 const T = {
   teachers: {
     toRow:   t => { const r={ id:t.id, name:t.name, title:t.title||null }; if(SCHEMA.teacherEmail) r.email=t.email||null; return r; },
     fromRow: r => ({ id:r.id, name:r.name, title:r.title||'', email:r.email||'' }),
   },
   students: {
-    toRow:   s => ({ id:s.id, name:s.name, grade:s.grade, group:s.group||null }),
-    fromRow: r => ({ id:r.id, name:r.name, grade:r.grade, group:r.group||'' }),
+    toRow:   s => { const r={ id:s.id, name:s.name, grade:s.grade, group:s.group||null }; if(SCHEMA.studentWithdraw){ r.withdrawn_on=s.withdrawnOn||null; r.withdraw_reason=s.withdrawReason||null; } if(SCHEMA.studentNames){ r.first_name=s.firstName||null; r.last_name=s.lastName||null; } return r; },
+    fromRow: r => withNameParts({ id:r.id, name:r.name, grade:r.grade, group:r.group||'', withdrawnOn:r.withdrawn_on||'', withdrawReason:r.withdraw_reason||'', firstName:r.first_name||'', lastName:r.last_name||'' }),
   },
   classes: {
     toRow:   c => ({ id:c.id, name:c.name, teacher_id:c.teacherId||null, student_ids:c.studentIds||[] }),
@@ -2741,7 +2771,7 @@ const T = {
                       block_id:a.blockId||null, standard_refs:a.standardRefs||[], grades:a.grades||{} };
                     if(SCHEMA.assignmentGroup) r.group=a.group||null; return r; },
     fromRow: r => ({ id:r.id, classId:r.class_id, title:r.title, date:r.date, trimester:r.trimester,
-                      subject:r.subject, totalPoints:r.total_points, category:r.category||'classwork',
+                      subject:normSubject(r.subject), totalPoints:r.total_points, category:r.category||'classwork',
                       blockId:r.block_id||undefined, standardRefs:r.standard_refs||[], grades:r.grades||{}, group:r.group||'' }),
   },
   announcements: {
@@ -2751,7 +2781,7 @@ const T = {
   lesson_blocks: {
     toRow:   b => ({ id:b.id, class_id:b.classId, week_start:b.weekStart||null, day_index:b.dayIndex, subject:b.subject,
                       title:b.title, content:b.content||'', standard_refs:b.standardRefs||[], attachments:b.attachments||[] }),
-    fromRow: r => ({ id:r.id, classId:r.class_id, weekStart:r.week_start, dayIndex:r.day_index, subject:r.subject,
+    fromRow: r => ({ id:r.id, classId:r.class_id, weekStart:r.week_start, dayIndex:r.day_index, subject:normSubject(r.subject),
                       title:r.title, content:r.content, standardRefs:r.standard_refs||[], attachments:r.attachments||[] }),
   },
   lesson_weeks: {
@@ -2760,7 +2790,11 @@ const T = {
     fromRow: r => ({ status:r.status||'draft', comments:r.comments||{}, holidays:r.holidays||[], docs:r.docs||{} }),
   },
   student_profiles: {
-    fromRow: r => ({ interventionNotes:r.intervention_notes||'', teacherComments:r.teacher_comments||'', parentNotes:r.parent_notes||'' }),
+    fromRow: r => ({ interventionNotes:r.intervention_notes||'', teacherComments:r.teacher_comments||'', parentNotes:r.parent_notes||'', trimesterComments:(r.trimester_comments&&typeof r.trimester_comments==='object')?r.trimester_comments:{} }),
+  },
+  room_assignments: {
+    toRow:   x => ({ id:x.id, teacher_id:x.teacherId, class_id:x.classId, subjects:x.subjects||[] }),
+    fromRow: r => ({ id:r.id, teacherId:r.teacher_id, classId:r.class_id, subjects:r.subjects||[] }),
   },
 };
 const PROFILE_COLS={ interventionNotes:'intervention_notes', teacherComments:'teacher_comments', parentNotes:'parent_notes' };
@@ -2781,6 +2815,10 @@ function showSaveError(label, err){
   const msg=(err&&(err.message||err.error_description||err.hint))||String(err||'');
   const expired=(err&&(err.status===401||/jwt|token|expired/i.test(msg)));
   const bar=document.getElementById('save-error-bar'); if(!bar) return;
+  if(/trimester \d is locked/i.test(msg)){
+    bar.innerHTML=`<div><strong>🔒 Couldn't save ${escH(label)}.</strong> ${escH(msg)} Reload the page to see the current version.</div><button class="btn btn-sm btn-secondary" onclick="location.reload()">Reload</button>`;
+    bar.style.display='flex'; return;
+  }
   bar.innerHTML=`<div><strong>⚠ Couldn't save ${escH(label)}.</strong> This change is <strong>not</strong> stored in the database${expired?' — your sign-in has expired. Sign out, sign back in, and redo it.':' — check your internet connection and try it again.'}<div class="save-error-detail">${escH(msg)}</div></div><button class="btn btn-sm btn-secondary" onclick="document.getElementById('save-error-bar').style.display='none'">Dismiss</button>`;
   bar.style.display='flex';
 }
@@ -2930,7 +2968,7 @@ function saveStudentProfileField(studentId, field, value){
    rows silently never loaded — they looked "unsaved" or "disappeared".
    This pages through every table until it has all of it. */
 const TABLE_ORDER={ teachers:['id'], students:['id'], classes:['id'], assignments:['id'], attendance:['class_id','date'],
-  announcements:['id'], lesson_blocks:['id'], lesson_weeks:['class_id','week_start'], student_profiles:['student_id'], app_settings:['key'] };
+  announcements:['id'], lesson_blocks:['id'], lesson_weeks:['class_id','week_start'], student_profiles:['student_id'], app_settings:['key'], standard_ratings:['student_id','trimester','std_key'], room_assignments:['id'] };
 async function sbSelectAll(table){
   const PAGE=1000; let all=[], from=0, total=null;
   for(let guard=0; guard<500; guard++){
@@ -2950,7 +2988,7 @@ async function sbSelectAll(table){
 
 async function sbCheckSchema(){
   SCHEMA.missing=[];
-  const checks=[['assignments','group','assignmentGroup'],['lesson_weeks','docs','lessonWeekDocs'],['teachers','email','teacherEmail']];
+  const checks=[['assignments','group','assignmentGroup'],['lesson_weeks','docs','lessonWeekDocs'],['teachers','email','teacherEmail'],['students','withdrawn_on','studentWithdraw'],['students','last_name','studentNames'],['student_profiles','trimester_comments','trimesterComments'],['standard_ratings','level','standardRatings'],['room_assignments','subjects','roomAssignments']];
   await Promise.all(checks.map(async ([table,col,flag])=>{
     const r=await sb.from(table).select(col).limit(1);
     const missing=!!(r.error&&(r.error.code==='42703'||/does not exist|could not find/i.test(r.error.message||'')));
@@ -2966,11 +3004,13 @@ let _lastLoadAt=0;
 async function loadAllFromSupabase(){
   await sbCheckSchema();
   const names=['teachers','students','classes','assignments','attendance','announcements','lesson_blocks','lesson_weeks','student_profiles','app_settings'];
+  if(SCHEMA.standardRatings) names.push('standard_ratings');
+  if(SCHEMA.roomAssignments) names.push('room_assignments');
   const results=await Promise.all(names.map(sbSelectAll));
   const R={}; const failed=[];
   names.forEach((n,i)=>{ R[n]=results[i]; if(results[i].error){ failed.push(n); console.error('[data-layer] load failed', n, results[i].error); } });
   DB.teachers      = R.teachers.data.map(T.teachers.fromRow);
-  DB.students      = R.students.data.map(T.students.fromRow);
+  DB.students      = R.students.data.map(T.students.fromRow); sortStudents();
   DB.classes       = R.classes.data.map(T.classes.fromRow);
   DB.assignments   = R.assignments.data.map(T.assignments.fromRow);
   DB.announcements = R.announcements.data.map(T.announcements.fromRow);
@@ -2981,9 +3021,13 @@ async function loadAllFromSupabase(){
   R.lesson_weeks.data.forEach(r => { DB.lessonWeeks[r.class_id+'||'+r.week_start] = T.lesson_weeks.fromRow(r); });
   DB.studentProfiles = {};
   R.student_profiles.data.forEach(r => { DB.studentProfiles[r.student_id] = T.student_profiles.fromRow(r); });
+  DB.standardRatings = {};
+  (R.standard_ratings?R.standard_ratings.data:[]).forEach(r => { DB.standardRatings[ratingKey(r.student_id, r.trimester, r.std_key)] = { level:r.level, by:r.updated_by||'' }; });
+  DB.roomAssignments = (R.room_assignments?R.room_assignments.data:[]).map(T.room_assignments.fromRow);
   const setting=key=>{ const row=R.app_settings.data.find(r=>r.key===key); return row?row.value:null; };
   const td=setting('trimester_dates'); if(td) DB.trimesterDates=Object.assign({}, DB.trimesterDates, td);
   const cw=setting('category_weights'); DB.categoryWeights=Object.assign({}, DEFAULT_CATEGORY_WEIGHTS, cw||{});
+  const tl=setting('trimester_locks'); DB.trimesterLocks=(tl&&typeof tl==='object')?tl:{};
   const gs=setting('grading_scale'); DB.gradingScale=(Array.isArray(gs)&&gs.length)?gs:DEFAULT_GRADING_SCALE.slice();
   _lastLoadAt=Date.now();
   _showLoadProblems(failed);
@@ -2994,7 +3038,7 @@ function _showLoadProblems(failed){
     bar.innerHTML=`<div><strong>⚠ Some data didn't load (${escH(failed.join(', '))}).</strong> What you see may be incomplete — please reload the page before making changes.</div><button class="btn btn-sm btn-secondary" onclick="location.reload()">Reload</button>`;
     bar.style.display='flex';
   } else if(SCHEMA.missing.length && DB.role==='admin'){
-    bar.innerHTML=`<div><strong>Database update needed.</strong> Run <code>migration_2026-10-13.sql</code> in the Supabase SQL Editor (missing: ${escH(SCHEMA.missing.join(', '))}). Until then, assignment groups and week document links can't be saved.</div><button class="btn btn-sm btn-secondary" onclick="document.getElementById('save-error-bar').style.display='none'">Dismiss</button>`;
+    bar.innerHTML=`<div><strong>Database update needed.</strong> Run ${SCHEMA.missing.some(m=>m!=='students.withdrawn_on')?'<code>migration_2026-10-13.sql</code> and then ':''}<code>migration_2026-11-10.sql</code> in the Supabase SQL Editor (missing: ${escH(SCHEMA.missing.join(', '))}). Until then, the features that use those columns (assignment groups, week document links, withdrawing students) can't be saved.</div><button class="btn btn-sm btn-secondary" onclick="document.getElementById('save-error-bar').style.display='none'">Dismiss</button>`;
     bar.style.display='flex';
   }
 }
@@ -3019,7 +3063,7 @@ function seedData(){
   const t3={id:newId(),name:'Ms. Williams',title:'3rd Grade Teacher'};
   DB.teachers=[t1,t2,t3];
   const sd=[{name:'Amir Whaley',grade:'K'},{name:'Sofia Reyes',grade:'K'},{name:'Marcus Johnson',grade:'K'},{name:'Aaliyah Brown',grade:'K'},{name:'Devon Carter',grade:'1st'},{name:'Kira Patel',grade:'1st'},{name:'Jaylen Morris',grade:'1st'},{name:'Bryce Mordelle',grade:'2nd'},{name:'Zara Thompson',grade:'2nd'},{name:'Isaiah Davis',grade:'2nd'},{name:'Priya Nair',grade:'2nd'},{name:'Tyrese Washington',grade:'3rd'},{name:'Luna Garcia',grade:'3rd'},{name:'Jordan Lee',grade:'3rd'},{name:'Mia Foster',grade:'PK3'},{name:'Caleb Wright',grade:'PK3'},{name:'Naomi Scott',grade:'VPK'},{name:'Elijah Barnes',grade:'VPK'}];
-  DB.students=sd.map(s=>({id:newId(),name:s.name,grade:s.grade}));
+  DB.students=sd.map(s=>withNameParts({id:newId(),name:s.name,grade:s.grade})); sortStudents();
   const cls1={id:newId(),name:'Kindergarten (Ms. Henry)',teacherId:t1.id,studentIds:DB.students.filter(s=>s.grade==='K').map(s=>s.id)};
   const cls2={id:newId(),name:'Blended 1st–2nd (Mr. Jackson)',teacherId:t2.id,studentIds:DB.students.filter(s=>s.grade==='1st'||s.grade==='2nd').map(s=>s.id)};
   const cls3={id:newId(),name:'3rd Grade (Ms. Williams)',teacherId:t3.id,studentIds:DB.students.filter(s=>s.grade==='3rd').map(s=>s.id)};
@@ -3030,7 +3074,7 @@ function seedData(){
   for(let d=0;d<2;d++)ab(cls2.id,d,'Circle Time','Teacher Planning','');
   for(let d=2;d<5;d++){
     ab(cls2.id,d,'Circle Time','Circle Time','Welcome PowerPoint, Calendar, Voice Levels, Classroom Jobs, Phonics Jam, School Pledge');
-    ab(cls2.id,d,'Phonics/Handwriting',d===2?'Gratitude Writing':d===3?'Break Reflection':'Set 24 Part 2',d===2?'Write about someone you are thankful for.':d===3?'How was your break? How does it feel to be around family?':'Phonics Set 24 Assessment');
+    ab(cls2.id,d,'Reading/Language Arts',d===2?'Gratitude Writing':d===3?'Break Reflection':'Set 24 Part 2',d===2?'Write about someone you are thankful for.':d===3?'How was your break? How does it feel to be around family?':'Phonics Set 24 Assessment');
     ab(cls2.id,d,'Reading/Language Arts',d===2?'Conjunctions & Text Features':d===3?'Parts of a Story Day 1':'Parts of a Story Day 2','Whole Group → Centers → Teacher Table → Technology',d===2?[{grade:'2nd',section:'Reading – Literature & Informational',stdIndex:6}]:[{grade:'1st',section:'Reading – Literature',stdIndex:2},{grade:'2nd',section:'Reading – Literature & Informational',stdIndex:4}]);
     ab(cls2.id,d,'Math',d===2?'Subtract 2-Digit Numbers':d===3?'Intro 2-Digit Multiplication':'2-Digit Multiplication Day 2','Whole Group → Centers → Teacher Table',d===2?[{grade:'2nd',section:'Mathematics – Numbers in Base Ten',stdIndex:4}]:[{grade:'2nd',section:'Mathematics – Operations & Algebraic Thinking',stdIndex:3}]);
     ab(cls2.id,d,'Project Based Learning','Habitats & Ecosystems '+(d===2?'Intro':d===3?'Lesson 1':'Lesson 2'),'Black History Practice: 10:30AM\nHabitats and Ecosystems Unit');
@@ -3104,6 +3148,17 @@ function instNav(page){
   if(pageEl) pageEl.classList.add('inst-page-active');
   if(instSidebar) instSidebar.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+page+"'"))n.classList.add('active');});
   ({dashboard:renderDashboard,lessonplan:renderLessonPlan,gradebook:renderGradebook,reports:initReportCards,students:renderStudents,teachers:renderTeachers,classes:renderClasses,standards:renderStandards,attendance:renderAttendance,profiles:renderProfiles,overview:renderAdminDashboard,compliance:renderCompliance,oversight:renderOversight,stdreport:renderStandardsReport,adminprofiles:renderAdminProfiles,adminreports:renderAdminReports,settings:renderSettingsPage})[page]?.();
+  const _rs=rotationSubjects(getCtxClass());
+  if(_rs&&['attendance','reports','profiles','dashboard'].includes(page)&&pageEl){
+    const c=DB.classes.find(x=>x.id===getCtxClass());
+    const t=c&&DB.teachers.find(x=>x.id===c.teacherId);
+    [...pageEl.children].forEach((ch,i)=>{ if(i>0&&!ch.classList.contains('rotation-note')&&ch.style.display!=='none'){ ch.style.display='none'; ch.dataset.rotHidden='1'; } });
+    let note=pageEl.querySelector('.rotation-note');
+    if(!note){ note=document.createElement('div'); note.className='card rotation-note'; pageEl.appendChild(note); }
+    note.style.display=''; note.innerHTML=`<div class="empty-state">You cover <strong>${escH(_rs.join(', '))}</strong> in ${escH(c?c.name:'this room')}. ${page==='attendance'?'Attendance':page==='reports'?'Reports':'This page'} for this room ${t?'is handled by '+escH(t.name):'is handled by the homeroom teacher'}. Switch to your own room in the Room picker above.</div>`;
+  } else if(pageEl){
+    [...pageEl.children].forEach(ch=>{ if(ch.classList.contains('rotation-note')) ch.style.display='none'; else if(ch.dataset.rotHidden==='1'){ ch.style.display=''; delete ch.dataset.rotHidden; } });
+  }
   updateRoomLabel();
 }
 
@@ -3128,9 +3183,38 @@ function getCtxClass(){
   // Teacher accounts (live Supabase login only) are locked to their own
   // room — every reader of getCtxClass() (Lesson Plans, Gradebook,
   // Attendance, Reports, Assignments, Standards) inherits this automatically.
-  if(DB.roomLocked) return DB.myClassId||'';
+  if(DB.roomLocked){
+    const allowed=myRoomIds(); const v=document.getElementById('ctx-class').value;
+    return allowed.includes(v)?v:(allowed[0]||'');
+  }
   return document.getElementById('ctx-class').value||(DB.classes[0]?.id||'');
 }
+/* ═══ ROTATION TEACHERS (2026-11-10) ═══
+   An admin gives a teacher rotation rooms + subjects in Roster › Teachers
+   (room_assignments table). In a rotation room that teacher sees and edits
+   only their subject(s) in Lesson Plans and the Gradebook; the room's
+   attendance, reports and other subjects stay with the homeroom teacher.
+   The homeroom teacher still submits the whole week's lesson plan. */
+function myRotations(){ return DB.myTeacherId?(DB.roomAssignments||[]).filter(r=>r.teacherId===DB.myTeacherId):[]; }
+// Rooms a room-locked teacher can open: homeroom first, then rotation rooms.
+function myRoomIds(){
+  const ids=[]; if(DB.myClassId) ids.push(DB.myClassId);
+  myRotations().forEach(r=>{ if(!ids.includes(r.classId)&&DB.classes.some(c=>c.id===r.classId)) ids.push(r.classId); });
+  return ids;
+}
+// Subjects the signed-in teacher covers in this room, or null when they have
+// full access to it (their homeroom, or any room for an admin).
+function rotationSubjects(classId){
+  if(DB.role==='admin'||!classId||classId===DB.myClassId) return null;
+  const subs=[]; myRotations().filter(r=>r.classId===classId).forEach(r=>(r.subjects||[]).forEach(x=>{ if(!subs.includes(x)) subs.push(x); }));
+  return subs.length?subs:null;
+}
+function rotationBlocked(classId, subject){
+  const rs=rotationSubjects(classId);
+  if(rs&&!rs.includes(subject)){ toast('You can only change '+rs.join(' / ')+' in this room.'); return true; }
+  return false;
+}
+function rotationLabel(r){ const c=DB.classes.find(x=>x.id===r.classId); return (r.subjects||[]).join(', ')+' in '+(c?c.name:'(removed room)'); }
 function getCtxTrimester(){return parseInt(document.getElementById('ctx-trimester').value)||3;}
 // Automatically determines which trimester an assignment belongs to from
 // its due date, using the admin-configured ranges in DB.trimesterDates
@@ -3151,8 +3235,51 @@ function computeTrimesterForDate(dateStr){
   return best;
 }
 
+/* ═══ TRIMESTER LOCK (2026-11-10) ═══
+   An admin locks a trimester from Roster › Settings once it ends. While it's
+   locked nobody (teachers or admins) can change its lesson plans, grades,
+   assignments or attendance; reports and printing still work. An admin
+   unlocks it to make a correction. The database enforces the same rule
+   (see migration_2026-11-10.sql). */
+function isTriLocked(n){ const l=(DB.trimesterLocks||{})[n]; return !!(l&&l.locked); }
+function lockedTriForDate(d){ if(!d) return 0; const n=computeTrimesterForDate(d); return isTriLocked(n)?n:0; }
+function lockBlocked(n){
+  if(!n||!isTriLocked(n)) return false;
+  toast('🔒 Trimester '+n+' is locked'+(DB.role==='admin'?' — unlock it in Roster › Settings to make changes':'. Ask an admin if something needs to change')+'.');
+  return true;
+}
+function lockBanner(n, what){
+  return `<div class="lp-status-bar" style="background:#efe7df;border:1px solid var(--bpi-rule-strong);margin-bottom:12px"><span>🔒 <strong>Trimester ${n} is locked.</strong> ${what} can be viewed and printed but not changed.${DB.role==='admin'?' Unlock it in Roster › Settings to make a correction.':''}</span></div>`;
+}
+function renderTrimesterLocks(){
+  const el=document.getElementById('set-locks'); if(!el) return;
+  const td=DB.trimesterDates||{};
+  el.innerHTML=[1,2,3].map(n=>{
+    const l=(DB.trimesterLocks||{})[n]; const locked=!!(l&&l.locked);
+    const range=td[n]?fmtDateUS(td[n].start)+' – '+fmtDateUS(td[n].end):'';
+    const meta=locked?`Locked${l.by?' by '+escH(l.by):''}${l.at?' on '+escH(l.at):''}`:'Open';
+    return `<div class="deadline-row" style="padding:10px 0"><span style="flex:1"><strong>Trimester ${n}</strong> <span style="font-size:.74rem;color:var(--bpi-ink-3)">${range}</span><div style="font-size:.74rem;color:${locked?'#5C3317':'var(--bpi-ink-3)'}">${locked?'🔒 ':''}${meta}</div></span>
+      ${locked?`<button class="btn btn-secondary btn-sm" onclick="setTriLock(${n},false)">Unlock</button>`:`<button class="btn btn-primary btn-sm" onclick="setTriLock(${n},true)">🔒 Lock T${n}</button>`}</div>`;
+  }).join('');
+}
+async function setTriLock(n, locked){
+  const msg=locked
+    ?`Lock Trimester ${n}? Lesson plans, grades, assignments and attendance for T${n} will be frozen for everyone until an admin unlocks it.`
+    :`Unlock Trimester ${n}? Teachers will be able to change T${n} lesson plans, grades and attendance again.`;
+  if(!confirm(msg)) return;
+  const prev=JSON.parse(JSON.stringify(DB.trimesterLocks||{}));
+  const next=Object.assign({}, DB.trimesterLocks||{});
+  next[n]=locked?{locked:true, at:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}), by:DB.myName||'Admin'}:{locked:false};
+  DB.trimesterLocks=next;
+  const r=await sbSaveSetting('trimester_locks', next, 'trimester lock');
+  if(!r.ok){ DB.trimesterLocks=prev; }
+  else toast(locked?`Trimester ${n} locked`:`Trimester ${n} unlocked`);
+  renderTrimesterLocks();
+}
+
 // ── Global Settings page (Roster > Settings, admin-only) ────────────────────
 function renderSettingsPage(){
+  renderTrimesterLocks();
   const w=DB.categoryWeights||{};
   const wEl=document.getElementById('set-weights');
   if(wEl) wEl.innerHTML=Object.keys(CATEGORIES).map(k=>`<div><label>${CATEGORIES[k]} (%)</label><input type="number" min="0" max="100" step="1" id="set-w-${k}" value="${Number(w[k])||0}" oninput="updateWeightsTotal()"></div>`).join('');
@@ -3208,6 +3335,10 @@ async function saveTrimesterDates(){
   if(!(vals[1].end<vals[2].start&&vals[2].end<vals[3].start)){
     if(!confirm('These trimester date ranges overlap or are out of order. Save anyway?'))return;
   }
+  for(const n of [1,2,3]){
+    const old=(DB.trimesterDates||{})[n]||{};
+    if(isTriLocked(n)&&(old.start!==vals[n].start||old.end!==vals[n].end)){alert(`Trimester ${n} is locked, so its dates can't change. Unlock it first.`);return;}
+  }
   DB.trimesterDates=vals;
   await sbSaveTrimesterDates();
   // "Automatic" should hold even after the calendar changes mid-year —
@@ -3216,6 +3347,7 @@ async function saveTrimesterDates(){
   let changed=0;
   DB.assignments.forEach(a=>{
     const t=computeTrimesterForDate(a.date);
+    if(isTriLocked(t)||isTriLocked(a.trimester)) return; // never move work into or out of a locked trimester
     if(t!==a.trimester){a.trimester=t;changed++;sbUpsert('assignments',T.assignments.toRow(a));}
   });
   toast('Trimester dates saved'+(changed?` — ${changed} assignment${changed===1?'':'s'} recalculated`:''));
@@ -3244,11 +3376,28 @@ function onClassChange(){renderDashboard();}
      remaining weights are scaled up, so one ungraded category doesn't drag
      a student down.
    • Missing (M) and Excused (E) are not counted — same rule as before. */
-const GRADE_SUBJECTS=['Reading/Language Arts','Math','Phonics/Handwriting','Science','Social Studies','Circle Time','Project Based Learning','Social Skills'];
+const GRADE_SUBJECTS=['Reading/Language Arts','Math','Circle Time','Project Based Learning','Social Skills'];
 const CATEGORIES={classwork:'Classwork',homework:'Homework',assessment:'Assessment',project:'Project'};
 
 function _gradeCounts(g){ return !!(g && g.earned!=null && g.status!=='M' && g.status!=='E'); }
-function _appliesTo(a, student){ return !(a.group && student && student.group && a.group!==student.group); }
+function _appliesTo(a, student){
+  if(a.group && student && student.group && a.group!==student.group) return false;
+  // Work dated on/after a student's withdrawal date doesn't apply to them.
+  if(student && student.withdrawnOn && a.date && a.date>=student.withdrawnOn) return false;
+  return true;
+}
+/* ═══ WITHDRAWN STUDENTS (2026-11-10) ═══
+   A withdrawn student keeps their class membership and history, but from
+   their withdrawal date on they're left off attendance, grade entry, averages,
+   missing-work counts and schoolwide lists. */
+function activeOn(s, dateStr){ return !!s && (!s.withdrawnOn || !dateStr || dateStr<s.withdrawnOn); }
+function activeNow(s){ return activeOn(s, isoLocal(new Date())); }
+function activeStudents(){ return DB.students.filter(activeNow); }
+function idsActiveOn(cls, dateStr){ return (cls&&cls.studentIds||[]).filter(id=>activeOn(DB.students.find(s=>s.id===id), dateStr)); }
+// Was this student enrolled for any part of trimester n?
+function enrolledInTri(s, n){ const td=DB.trimesterDates&&DB.trimesterDates[n]; return !s.withdrawnOn || !td || !td.start || s.withdrawnOn>td.start || DB.assignments.some(a=>a.trimester===n&&a.grades&&a.grades[s.id]); }
+function fmtDateUS(d){ if(!d) return ''; const x=parseLocal(d); return (x.getMonth()+1)+'/'+x.getDate()+'/'+x.getFullYear(); }
+function withdrawnChip(s){ return s&&s.withdrawnOn?`<span class="chip" style="background:#ece5de;color:#6b5744;font-size:.62rem" title="${escH(s.withdrawReason||'')}">Withdrawn ${fmtDateUS(s.withdrawnOn)}</span>`:''; }
 
 // Returns { pct (0-100, unrounded) | null, byCat:{cat:{earned,possible,pct}}, graded:n }
 function calcGrade(studentId, assignments){
@@ -3369,9 +3518,10 @@ function renderLessonPlan(){
   // editing or deleting their activities. A teacher (or a dual-role
   // admin/teacher viewing their own linked room) always gets full edit
   // access, same as before.
-  const viewingOwnRoom=DB.role!=='admin'||!!(DB.myClassId&&classId===DB.myClassId);
+  const lpLocked=lockedTriForDate(wsStr);
+  const viewingOwnRoom=(DB.role!=='admin'||!!(DB.myClassId&&classId===DB.myClassId))&&!lpLocked;
   const addBtn=document.getElementById('lp-add-activity-btn');if(addBtn)addBtn.style.display=viewingOwnRoom?'':'none';
-  const holBtn=document.getElementById('lp-holiday-btn');if(holBtn)holBtn.style.display=viewingOwnRoom?'':'none';
+  const holBtn=document.getElementById('lp-holiday-btn');if(holBtn)holBtn.style.display=(viewingOwnRoom&&!rotationSubjects(classId))?'':'none';
   const roNote=document.getElementById('lp-readonly-note');if(roNote)roNote.style.display=viewingOwnRoom?'none':'';
   if(DB.roomLocked&&!classId){
     document.getElementById('lp-week-label').textContent='';
@@ -3388,12 +3538,14 @@ function renderLessonPlan(){
   if(lpSubjSel&&lpSubjSel.options.length<=1)lpSubjSel.innerHTML='<option value="">All Subjects</option>'+SUBJECTS.map(sj=>`<option>${sj}</option>`).join('');
   const subjFilter=lpSubjSel?.value||'';
   const allWeekBlocks=DB.lessonBlocks.filter(b=>b.classId===classId&&b.weekStart===wsStr);
-  const blocks=subjFilter?allWeekBlocks.filter(b=>b.subject===subjFilter):allWeekBlocks;
+  const lpRot=rotationSubjects(classId);
+  const visibleWeekBlocks=lpRot?allWeekBlocks.filter(b=>lpRot.includes(b.subject)):allWeekBlocks;
+  const blocks=subjFilter?visibleWeekBlocks.filter(b=>b.subject===subjFilter):visibleWeekBlocks;
   document.getElementById('lp-day-headers').innerHTML=DAYS.map((day,i)=>{const d=new Date(lpCurrentWeek);d.setDate(d.getDate()+i);
-    const hasBlocks=allWeekBlocks.some(b=>b.dayIndex===i);
-    const copyBtn=(viewingOwnRoom&&hasBlocks)?`<button class="lp-copy-day-btn no-print" onclick="openCopyDayModal(${i})" title="Copy this whole day to another day">⧉ Copy day</button>`:'';
+    const hasBlocks=visibleWeekBlocks.some(b=>b.dayIndex===i);
+    const copyBtn=((DB.role!=='admin'||!!(DB.myClassId&&classId===DB.myClassId))&&hasBlocks)?`<button class="lp-copy-day-btn no-print" onclick="openCopyDayModal(${i})" title="Copy this whole day to another day">⧉ Copy day</button>`:'';
     return`<div class="lp-col-header">${day}<br><span style="font-weight:400;font-size:.7rem;opacity:.75">${fmtShort(d)}</span>${copyBtn}</div>`;}).join('');
-  const subOrder=['Circle Time','Phonics/Handwriting','Reading/Language Arts','Math','Project Based Learning'];
+  const subOrder=['Circle Time','Reading/Language Arts','Math','Project Based Learning'];
   const classId2=classId;
   const lw=getLW(classId,wsStr);
   document.getElementById('lp-grid').innerHTML=DAYS.map((_,dayIdx)=>{
@@ -3409,7 +3561,7 @@ function renderLessonPlan(){
         ${escH(a.title)}</div>`).join('');
       const blockComments=(lw.comments[b.id]||[]);
       const commentBadge=blockComments.length?`<span style="font-size:.62rem;background:var(--bpi-harvest-gold);color:#fff;border-radius:10px;padding:1px 5px;margin-left:4px;font-weight:700">${blockComments.length}</span>`:'';
-      const adminCommentArea=DB.role==='admin'?`<button class="btn btn-sm" style="font-size:.63rem;padding:2px 6px;margin-top:4px;background:var(--bpi-gold-10);border:1px solid var(--bpi-gold-20);color:var(--bpi-bistre);width:100%" onclick="openAdminCommentModal('${b.id}','${classId2}','${wsStr}');event.stopPropagation()">＋ Comment${commentBadge}</button>`:(blockComments.length?`<div style="margin-top:4px">${blockComments.map(c=>`<div class="admin-comment-wrap"><div class="admin-comment-meta">${escH(c.author)} &middot; ${escH(c.ts)}</div>${escH(c.text)}</div>`).join('')}</div>`:'');
+      const adminCommentArea=(DB.role==='admin'&&!lpLocked)?`<button class="btn btn-sm" style="font-size:.63rem;padding:2px 6px;margin-top:4px;background:var(--bpi-gold-10);border:1px solid var(--bpi-gold-20);color:var(--bpi-bistre);width:100%" onclick="openAdminCommentModal('${b.id}','${classId2}','${wsStr}');event.stopPropagation()">＋ Comment${commentBadge}</button>`:(blockComments.length?`<div style="margin-top:4px">${blockComments.map(c=>`<div class="admin-comment-wrap"><div class="admin-comment-meta">${escH(c.author)} &middot; ${escH(c.ts)}</div>${escH(c.text)}</div>`).join('')}</div>`:'');
       // Click-to-edit and the "create assignment from this activity" button
       // are only wired up when viewing your own room — an admin browsing
       // someone else's room this way can still comment and open grade entry
@@ -3461,10 +3613,11 @@ function buildStdCheckboxes(classId,existingRefs){
 }
 
 function openBlockModal(dayIdx){
+  if(lockBlocked(lockedTriForDate(isoLocal(lpCurrentWeek))))return;
   const classId=getCtxClass();if(!DB.classes.find(c=>c.id===classId)){toast('Select a class first');return;}
   const dayDate=new Date(lpCurrentWeek);dayDate.setDate(dayDate.getDate()+(dayIdx||0));const dayDateStr=isoLocal(dayDate);
   showModal(`<div class="modal-title">Add Lesson Activity</div>
-    <div class="form-row cols-2"><div><label>Day</label><select id="blk-day">${DAYS.map((d,i)=>`<option value="${i}" ${i===(dayIdx||0)?'selected':''}>${d}</option>`).join('')}</select></div><div><label>Subject Block</label><select id="blk-subject" onchange="refreshBlkStds()">${SUBJECTS.map(s=>`<option>${s}</option>`).join('')}</select></div></div>
+    <div class="form-row cols-2"><div><label>Day</label><select id="blk-day">${DAYS.map((d,i)=>`<option value="${i}" ${i===(dayIdx||0)?'selected':''}>${d}</option>`).join('')}</select></div><div><label>Subject Block</label><select id="blk-subject" onchange="refreshBlkStds()">${(rotationSubjects(getCtxClass())||SUBJECTS).map(s=>`<option>${s}</option>`).join('')}</select></div></div>
     <div class="form-row"><div><label>Activity Title</label><input type="text" id="blk-title" placeholder="e.g. Parts of a Story Day 1" oninput="syncAsnTitles()"></div></div>
     <div class="form-row"><div><label>Content / Notes</label><textarea id="blk-content" rows="3" placeholder="Whole Group → Centers → Teacher Table…"></textarea></div></div>
     <div style="margin-top:8px">
@@ -3609,9 +3762,10 @@ function filterBlkStds(){
 }
 
 function editBlockModal(blockId){
+  if(lockBlocked(lockedTriForDate(isoLocal(lpCurrentWeek))))return;
   const b=DB.lessonBlocks.find(x=>x.id===blockId);if(!b)return;
   showModal(`<div class="modal-title">Edit Activity</div>
-    <div class="form-row cols-2"><div><label>Day</label><select id="blk-day">${DAYS.map((d,i)=>`<option value="${i}" ${i===b.dayIndex?'selected':''}>${d}</option>`).join('')}</select></div><div><label>Subject Block</label><select id="blk-subject">${SUBJECTS.map(s=>`<option ${s===b.subject?'selected':''}>${s}</option>`).join('')}</select></div></div>
+    <div class="form-row cols-2"><div><label>Day</label><select id="blk-day">${DAYS.map((d,i)=>`<option value="${i}" ${i===b.dayIndex?'selected':''}>${d}</option>`).join('')}</select></div><div><label>Subject Block</label><select id="blk-subject">${(rotationSubjects(getCtxClass())||SUBJECTS).map(s=>`<option ${s===b.subject?'selected':''}>${s}</option>`).join('')}</select></div></div>
     <div class="form-row"><div><label>Activity Title</label><input type="text" id="blk-title" value="${escH(b.title)}"></div></div>
     <div class="form-row"><div><label>Content / Notes</label><textarea id="blk-content" rows="3">${escH(b.content)}</textarea></div></div>
     <div style="margin-top:8px">
@@ -3628,10 +3782,13 @@ function editBlockModal(blockId){
 }
 
 function saveBlock(existingId){
+  if(lockBlocked(lockedTriForDate(isoLocal(lpCurrentWeek))))return;
   const classId=getCtxClass();const wsStr=isoLocal(lpCurrentWeek);
   const day=parseInt(document.getElementById('blk-day').value);const subject=document.getElementById('blk-subject').value;
   const title=document.getElementById('blk-title').value.trim();const content=document.getElementById('blk-content').value.trim();
   if(!title){alert('Please enter a title');return;}
+  if(rotationBlocked(classId,subject))return;
+  if(existingId){const _old=DB.lessonBlocks.find(x=>x.id===existingId);if(_old&&rotationBlocked(classId,_old.subject))return;}
   const stdRefs=[];document.querySelectorAll('.std-ref-cb:checked').forEach(cb=>{const[grade,section,stdi]=cb.dataset.key.split('||');stdRefs.push({grade,section,stdIndex:parseInt(stdi)});});
   let blockId=existingId;
   const attachments=blkGetAttachments();
@@ -3650,6 +3807,8 @@ function saveBlock(existingId){
     const trimester=computeTrimesterForDate(date);
     const asnGroup=item.querySelector('.blk-asn-group')?.value||'';const asnCat=item.querySelector('.blk-asn-category')?.value||'classwork';newAssignments.push({id:newId(),classId,title:asnTitle,date,subject,trimester,standardRefs:stdRefs,grades:{},totalPoints,blockId,group:asnGroup,category:asnCat});
   });
+  const _lockedAsn=newAssignments.filter(a=>isTriLocked(a.trimester));
+  if(_lockedAsn.length){ toast(`🔒 Skipped ${_lockedAsn.length} assignment${_lockedAsn.length===1?'':'s'} due in a locked trimester`); newAssignments.splice(0,newAssignments.length,...newAssignments.filter(a=>!isTriLocked(a.trimester))); }
   newAssignments.forEach(a=>{DB.assignments.push(a);sbUpsert('assignments',T.assignments.toRow(a));});
   closeModal();renderLessonPlan();
   if(newAssignments.length===1){
@@ -3716,6 +3875,14 @@ function renderLPStatusBar(){
 
   const bar=document.getElementById('lp-submit-bar');
   if(!bar)return;
+  const lockN=lockedTriForDate(wsStr);
+  if(lockN){ bar.innerHTML=lockBanner(lockN,'This week\'s lesson plan'); return; }
+  const rotS=rotationSubjects(classId);
+  if(rotS){
+    const c=DB.classes.find(x=>x.id===classId); const t=c&&DB.teachers.find(x=>x.id===c.teacherId);
+    bar.innerHTML=`<div class="lp-status-bar ${lw.status}"><span>🔁 <strong>Rotation room.</strong> You're planning <strong>${escH(rotS.join(', '))}</strong> here. Your activities are part of ${t?escH(t.name)+'\'s':'the homeroom teacher\'s'} weekly plan, which they submit for review (${escH(sm.label.toLowerCase())}).</span></div>`;
+    return;
+  }
 
   // Admin view on LP page — unless this admin is also the teacher assigned
   // to the room currently being viewed (a dual-role admin/teacher account),
@@ -3747,6 +3914,8 @@ function renderLPStatusBar(){
 }
 
 function setLPStatus(status){
+  if(rotationSubjects(getCtxClass())){toast('The homeroom teacher submits this week\'s plan.');return;}
+  if(lockBlocked(lockedTriForDate(isoLocal(lpCurrentWeek))))return;
   const classId=getCtxClass();const wsStr=isoLocal(lpCurrentWeek);
   if(!classId){toast('Select a room first');return;}
   patchLessonWeek(classId,wsStr,lw=>{lw.status=status;},'lesson plan status');
@@ -3757,6 +3926,7 @@ function setLPStatus(status){
 
 // ── Holiday modal ────────────────────────────────────────────────────────────
 function openHolidayModal(){
+  if(lockBlocked(lockedTriForDate(isoLocal(lpCurrentWeek))))return;
   const classId=getCtxClass();const wsStr=isoLocal(lpCurrentWeek);
   const lw=getLW(classId,wsStr);
   const checks=DAYS.map((d,i)=>{
@@ -3772,6 +3942,7 @@ function openHolidayModal(){
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveHolidays('${classId}','${wsStr}')">Save</button></div>`);
 }
 function saveHolidays(classId,wsStr){
+  if(lockBlocked(lockedTriForDate(wsStr)))return;
   const days=[];
   document.querySelectorAll('[data-day]:checked').forEach(cb=>days.push(parseInt(cb.dataset.day)));
   patchLessonWeek(classId,wsStr,lw=>{lw.holidays=days.slice();},'holiday days');
@@ -3780,6 +3951,7 @@ function saveHolidays(classId,wsStr){
 
 // ── Admin comment on a block ─────────────────────────────────────────────────
 function openAdminCommentModal(blockId,classId,wsStr){
+  if(lockBlocked(lockedTriForDate(wsStr)))return;
   const lw=getLW(classId,wsStr);
   const existing=(lw.comments[blockId]||[]);
   const block=DB.lessonBlocks.find(b=>b.id===blockId);
@@ -3804,6 +3976,7 @@ function openAdminCommentModal(blockId,classId,wsStr){
   _commentAttachments=[];
 }
 function saveAdminComment(blockId,classId,wsStr){
+  if(lockBlocked(lockedTriForDate(wsStr)))return;
   const text=document.getElementById('admin-comment-text')?.value.trim();
   if(!text&&!_commentAttachments.length){toast('Enter a comment or add an attachment');return;}
   const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
@@ -3821,7 +3994,7 @@ function saveAdminComment(blockId,classId,wsStr){
   toast('Comment posted');
 }
 
-function deleteBlock(id){DB.lessonBlocks=DB.lessonBlocks.filter(b=>b.id!==id);sbDelete('lesson_blocks',{id});closeModal();renderLessonPlan();toast('Removed');}
+function deleteBlock(id){const _b=DB.lessonBlocks.find(b=>b.id===id);if(_b&&lockBlocked(lockedTriForDate(_b.weekStart)))return;if(_b&&rotationBlocked(_b.classId,_b.subject))return;DB.lessonBlocks=DB.lessonBlocks.filter(b=>b.id!==id);sbDelete('lesson_blocks',{id});closeModal();renderLessonPlan();toast('Removed');}
 
 // Gradebook is organized subject-first: pick a subject tab (Math, Reading…)
 // and you see / create only that subject's assignments and each student's
@@ -3837,26 +4010,30 @@ function renderGradebook(){
   const q=(document.getElementById('gb-search')?.value||'').toLowerCase();
   const stdQ=(document.getElementById('gb-std-search')?.value||'').toLowerCase();
   const trimester=getCtxTrimester();
-  const triAsns=DB.assignments.filter(a=>a.classId===classId&&a.trimester===trimester);
+  const gbRot=rotationSubjects(classId);
+  const triAsns=DB.assignments.filter(a=>a.classId===classId&&a.trimester===trimester&&(!gbRot||gbRot.includes(a.subject)));
   // Subject tabs: the standard subjects plus any other subject in use.
-  const tabSubjects=GRADE_SUBJECTS.filter(s=>s!=='Circle Time'||triAsns.some(a=>a.subject===s)).concat(subjectsIn(triAsns).filter(s=>!GRADE_SUBJECTS.includes(s)));
+  // A rotation teacher only gets tabs for the subject(s) they cover here.
+  const tabSubjects=gbRot?gbRot.slice():GRADE_SUBJECTS.filter(s=>s!=='Circle Time'||triAsns.some(a=>a.subject===s)).concat(subjectsIn(triAsns).filter(s=>!GRADE_SUBJECTS.includes(s)));
   if(gbSubject&&!tabSubjects.includes(gbSubject))gbSubject='';
-  if(tabsEl)tabsEl.innerHTML=[''].concat(tabSubjects).map(sj=>{const n=sj?triAsns.filter(a=>a.subject===sj).length:triAsns.length;return`<button class="subject-tab ${sj===gbSubject?'active':''}" onclick="setGbSubject(${sj?`'${escH(sj)}'`:"''"})">${sj?escH(sj):'All Subjects'}<span class="subject-tab-n">${n}</span></button>`;}).join('');
-  let students=DB.students.filter(s=>cls.studentIds.includes(s.id)).sort((a,b)=>a.name.localeCompare(b.name));
-  if(q)students=students.filter(s=>s.name.toLowerCase().includes(q)||s.grade.toLowerCase().includes(q));
+  if(gbRot&&!gbSubject)gbSubject=gbRot[0];
+  if(tabsEl)tabsEl.innerHTML=(gbRot?[]:['']).concat(tabSubjects).map(sj=>{const n=sj?triAsns.filter(a=>a.subject===sj).length:triAsns.length;return`<button class="subject-tab ${sj===gbSubject?'active':''}" onclick="setGbSubject(${sj?`'${escH(sj)}'`:"''"})">${sj?escH(sj):'All Subjects'}<span class="subject-tab-n">${n}</span></button>`;}).join('');
+  let students=DB.students.filter(s=>cls.studentIds.includes(s.id)&&enrolledInTri(s,trimester)).sort((a,b)=>byLastName(a,b));
+  if(q)students=students.filter(s=>(s.name+' '+lf(s)).toLowerCase().includes(q)||s.grade.toLowerCase().includes(q));
   let assignments=triAsns.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
   if(gbSubject)assignments=assignments.filter(a=>a.subject===gbSubject);
   if(stdQ)assignments=assignments.filter(a=>a.standardRefs.some(r=>{const std=STANDARDS[r.grade]?.[r.section]?.[r.stdIndex]||'';return std.toLowerCase().includes(stdQ)||r.section.toLowerCase().includes(stdQ)||r.grade.toLowerCase().includes(stdQ);}));
   if(!assignments.length){wrap.innerHTML=`<div class="card"><div class="alert alert-info">No ${gbSubject?escH(gbSubject)+' ':''}assignments for T${trimester} yet. Use <strong>New Assignment</strong> to add one.</div></div>`;return;}
   const overallLabel=gbSubject?escH(gbSubject)+' Grade':'Overall';
-  let html='<div class="card" style="overflow-x:auto"><table class="gb-table"><thead><tr><th>Student</th><th>Lvl</th>';
+  const gbLocked=isTriLocked(trimester);
+  let html=(gbLocked?lockBanner(trimester,'This trimester\'s grades'):'')+'<div class="card" style="overflow-x:auto"><table class="gb-table"><thead><tr><th>Student</th><th>Lvl</th>';
   assignments.forEach(a=>{html+=`<th style="max-width:110px;font-size:.69rem;cursor:pointer" title="${escH(a.subject)} · ${escH(CATEGORIES[a.category]||'Classwork')} · ${escH(a.date)}" onclick="openGradeEntryModal('${a.id}')">${escH(a.title)}<br><span style="font-weight:400;opacity:.7">${a.totalPoints?a.totalPoints+' pts · ':''}${escH(a.date)}</span>${gbSubject?'':`<br><span style="font-weight:400;opacity:.6">${escH(a.subject||'')}</span>`}</th>`;});
   html+=`<th>${overallLabel}</th><th></th></tr></thead><tbody>`;
   students.forEach(s=>{
-    html+=`<tr><td style="cursor:pointer" onclick="openStudentDetail('${s.id}','${classId}')"><strong style="color:var(--bpi-brown-sugar)">${escH(s.name)}</strong></td><td><span class="chip chip-grade">${escH(s.grade)}</span></td>`;
+    html+=`<tr><td style="cursor:pointer" onclick="openStudentDetail('${s.id}','${classId}')"><strong style="color:var(--bpi-brown-sugar)">${escH(lf(s))}</strong> ${withdrawnChip(s)}</td><td><span class="chip chip-grade">${escH(s.grade)}</span></td>`;
     assignments.forEach(a=>{
       const g=a.grades?.[s.id];
-      if(!_appliesTo(a,s)){html+='<td style="text-align:center;color:var(--bpi-bistre-20)" title="Different group">·</td>';return;}
+      if(!_appliesTo(a,s)){const w=s.withdrawnOn&&a.date>=s.withdrawnOn;html+=`<td style="text-align:center;color:var(--bpi-bistre-20)" title="${w?'After withdrawal':'Different group'}">${w?'W':'·'}</td>`;return;}
       if(g&&g.status==='M'){html+=`<td style="text-align:center"><span class="chip" style="background:var(--intent-warning);color:#fff;font-size:.7rem">M</span></td>`;}
       else if(g&&g.status==='E'){html+=`<td style="text-align:center"><span class="chip" style="background:var(--intent-info);color:#fff;font-size:.7rem">E</span></td>`;}
       else if(g&&g.earned!=null&&a.totalPoints){
@@ -3876,7 +4053,7 @@ function renderGradebook(){
     const stdTags=a.standardRefs.map(r=>{const std=STANDARDS[r.grade]?.[r.section]?.[r.stdIndex];return std?`<span class="chip chip-std">${escH(r.grade)} &middot; ${escH(std.substring(0,38))}…</span>`:''}).join('');
     const linkedBlock=a.blockId?DB.lessonBlocks.find(b=>b.id===a.blockId):null;
     const lpBadge=linkedBlock?`<span class="chip" style="background:var(--bpi-caramel);color:var(--bpi-bistre);font-size:.62rem;cursor:pointer" onclick="goToInstPage('lesson-plans','lessonplan')" title="View lesson plan">📋 ${escH(linkedBlock.title)}</span>`:'';
-    html+=`<div style="padding:10px;border-bottom:1px solid var(--bpi-rule);display:flex;align-items:flex-start;gap:12px"><div style="flex:1"><div style="font-weight:700;font-size:.87rem">${escH(a.title)}</div><div style="font-size:.72rem;color:var(--bpi-ink-3);margin:3px 0">${escH(a.subject||'')} &middot; ${escH(CATEGORIES[a.category]||'Classwork')} &middot; ${escH(a.date)} &middot; T${a.trimester}</div><div style="margin-top:4px">${stdTags} ${lpBadge}</div></div><button class="btn btn-outline btn-sm" onclick="openGradeEntryModal('${a.id}')">Enter Grades</button><button class="btn btn-danger btn-sm" onclick="deleteAssignment('${a.id}')">Delete</button></div>`;
+    html+=`<div style="padding:10px;border-bottom:1px solid var(--bpi-rule);display:flex;align-items:flex-start;gap:12px"><div style="flex:1"><div style="font-weight:700;font-size:.87rem">${escH(a.title)}</div><div style="font-size:.72rem;color:var(--bpi-ink-3);margin:3px 0">${escH(a.subject||'')} &middot; ${escH(CATEGORIES[a.category]||'Classwork')} &middot; ${escH(a.date)} &middot; T${a.trimester}</div><div style="margin-top:4px">${stdTags} ${lpBadge}</div></div><button class="btn btn-outline btn-sm" onclick="openGradeEntryModal('${a.id}')">${gbLocked?'View Grades':'Enter Grades'}</button>${gbLocked?'':`<button class="btn btn-danger btn-sm" onclick="deleteAssignment('${a.id}')">Delete</button>`}</div>`;
   });
   html+='</div>';
   wrap.innerHTML=html;
@@ -3884,7 +4061,8 @@ function renderGradebook(){
 
 function openStudentDetail(studentId,classId){
   const student=DB.students.find(s=>s.id===studentId);
-  const allAssignments=DB.assignments.filter(a=>a.classId===classId).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  const _rs=rotationSubjects(classId);
+  const allAssignments=DB.assignments.filter(a=>a.classId===classId&&(!_rs||_rs.includes(a.subject))).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
   if(!allAssignments.length){toast('No assignments yet');return;}
   const trimester=getCtxTrimester();
   const triAsns=allAssignments.filter(a=>a.trimester===trimester);
@@ -3909,7 +4087,7 @@ function openStudentDetail(studentId,classId){
   }).join('');
   const overall=calcGrade(studentId,triAsns).pct;
   const subjRows=subjectsIn(triAsns).map(sj=>{const p=calcGrade(studentId,triAsns.filter(a=>a.subject===sj)).pct;return`<span class="chip" style="margin:2px">${escH(sj)}: <strong style="color:${pctColor(p)}">${fmtPct(p)}${p!=null?' '+letterFor(p):''}</strong></span>`;}).join('');
-  const html=`<div class="modal-title">${escH(student.name)} <span class="chip chip-grade" style="margin-left:6px">${escH(student.grade)}</span></div>
+  const html=`<div class="modal-title">${escH(lf(student))} <span class="chip chip-grade" style="margin-left:6px">${escH(student.grade)}</span></div>
     <div style="display:flex;gap:12px;margin-bottom:10px">
       <div class="stat-card" style="flex:1;padding:10px 14px"><div class="stat-val" style="font-size:1.4rem">${allAssignments.length}</div><div class="stat-label">Assignments</div></div>
       <div class="stat-card" style="flex:1;padding:10px 14px"><div class="stat-val" style="font-size:1.4rem;color:${pctColor(overall)}">${fmtPct(overall)} ${overall!=null?letterFor(overall):''}</div><div class="stat-label">T${trimester} Overall</div></div>
@@ -3926,10 +4104,7 @@ function openStudentDetail(studentId,classId){
 const SUBJECT_STD_MAP={
   'Reading/Language Arts':['reading','literature','informational','writing','language','foundational','phonics','speaking','listening'],
   'Math':['math','number','operations','geometry','measurement','data','algebra','counting','cardinality'],
-  'Phonics/Handwriting':['foundational','phonics','print','handwriting','letter'],
-  'Science':['science','earth','life','physical','engineering'],
-  'Social Studies':['social','history','geography','civics','economics'],
-  'Project Based Learning':[],
+  'Project Based Learning':['science','social studies','history','geography','civics','economics','earth','life','physical','engineering'],
   'Social Skills':['social','emotional','behavior']
 };
 
@@ -3970,7 +4145,7 @@ function openAssignmentModal(){
   showModal(`<div class="modal-title">New Assignment</div>
     <div class="form-row cols-2"><div><label>Title</label><input type="text" id="asn-title" placeholder="e.g. Parts of a Story Quiz"></div><div><label>Date</label><input type="date" id="asn-date" value="${isoLocal(new Date())}" oninput="updateAsnTrimesterDisplay()"></div></div>
     <div class="form-row cols-3">
-      <div><label>Subject</label><select id="asn-subject" onchange="refreshAsnStandards()">${GRADE_SUBJECTS.map(sj=>`<option ${sj===defaultSubject?'selected':''}>${sj}</option>`).join('')}</select></div>
+      <div><label>Subject</label><select id="asn-subject" onchange="refreshAsnStandards()">${(rotationSubjects(classId)||GRADE_SUBJECTS).map(sj=>`<option ${sj===defaultSubject?'selected':''}>${sj}</option>`).join('')}</select></div>
       <div><label>Category</label><select id="asn-category" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem">
         <option value="classwork">Classwork</option><option value="homework">Homework</option>
         <option value="assessment">Assessment</option><option value="project">Project</option>
@@ -4003,6 +4178,8 @@ function saveAssignment(){
   const classId=getCtxClass();const title=document.getElementById('asn-title').value.trim();const date=document.getElementById('asn-date').value;const subject=document.getElementById('asn-subject').value;const trimester=computeTrimesterForDate(date);
   if(!title){alert('Enter a title');return;}
   if(!date){alert('Pick a date');return;}
+  if(lockBlocked(lockedTriForDate(date)))return;
+  if(rotationBlocked(classId,subject))return;
   const stdRefs=[];document.querySelectorAll('.std-ref-cb:checked').forEach(cb=>{const[grade,section,stdi]=cb.dataset.key.split('||');if(!stdRefs.find(r=>r.grade===grade&&r.section===section&&r.stdIndex===parseInt(stdi)))stdRefs.push({grade,section,stdIndex:parseInt(stdi)});});
   const blockId=document.getElementById('asn-block-id')?.value||null;
   const totalPoints=parseInt(document.getElementById('asn-points')?.value)||100;
@@ -4033,7 +4210,7 @@ function openAssignmentFromBlock(blockId,dateStr){
     <input type="hidden" id="asn-block-id" value="${blockId}">
     <div class="form-row cols-2"><div><label>Title</label><input type="text" id="asn-title" placeholder="e.g. ${escH(block.title)} Quiz" value="${escH(block.title)}"></div><div><label>Date</label><input type="date" id="asn-date" value="${dateStr}" oninput="updateAsnTrimesterDisplay()"></div></div>
     <div class="form-row cols-3">
-      <div><label>Subject</label><select id="asn-subject" onchange="refreshAsnStandards()">${GRADE_SUBJECTS.map(sj=>`<option ${sj===subject?'selected':''}>${sj}</option>`).join('')}</select></div>
+      <div><label>Subject</label><select id="asn-subject" onchange="refreshAsnStandards()">${(rotationSubjects(classId)||GRADE_SUBJECTS).map(sj=>`<option ${sj===subject?'selected':''}>${sj}</option>`).join('')}</select></div>
       <div><label>Category</label><select id="asn-category" style="font-family:var(--font-body);padding:6px 10px;border:1px solid var(--bpi-rule-strong);border-radius:var(--radius-md);width:100%;font-size:.84rem">
         <option value="classwork">Classwork</option><option value="homework">Homework</option>
         <option value="assessment">Assessment</option><option value="project">Project</option>
@@ -4046,12 +4223,12 @@ function openAssignmentFromBlock(blockId,dateStr){
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveAssignment()">Create &amp; Enter Grades</button></div>`,'large');
 }
-function deleteAssignment(id){if(!confirm('Delete assignment?'))return;DB.assignments=DB.assignments.filter(a=>a.id!==id);sbDelete('assignments',{id});renderGradebook();toast('Deleted');}
+function deleteAssignment(id){const _a=DB.assignments.find(x=>x.id===id);if(_a&&lockBlocked(_a.trimester))return;if(_a&&rotationBlocked(_a.classId,_a.subject))return;if(!confirm('Delete assignment?'))return;DB.assignments=DB.assignments.filter(a=>a.id!==id);sbDelete('assignments',{id});renderGradebook();toast('Deleted');}
 
 function openGradeEntryModal(assignmentId){
   const a=DB.assignments.find(x=>x.id===assignmentId);
   const cls=DB.classes.find(c=>c.id===a.classId);
-  const students=DB.students.filter(s=>cls.studentIds.includes(s.id)&&(!a.group||s.group===a.group||!s.group));
+  const students=DB.students.filter(s=>cls.studentIds.includes(s.id)&&_appliesTo(a,s));
   const tp=a.totalPoints||100;
   const rows=students.map(s=>{
     const g=a.grades[s.id]||{};
@@ -4059,7 +4236,7 @@ function openGradeEntryModal(assignmentId){
     const earned=g.earned!=null?g.earned:'';
     const pct=earned!==''?Math.round(earned/tp*100):'';
     return`<tr id="grow_${s.id}">
-      <td><strong>${escH(s.name)}</strong> <span class="chip chip-grade">${escH(s.grade)}</span>${s.group?` <span class="chip-group-${s.group}">${s.group.charAt(0).toUpperCase()+s.group.slice(1)}</span>`:''}</td>
+      <td><strong>${escH(lf(s))}</strong> <span class="chip chip-grade">${escH(s.grade)}</span>${s.group?` <span class="chip-group-${s.group}">${s.group.charAt(0).toUpperCase()+s.group.slice(1)}</span>`:''}</td>
       <td style="text-align:center">
         <div style="display:flex;align-items:center;gap:6px;justify-content:center">
           <div>
@@ -4104,7 +4281,8 @@ function openGradeEntryModal(assignmentId){
       <span style="font-size:.8rem;color:var(--bpi-ink-2)">Total points: <strong>${tp}</strong> &nbsp;·&nbsp; Enter earned points per student. <strong>M</strong> = Missing &nbsp; <strong>E</strong> = Excused</span>
     </div>
     <table><thead><tr><th>Student</th><th style="text-align:center">Points &nbsp;·&nbsp; Score</th><th style="text-align:center">Status</th></tr></thead><tbody>${rows}</tbody></table>
-    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveGrades('${assignmentId}')">Save Grades</button></div>`,'large');
+    ${isTriLocked(a.trimester)?`<div class="modal-footer"><span style="margin-right:auto;font-size:.8rem;color:var(--bpi-ink-2)">🔒 Trimester ${a.trimester} is locked — grades are view-only.</span><button class="btn btn-secondary" onclick="closeModal()">Close</button></div>`:`<div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveGrades('${assignmentId}')">Save Grades</button></div>`}`,'large');
+  if(isTriLocked(a.trimester)) document.querySelectorAll('#inst-modal-container .modal input').forEach(i=>i.disabled=true);
 }
 function updatePctPreview(sid,tp){
   const val=parseFloat(document.getElementById('ge_pts_'+sid)?.value);
@@ -4134,6 +4312,8 @@ function toggleME(sid,type,tp){
   if(ptsEl){ptsEl.disabled=disabled;if(disabled){ptsEl.value='';if(pctEl)pctEl.textContent='';if(scoreEl)scoreEl.innerHTML='';}}}
 function saveGrades(aid){
   const a=DB.assignments.find(x=>x.id===aid);if(!a)return;
+  if(lockBlocked(a.trimester))return;
+  if(rotationBlocked(a.classId,a.subject))return;
   const cls=DB.classes.find(c=>c.id===a.classId);
   const changes={};
   DB.students.filter(s=>cls&&cls.studentIds.includes(s.id)).forEach(s=>{
@@ -4166,7 +4346,7 @@ function saveGrades(aid){
 function openStudentStdModal(studentId,classId){
   const student=DB.students.find(s=>s.id===studentId);const assignments=DB.assignments.filter(a=>a.classId===classId);const grade=student.grade;const secs=STANDARDS[grade];if(!secs){toast('No standards for this grade');return;}
   const perf={};assignments.forEach(a=>{const g=a.grades?.[student.id];if(!g||g.status==='M'||g.status==='E'||g.earned==null||!a.totalPoints)return;const pct=g.earned/a.totalPoints;const score=pct>=0.85?4:pct>=0.75?3:pct>=0.65?2:1;a.standardRefs.filter(r=>r.grade===grade).forEach(r=>{const k=`${r.section}||${r.stdIndex}`;(perf[k]=perf[k]||[]).push(score);});});
-  let html=`<div class="modal-title">${escH(student.name)} &middot; Standards (${grade})</div>`;
+  let html=`<div class="modal-title">${escH(lf(student))} &middot; Standards (${grade})</div>`;
   Object.keys(secs).forEach(section=>{
     html+=`<div class="rc-section-header" style="margin:10px 0 0">${section}</div>`;
     secs[section].forEach((std,stdi)=>{const scores=perf[`${section}||${stdi}`]||[];const avg=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):null;html+=`<div class="rc-row"><span class="rc-std">${std}</span>${avg?renderScoreBadge(Math.round(parseFloat(avg)))+`<span style="font-size:.7rem;color:var(--bpi-ink-3);margin-left:4px">${avg}</span>`:'<span style="color:var(--bpi-bistre-20);font-size:.74rem">Not assessed</span>'}</div>`;});
@@ -4186,6 +4366,97 @@ function openStudentStdModal(studentId,classId){
      each trimester, each subject's grade, and attendance.
    • The old version crashed looking for a logo element that doesn't exist,
      which is why report cards showed nothing for teachers or admins. */
+/* ═══ TEACHER-SET SCORES & TRIMESTER COMMENTS (2026-11-10) ═══
+   Teachers can set a 1–4 score for Foundational Math and Social-Emotional
+   standards on a student's progress report. A teacher-set score replaces the
+   one calculated from grades (on progress reports AND report cards); blank =
+   calculated. Comments are kept per trimester (student_profiles.
+   trimester_comments) and edited right on the Reports tab. */
+function ratingKey(studentId, tri, stdKey){ return studentId+'|'+tri+'|'+stdKey; }
+function isRatableSection(section){ return /^Math Foundations$|^Social\/Emotional$|^Mathematics|^Social Skills/i.test(section||''); }
+function getRating(studentId, tri, stdKey){ const r=DB.standardRatings[ratingKey(studentId,tri,stdKey)]; return r?r.level:null; }
+// calcStandardLevels + teacher-set scores for a student in trimester n
+function standardLevelsFor(student, assignments, n){
+  const out=calcStandardLevels(student, assignments);
+  const pre=student.id+'|'+n+'|'+student.grade+'||';
+  Object.keys(DB.standardRatings).forEach(k=>{ if(k.indexOf(pre)===0){ out[k.slice(pre.length)]=DB.standardRatings[k].level; } });
+  return out;
+}
+function saveRating(studentId, tri, stdKey, level){
+  if(lockBlocked(isTriLocked(tri)?tri:0)) return;
+  if(!SCHEMA.standardRatings){ alert('Teacher-set scores need the database update (migration_2026-11-10.sql) to be run first.'); return; }
+  const k=ratingKey(studentId,tri,stdKey);
+  if(level){ DB.standardRatings[k]={level:+level, by:DB.myName||''};
+    sbUpsert('standard_ratings',{ student_id:studentId, trimester:tri, std_key:stdKey, level:+level, updated_by:DB.myName||null },'score');
+  } else { delete DB.standardRatings[k];
+    sbDelete('standard_ratings',{ student_id:studentId, trimester:tri, std_key:stdKey },'score');
+  }
+}
+function getTriComment(studentId, tri){
+  const prof=DB.studentProfiles[studentId]||{};
+  const c=(prof.trimesterComments||{})[tri];
+  if(c!=null&&String(c).trim()) return String(c);
+  // Before the database update, T1 falls back to the old single comment field.
+  if(+tri===1&&!SCHEMA.trimesterComments&&prof.teacherComments) return prof.teacherComments;
+  return '';
+}
+let _commentTimers={};
+function onTriCommentInput(studentId, tri, el){
+  document.querySelectorAll('.tri-comment[data-sid="'+studentId+'"][data-tri="'+tri+'"]').forEach(x=>{ if(x!==el) x.value=el.value; });
+  document.querySelectorAll('.rc-comment-print[data-sid="'+studentId+'"]').forEach(x=>{ x.textContent=el.value.trim()?el.value:(x.dataset.draft||''); });
+  clearTimeout(_commentTimers[studentId+tri]);
+  _commentTimers[studentId+tri]=setTimeout(()=>saveTriComment(studentId,tri,el.value), 800);
+}
+function saveTriComment(studentId, tri, text){
+  if(lockBlocked(isTriLocked(tri)?tri:0)) return;
+  if(!DB.studentProfiles[studentId]) DB.studentProfiles[studentId]={ interventionNotes:'', teacherComments:'', parentNotes:'', trimesterComments:{} };
+  const prof=DB.studentProfiles[studentId]; prof.trimesterComments=Object.assign({}, prof.trimesterComments||{}); prof.trimesterComments[tri]=text;
+  if(!SCHEMA.trimesterComments){ if(+tri===1) return saveStudentProfileField(studentId,'teacherComments',text); toast('Comments for T2/T3 need the database update to be run first'); return; }
+  if(!sbOn()) return;
+  // Re-read so a comment saved for another trimester (or by someone else) isn't lost.
+  return sbRun('comment', async()=>{
+    const cur=await sbFetchOne('student_profiles',{ student_id:studentId });
+    const merged=Object.assign({}, (cur&&cur.trimester_comments)||{}); merged[tri]=text;
+    const r=await sb.from('student_profiles').upsert({ student_id:studentId, trimester_comments:merged });
+    if(!r.error) prof.trimesterComments=merged;
+    return r;
+  });
+}
+function triCommentBox(student, tri, rows){
+  const locked=isTriLocked(tri);
+  return `<textarea class="profile-note-area tri-comment no-print" data-sid="${escH(student.id)}" data-tri="${tri}" rows="${rows||4}" placeholder="Write ${escH(student.firstName||lf(student))}'s T${tri} comment…" ${locked?'disabled title="Trimester is locked"':''} oninput="onTriCommentInput('${escH(student.id)}',${tri},this)">${escH(getTriComment(student.id,tri))}</textarea>`;
+}
+// Progress report editor: comment + teacher-set scores for one student
+function useSuggestedComment(studentId, tri){
+  const box=document.querySelector('.rc-comment-print[data-sid="'+studentId+'"]');
+  const ta=document.querySelector('.tri-comment[data-sid="'+studentId+'"][data-tri="'+tri+'"]');
+  if(!box||!ta) return; ta.value=box.dataset.draft||''; onTriCommentInput(studentId,tri,ta); ta.focus();
+}
+function openProgressEditor(studentId){
+  const st=DB.students.find(s=>s.id===studentId); if(!st) return;
+  const classId=getCtxClass(); const tri=getCtxTrimester(); const locked=isTriLocked(tri);
+  const calc=calcStandardLevels(st, _rcTriAsns(classId,tri));
+  const secs=STANDARDS[st.grade]||{};
+  let rows='';
+  Object.keys(secs).filter(isRatableSection).forEach(section=>{
+    rows+=`<div class="rc-section-header" style="margin-top:10px">${escH(section)}</div>`;
+    secs[section].forEach((std,i)=>{
+      const key=st.grade+'||'+section+'||'+i; const cur=getRating(st.id,tri,key); const c=calc[section+'||'+i];
+      const opts=`<option value="">${c!=null?'Calculated ('+Math.round(c)+')':'— Not scored'}</option>`+[4,3,2,1].map(n=>`<option value="${n}" ${cur===n?'selected':''}>${n} — ${['','Beginning','Developing','Proficient','Exemplary'][n]}</option>`).join('');
+      rows+=`<div class="rc-row"><span class="rc-code">${escH(stdCode(section,i))}</span><span class="rc-std">${escH(std)}</span><select style="width:170px!important" ${locked?'disabled':''} onchange="saveRating('${st.id}',${tri},'${escH(key).replace(/'/g,"\\'")}',this.value)">${opts}</select></div>`;
+    });
+  });
+  if(!rows) rows='<div class="empty-state">No Foundational Math or Social-Emotional standards for this grade.</div>';
+  showModal(`<div class="modal-title">${escH(lf(st))} · T${tri} Progress Report</div>
+    ${locked?`<div class="alert alert-info">🔒 Trimester ${tri} is locked — view only.</div>`:''}
+    <label>T${tri} Comment</label>${triCommentBox(st,tri,5)}
+    <div style="font-size:.74rem;color:var(--bpi-ink-3);margin:4px 0 14px">Saves automatically. Shows on this student's progress report and report card.</div>
+    <label>Foundational Math &amp; Social-Emotional Scores</label>
+    <div style="font-size:.74rem;color:var(--bpi-ink-3);margin-bottom:4px">Pick a score to set it yourself, or leave it on "Calculated" to use the score from graded work.</div>
+    ${rows}
+    <div class="modal-footer"><button class="btn btn-primary" onclick="closeModal();rerenderActivePage()">Done</button></div>`,'large');
+}
+
 function _rcTriAsns(classId, n){ return DB.assignments.filter(a=>a.classId===classId&&a.trimester===n); }
 function _rcAttendance(student, classId, n){
   const td=DB.trimesterDates&&DB.trimesterDates[n]; let p=0,a=0,t=0;
@@ -4206,7 +4477,7 @@ function buildReportCard(student, teacher, cls, trimester){
   const overall={}, levels={}, stdAvg={};
   tris.forEach(n=>{
     overall[n]=n<=trimester?calcGrade(student.id,asnBy[n]).pct:null;
-    levels[n]=n<=trimester?calcStandardLevels(student,asnBy[n]):{};
+    levels[n]=n<=trimester?standardLevelsFor(student,asnBy[n],n):{};
     stdAvg[n]=_stdAvgOf(levels[n]);
   });
   const cell=(v,fmt)=>v==null?'<span class="rc-blank">–</span>':fmt(v);
@@ -4228,11 +4499,9 @@ function buildReportCard(student, teacher, cls, trimester){
   });
   if(!stdHtml) stdHtml=`<div class="alert alert-info">No standards are set up for grade ${escH(grade)}.</div>`;
   const att=_rcAttendance(student,cls.id,trimester);
-  const prof=DB.studentProfiles[student.id]||{};
-  const comment=(prof.teacherComments&&prof.teacherComments.trim())
-    ? escH(prof.teacherComments).replace(/\n/g,'<br>')
-    : generateComment(student.name, stdAvg[trimester]!=null?stdAvg[trimester]:(overall[trimester]!=null?stdLevelFromPct(overall[trimester]):0), trimester);
-  const commentNote=(prof.teacherComments&&prof.teacherComments.trim())?'':'<div class="rc-comment-note no-print">Auto-drafted from this trimester\'s results. To write your own, add Teacher Comments in Roster › Profiles.</div>';
+  const ownComment=getTriComment(student.id, trimester);
+  const draft=generateComment((student.firstName||student.name), stdAvg[trimester]!=null?stdAvg[trimester]:(overall[trimester]!=null?stdLevelFromPct(overall[trimester]):0), trimester);
+  const commentNote=`<div class="rc-comment-note no-print">${ownComment.trim()?'Saves automatically.':`Empty comments print a suggested comment based on this trimester's results. ${isTriLocked(trimester)?'':`<a href="#" onclick="useSuggestedComment('${escH(student.id)}',${trimester});return false">Start from the suggestion</a>`}`}</div>`;
   const sy=schoolYearLabel();
   return`<div class="card rc-card" data-student="${escH(student.id)}">
     <div class="rc-header">
@@ -4240,7 +4509,7 @@ function buildReportCard(student, teacher, cls, trimester){
       <div class="rc-addr">1401 Old Bainbridge Rd, Tallahassee FL 32303 &middot; (850) 412-9390</div>
       <div class="rc-title">Report Card${sy?' &middot; '+escH(sy):''} &middot; Trimester ${trimester}</div>
     </div>
-    <div class="rc-info"><div><strong>Student:</strong> ${escH(student.name)}</div><div><strong>Teacher:</strong> ${escH(teacher?.name||'–')}</div><div><strong>Grade:</strong> ${escH(grade)}</div><div><strong>Room:</strong> ${escH(cls.name)}</div></div>
+    <div class="rc-info"><div><strong>Student:</strong> ${escH(lf(student))}</div><div><strong>Teacher:</strong> ${escH(teacher?.name||'–')}</div><div><strong>Grade:</strong> ${escH(grade)}</div><div><strong>Room:</strong> ${escH(cls.name)}</div>${student.withdrawnOn?`<div><strong>Withdrawn:</strong> ${fmtDateUS(student.withdrawnOn)}</div>`:''}</div>
     <div class="rc-two">
       <table class="rc-table"><thead><tr><th>Summary</th><th>T1</th><th>T2</th><th>T3</th></tr></thead><tbody>${summaryRows}</tbody></table>
       <table class="rc-table"><thead><tr><th>Subject</th><th>T1</th><th>T2</th><th>T3</th></tr></thead><tbody>${subjectRows}</tbody></table>
@@ -4249,7 +4518,7 @@ function buildReportCard(student, teacher, cls, trimester){
     <div class="rc-std-head"><span>Standard</span><span class="rc-scores"><span class="rc-score-cell">T1</span><span class="rc-score-cell">T2</span><span class="rc-score-cell">T3</span></span></div>
     ${stdHtml}
     <div class="rc-bottom">
-      <div class="rc-comments"><div class="rc-label">T${trimester} Comments</div><div class="rc-comment-box">${comment}</div>${commentNote}</div>
+      <div class="rc-comments"><div class="rc-label">T${trimester} Comments</div>${triCommentBox(student,trimester,4)}<div class="rc-comment-box rc-comment-print print-only" data-sid="${escH(student.id)}" data-draft="${escH(draft)}" style="white-space:pre-wrap">${escH(ownComment.trim()?ownComment:draft)}</div>${commentNote}</div>
       <div class="rc-att"><div class="rc-label">T${trimester} Attendance</div><div>Present: <strong>${att.p}</strong></div><div>Absent: <strong>${att.a}</strong></div><div>Tardy: <strong>${att.t}</strong></div></div>
     </div>
     <div class="rc-sign"><div>Teacher Signature ____________________</div><div>Parent Signature ____________________</div><div>Date __________</div></div>
@@ -4262,7 +4531,7 @@ function renderReportCardsInto(body){
   if(!cls){ body.innerHTML=`<div class="empty-state">${DB.roomLocked?'No room is linked to your account yet — contact your administrator.':'Select a room above.'}</div>`; return; }
   const trimester=getCtxTrimester();
   const teacher=DB.teachers.find(t=>t.id===cls.teacherId);
-  const students=DB.students.filter(s=>cls.studentIds.includes(s.id)).sort((a,b)=>a.name.localeCompare(b.name));
+  const students=DB.students.filter(s=>cls.studentIds.includes(s.id)&&enrolledInTri(s,trimester)).sort((a,b)=>byLastName(a,b));
   if(!students.length){ body.innerHTML='<div class="empty-state">No students in this room.</div>'; return; }
   body.innerHTML=`<div class="toolbar no-print" style="margin-bottom:12px"><span style="font-size:.8rem;color:var(--bpi-ink-2)">${students.length} report cards · ${escH(cls.name)} · Trimester ${trimester}</span><button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="printReportCards()">🖨 Print all</button></div>`
     + students.map(s=>buildReportCard(s,teacher,cls,trimester)).join('');
@@ -4285,16 +4554,19 @@ function renderProgressInto(body){
   if(!cls){ body.innerHTML='<div class="empty-state">Select a room above.</div>'; return; }
   const trimester=getCtxTrimester();
   const asns=_rcTriAsns(classId,trimester);
-  const students=DB.students.filter(s=>cls.studentIds.includes(s.id)).sort((a,b)=>a.name.localeCompare(b.name));
+  const students=DB.students.filter(s=>cls.studentIds.includes(s.id)&&enrolledInTri(s,trimester)).sort((a,b)=>byLastName(a,b));
   const subjects=subjectsIn(asns);
-  if(!subjects.length){ body.innerHTML=`<div class="empty-state">No assignments in Trimester ${trimester} yet.</div>`; return; }
-  let html=`<div class="card" style="overflow-x:auto"><div class="card-title">Progress by Subject — ${escH(cls.name)} · T${trimester}</div><table class="gb-table"><thead><tr><th>Student</th>${subjects.map(sj=>`<th>${escH(sj)}</th>`).join('')}<th>Overall</th><th>Missing</th></tr></thead><tbody>`;
+  const triLocked=isTriLocked(trimester);
+  let html=(triLocked?lockBanner(trimester,'This trimester\'s progress reports'):'')+`<div class="card" style="overflow-x:auto"><div class="card-title">Progress by Subject — ${escH(cls.name)} · T${trimester}</div>${subjects.length?'':`<div class="alert alert-info">No graded assignments in Trimester ${trimester} yet — you can still write comments and set scores.</div>`}<table class="gb-table"><thead><tr><th>Student</th>${subjects.map(sj=>`<th>${escH(sj)}</th>`).join('')}<th>Overall</th><th>Missing</th><th class="no-print">Comment &amp; Scores</th></tr></thead><tbody>`;
   students.forEach(s=>{
-    html+=`<tr><td><strong>${escH(s.name)}</strong> <span class="chip chip-grade">${escH(s.grade)}</span></td>`;
+    html+=`<tr><td><strong>${escH(lf(s))}</strong> <span class="chip chip-grade">${escH(s.grade)}</span></td>`;
     subjects.forEach(sj=>{ const r=calcGrade(s.id,asns.filter(a=>a.subject===sj)); html+=`<td style="text-align:center;color:${pctColor(r.pct)};font-weight:700">${fmtPct(r.pct)}${r.pct!=null?` <span style="font-size:.75rem">${letterFor(r.pct)}</span>`:''}<div style="font-size:.66rem;font-weight:400;color:var(--bpi-ink-3)">${r.graded} graded</div></td>`; });
     const o=calcGrade(s.id,asns).pct;
     const missing=asns.filter(a=>_appliesTo(a,s)&&a.grades?.[s.id]?.status==='M').length;
-    html+=`<td style="text-align:center;font-weight:800;color:${pctColor(o)}">${fmtPct(o)} ${o!=null?letterFor(o):''}</td><td style="text-align:center;${missing?'color:var(--intent-warning);font-weight:700':''}">${missing}</td></tr>`;
+    html+=`<td style="text-align:center;font-weight:800;color:${pctColor(o)}">${fmtPct(o)} ${o!=null?letterFor(o):''}</td><td style="text-align:center;${missing?'color:var(--intent-warning);font-weight:700':''}">${missing}</td>`;
+    const nSet=Object.keys(DB.standardRatings).filter(k=>k.indexOf(s.id+'|'+trimester+'|')===0).length;
+    const hasC=!!getTriComment(s.id,trimester).trim();
+    html+=`<td class="no-print" style="text-align:center;white-space:nowrap"><button class="btn btn-outline btn-sm" onclick="openProgressEditor('${s.id}')">${triLocked?'View':'Edit'}</button><div style="font-size:.66rem;color:var(--bpi-ink-3);margin-top:3px">${hasC?'✓ comment':'no comment'}${nSet?' · '+nSet+' score'+(nSet===1?'':'s')+' set':''}</div></td></tr>`;
   });
   html+='</tbody></table></div>';
   body.innerHTML=html;
@@ -4310,26 +4582,53 @@ function generateComment(name,avg,trimester){
 function renderStudents(){
   const q=(document.getElementById('student-search')?.value||'').toLowerCase();const gf=document.getElementById('student-grade-filter')?.value||'';
   const isAdmin=DB.role==='admin';
-  let students=DB.students.slice().sort((a,b)=>a.name.localeCompare(b.name));
+  let students=DB.students.slice().sort((a,b)=>(!!a.withdrawnOn-!!b.withdrawnOn)||byLastName(a,b));
   if(DB.roomLocked){const my=DB.classes.find(c=>c.id===DB.myClassId);students=my?students.filter(s=>my.studentIds.includes(s.id)):[];}
-  if(q)students=students.filter(s=>s.name.toLowerCase().includes(q)||s.grade.toLowerCase().includes(q));if(gf)students=students.filter(s=>s.grade===gf);
+  if(q)students=students.filter(s=>(s.name+' '+lf(s)).toLowerCase().includes(q)||s.grade.toLowerCase().includes(q));if(gf)students=students.filter(s=>s.grade===gf);
   document.getElementById('students-tbody').innerHTML=students.map(s=>{const enrolled=DB.classes.filter(c=>c.studentIds.includes(s.id)).map(c=>escH(c.name)).join(', ')||'—';const grpChip=s.group?`<span class="chip-group-${escH(s.group)}">${escH(s.group.charAt(0).toUpperCase()+s.group.slice(1))}</span>`:'';
-    const actions=isAdmin?`<td><button class="btn btn-secondary btn-sm" onclick="openStudentModal('${s.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}')">Delete</button></td>`:'';
-    return`<tr><td><strong>${escH(s.name)}</strong> ${grpChip}</td><td><span class="chip chip-grade">${escH(s.grade)}</span></td><td style="font-size:.8rem;color:var(--bpi-ink-2)">${enrolled}</td>${actions}</tr>`;}).join('')||`<tr><td colspan="4" class="empty-state">${DB.roomLocked&&!DB.myClassId?'No room is linked to your account yet — contact your administrator.':'No students match'}</td></tr>`;
+    const wBtn=s.withdrawnOn?`<button class="btn btn-secondary btn-sm" onclick="reenrollStudent('${s.id}')">Re-enroll</button>`:`<button class="btn btn-outline btn-sm" onclick="openWithdrawModal('${s.id}')">Withdraw</button>`;
+    const actions=isAdmin?`<td><button class="btn btn-secondary btn-sm" onclick="openStudentModal('${s.id}')">Edit</button> ${wBtn} <button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}')">Delete</button></td>`:'';
+    return`<tr${s.withdrawnOn?' style="opacity:.6"':''}><td><strong>${escH(lf(s))}</strong> ${grpChip} ${withdrawnChip(s)}</td><td><span class="chip chip-grade">${escH(s.grade)}</span></td><td style="font-size:.8rem;color:var(--bpi-ink-2)">${enrolled}</td>${actions}</tr>`;}).join('')||`<tr><td colspan="4" class="empty-state">${DB.roomLocked&&!DB.myClassId?'No room is linked to your account yet — contact your administrator.':'No students match'}</td></tr>`;
+}
+function openWithdrawModal(id){
+  const s=DB.students.find(x=>x.id===id); if(!s) return;
+  if(!SCHEMA.studentWithdraw){alert('Withdrawing students needs the database update (migration_2026-11-10.sql) to be run first.');return;}
+  showModal(`<div class="modal-title">Withdraw ${escH(lf(s))}</div>
+    <div class="alert alert-info">From this date on, ${escH(s.name.split(' ')[0])} is left off attendance, grade entry, averages and missing-work counts. Their grades and attendance before this date are kept, and report cards can still be printed for the time they were enrolled. You can re-enroll them later.</div>
+    <div class="form-row cols-2"><div><label>Withdrawal date</label><input type="date" id="wd-date" value="${isoLocal(new Date())}"></div>
+    <div><label>Reason (optional)</label><input type="text" id="wd-reason" placeholder="e.g. Family moved"></div></div>
+    <div style="font-size:.74rem;color:var(--bpi-ink-3)">Enter the first day the student is <strong>no longer</strong> attending.</div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="saveWithdraw('${s.id}')">Withdraw Student</button></div>`);
+}
+function saveWithdraw(id){
+  const s=DB.students.find(x=>x.id===id); if(!s) return;
+  const d=document.getElementById('wd-date').value;
+  if(!d){alert('Pick the withdrawal date');return;}
+  s.withdrawnOn=d; s.withdrawReason=(document.getElementById('wd-reason').value||'').trim();
+  sbUpsert('students',T.students.toRow(s),'student withdrawal');
+  closeModal(); renderStudents(); toast(s.name+' withdrawn as of '+fmtDateUS(d));
+}
+function reenrollStudent(id){
+  const s=DB.students.find(x=>x.id===id); if(!s) return;
+  if(!confirm('Re-enroll '+s.name+'? They will show up again on attendance and grade entry.'))return;
+  s.withdrawnOn=''; s.withdrawReason='';
+  sbUpsert('students',T.students.toRow(s),'student re-enroll');
+  renderStudents(); toast(s.name+' re-enrolled');
 }
 function openStudentModal(id){
   const s=id?DB.students.find(x=>x.id===id):null;
   showModal(`<div class="modal-title">${s?'Edit':'Add'} Student</div>
-    <div class="form-row"><div><label>Full Name</label><input type="text" id="st-name" value="${s?escH(s.name):''}"></div></div>
+    <div class="form-row cols-2"><div><label>First Name</label><input type="text" id="st-first" value="${s?escH(withNameParts(s).firstName):''}"></div><div><label>Last Name</label><input type="text" id="st-last" value="${s?escH(s.lastName):''}"></div></div>
     <div class="form-row cols-3"><div><label>Grade Level</label><select id="st-grade">${GRADES.map(g=>`<option ${s&&s.grade===g?'selected':''}>${g}</option>`).join('')}</select></div><div><label>Group Tag</label><select id="st-group"><option value="">None</option><option value="high" ${s&&s.group==='high'?'selected':''}>High</option><option value="middle" ${s&&s.group==='middle'?'selected':''}>Middle</option><option value="low" ${s&&s.group==='low'?'selected':''}>Low</option></select></div><div><label>Enroll In Class</label><select id="st-class" multiple style="height:90px">${DB.classes.map(c=>`<option value="${c.id}" ${s&&c.studentIds.includes(s.id)?'selected':''}>${escH(c.name)}</option>`).join('')}</select></div></div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveStudent('${id||''}')">Save</button></div>`);
 }
 function saveStudent(id){
-  const name=document.getElementById('st-name').value.trim();const grade=document.getElementById('st-grade').value;const group=document.getElementById('st-group')?.value||'';const selCls=[...document.getElementById('st-class').selectedOptions].map(o=>o.value);
-  if(!name){alert('Enter a name');return;}
+  const firstName=document.getElementById('st-first').value.trim().replace(/\s+/g,' ');const lastName=document.getElementById('st-last').value.trim().replace(/\s+/g,' ');const name=(firstName+' '+lastName).trim();const grade=document.getElementById('st-grade').value;const group=document.getElementById('st-group')?.value||'';const selCls=[...document.getElementById('st-class').selectedOptions].map(o=>o.value);
+  if(!firstName||!lastName){alert('Enter a first and last name');return;}
   let sid=id;
-  if(id){const s=DB.students.find(x=>x.id===id);s.name=name;s.grade=grade;s.group=group;sbUpsert('students',T.students.toRow(s),'student');}
-  else{const ns={id:newId(),name,grade,group};sid=ns.id;DB.students.push(ns);sbUpsert('students',T.students.toRow(ns),'new student');}
+  if(id){const s=DB.students.find(x=>x.id===id);s.name=name;s.firstName=firstName;s.lastName=lastName;s.grade=grade;s.group=group;sbUpsert('students',T.students.toRow(s),'student');}
+  else{const ns={id:newId(),name,firstName,lastName,grade,group};sid=ns.id;DB.students.push(ns);sbUpsert('students',T.students.toRow(ns),'new student');}
+  sortStudents();
   // Enroll/unenroll by changing only this student's membership on each
   // affected class roster (never rewriting the whole roster from memory).
   DB.classes.forEach(c=>{
@@ -4351,7 +4650,7 @@ function deleteStudent(id){
 function renderTeachers(){
   const q=(document.getElementById('teacher-search')?.value||'').toLowerCase();
   let teachers=DB.teachers;if(q)teachers=teachers.filter(t=>t.name.toLowerCase().includes(q)||t.title?.toLowerCase().includes(q));
-  document.getElementById('teachers-tbody').innerHTML=teachers.map(t=>{const classes=DB.classes.filter(c=>c.teacherId===t.id).map(c=>escH(c.name)).join(', ')||'—';return`<tr><td><strong>${escH(t.name)}</strong></td><td style="color:var(--bpi-ink-2);font-size:.81rem">${escH(t.title||'—')}</td><td style="font-size:.8rem">${t.email?escH(t.email):'<span style="color:var(--bpi-ink-3);font-style:italic">not linked</span>'}</td><td style="font-size:.8rem">${classes}</td><td><button class="btn btn-secondary btn-sm" onclick="openTeacherModal('${t.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteTeacher('${t.id}')">Delete</button></td></tr>`;}).join('')||'<tr><td colspan="5" class="empty-state">No teachers found</td></tr>';
+  document.getElementById('teachers-tbody').innerHTML=teachers.map(t=>{const rot=(DB.roomAssignments||[]).filter(r=>r.teacherId===t.id).map(r=>`<div style="font-size:.74rem;color:var(--bpi-brown-sugar)">🔁 ${escH(rotationLabel(r))}</div>`).join('');const classes=(DB.classes.filter(c=>c.teacherId===t.id).map(c=>escH(c.name)).join(', ')||(rot?'':'—'))+rot;return`<tr><td><strong>${escH(t.name)}</strong></td><td style="color:var(--bpi-ink-2);font-size:.81rem">${escH(t.title||'—')}</td><td style="font-size:.8rem">${t.email?escH(t.email):'<span style="color:var(--bpi-ink-3);font-style:italic">not linked</span>'}</td><td style="font-size:.8rem">${classes}</td><td><button class="btn btn-secondary btn-sm" onclick="openTeacherModal('${t.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteTeacher('${t.id}')">Delete</button></td></tr>`;}).join('')||'<tr><td colspan="5" class="empty-state">No teachers found</td></tr>';
 }
 function openTeacherModal(id){
   const t=id?DB.teachers.find(x=>x.id===id):null;
@@ -4359,17 +4658,42 @@ function openTeacherModal(id){
     <div class="form-row cols-2"><div><label>Full Name</label><input type="text" id="tc-name" value="${t?escH(t.name):''}"></div><div><label>Title</label><input type="text" id="tc-title" value="${t?escH(t.title||''):''}"></div></div>
     <div class="form-row"><label>Login Email</label><input type="email" id="tc-email" placeholder="must match their Supabase login email" value="${t?escH(t.email||''):''}"></div>
     <div style="font-size:.74rem;color:var(--bpi-ink-3);margin-top:-8px;margin-bottom:10px">Used to automatically show this teacher only their own room in Lesson Plans and Attendance. Must exactly match the email they log in with.</div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bpi-rule)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span style="font-weight:700;font-size:.84rem;color:var(--bpi-bistre)">Rotation Rooms</span><button type="button" class="btn btn-secondary btn-sm" onclick="addRotationRow()">+ Add Room</button></div>
+      <div style="font-size:.74rem;color:var(--bpi-ink-3);margin-bottom:8px">Rooms this teacher visits for a subject. In each one they can plan lessons and enter grades for the checked subject(s) only.</div>
+      <div id="tc-rot-rows"></div>
+    </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveTeacher('${id||''}')">Save</button></div>`);
+  (id?(DB.roomAssignments||[]).filter(r=>r.teacherId===id):[]).forEach(r=>addRotationRow(r));
+}
+function addRotationRow(r){
+  const wrap=document.getElementById('tc-rot-rows'); if(!wrap) return;
+  const row=document.createElement('div'); row.className='tc-rot-row';
+  row.style.cssText='border:1px solid var(--bpi-rule);border-radius:var(--radius-md);padding:8px 10px;margin-bottom:6px;background:var(--bpi-cream)';
+  if(r&&r.id) row.dataset.id=r.id;
+  row.innerHTML=`<div style="display:flex;gap:8px;align-items:center"><select class="tc-rot-class" style="flex:1">${DB.classes.map(c=>`<option value="${c.id}" ${r&&r.classId===c.id?'selected':''}>${escH(c.name)}</option>`).join('')}</select><button type="button" class="blk-attach-remove" title="Remove" onclick="this.closest('.tc-rot-row').remove()">&times;</button></div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px">${GRADE_SUBJECTS.map(sj=>`<label style="display:inline-flex;align-items:center;gap:4px;font-weight:500;margin:0"><input type="checkbox" class="tc-rot-sub" value="${escH(sj)}" ${r&&(r.subjects||[]).includes(sj)?'checked':''} style="width:auto">${escH(sj)}</label>`).join('')}</div>`;
+  wrap.appendChild(row);
 }
 function saveTeacher(id){
   const name=document.getElementById('tc-name').value.trim();const title=document.getElementById('tc-title').value.trim();const email=(document.getElementById('tc-email')?.value||'').trim().toLowerCase();if(!name){alert('Enter a name');return;}
   if(email&&DB.teachers.some(x=>x.id!==id&&(x.email||'').toLowerCase()===email)){alert('Another teacher is already linked to that email.');return;}
   let t;
   if(id){t=DB.teachers.find(x=>x.id===id);t.name=name;t.title=title;t.email=email;}else{t={id:newId(),name,title,email};DB.teachers.push(t);}
+  // Rotation rooms
+  const rows=[...document.querySelectorAll('.tc-rot-row')].map(el=>({ id:el.dataset.id||'', teacherId:t.id, classId:el.querySelector('.tc-rot-class').value, subjects:[...el.querySelectorAll('.tc-rot-sub:checked')].map(x=>x.value) }));
+  if(rows.some(r=>!r.subjects.length)){alert('Check at least one subject for each rotation room (or remove the room).');return;}
+  if(rows.some(r=>DB.classes.find(c=>c.id===r.classId)?.teacherId===t.id)){alert("A teacher's own homeroom can't also be a rotation room.");return;}
+  if(new Set(rows.map(r=>r.classId)).size<rows.length){alert('Each rotation room should only be listed once — check more subjects on one row instead.');return;}
+  const before=(DB.roomAssignments||[]).filter(r=>r.teacherId===t.id);
+  if((rows.length||before.length)&&!SCHEMA.roomAssignments){alert('Rotation rooms need the database update (migration_2026-11-10.sql) to be run first.');return;}
   sbUpsert('teachers',T.teachers.toRow(t));
+  before.filter(b=>!rows.some(r=>r.id===b.id)).forEach(b=>sbDelete('room_assignments',{id:b.id},'rotation room'));
+  rows.forEach(r=>{ if(!r.id) r.id=newId(); sbUpsert('room_assignments',T.room_assignments.toRow(r),'rotation room'); });
+  DB.roomAssignments=(DB.roomAssignments||[]).filter(r=>r.teacherId!==t.id).concat(rows);
   closeModal();renderTeachers();populateContextSelects();toast('Teacher saved');
 }
-function deleteTeacher(id){if(!confirm('Delete?'))return;DB.teachers=DB.teachers.filter(t=>t.id!==id);sbDelete('teachers',{id});renderTeachers();populateContextSelects();}
+function deleteTeacher(id){if(!confirm('Delete?'))return;(DB.roomAssignments||[]).filter(r=>r.teacherId===id).forEach(r=>sbDelete('room_assignments',{id:r.id},'rotation room'));DB.roomAssignments=(DB.roomAssignments||[]).filter(r=>r.teacherId!==id);DB.teachers=DB.teachers.filter(t=>t.id!==id);sbDelete('teachers',{id});renderTeachers();populateContextSelects();}
 
 function renderClasses(){
   document.getElementById('classes-tbody').innerHTML=DB.classes.map(c=>{const teacher=DB.teachers.find(t=>t.id===c.teacherId);const students=DB.students.filter(s=>c.studentIds.includes(s.id));const gradeSet=[...new Set(students.map(s=>s.grade))].sort();return`<tr><td><strong>${escH(c.name)}</strong></td><td>${escH(teacher?.name||'—')}</td><td>${students.length}</td><td>${gradeSet.map(g=>`<span class="chip chip-grade">${g}</span>`).join(' ')}</td><td><button class="btn btn-secondary btn-sm" onclick="openClassModal('${c.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteClass('${c.id}')">Delete</button></td></tr>`;}).join('')||'<tr><td colspan="5" class="empty-state">No classes yet</td></tr>';
@@ -4379,7 +4703,7 @@ function openClassModal(id){
   showModal(`<div class="modal-title">${c?'Edit':'Add'} Class</div>
     <div class="form-row"><div><label>Class Name</label><input type="text" id="cls-name" value="${c?escH(c.name):''}"></div></div>
     <div class="form-row"><div><label>Teacher</label><select id="cls-teacher">${DB.teachers.map(t=>`<option value="${t.id}" ${c&&c.teacherId===t.id?'selected':''}>${escH(t.name)}</option>`).join('')}</select></div></div>
-    <div><label>Students (Ctrl/Cmd to multi-select)</label><select id="cls-students" multiple style="height:150px">${DB.students.map(s=>`<option value="${s.id}" ${c&&c.studentIds.includes(s.id)?'selected':''}>${escH(s.name)} (${escH(s.grade)})</option>`).join('')}</select></div>
+    <div><label>Students (Ctrl/Cmd to multi-select)</label><select id="cls-students" multiple style="height:150px">${DB.students.map(s=>`<option value="${s.id}" ${c&&c.studentIds.includes(s.id)?'selected':''}>${escH(lf(s))} (${escH(s.grade)})</option>`).join('')}</select></div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveClass('${id||''}')">Save</button></div>`);
 }
 function saveClass(id){
@@ -4417,8 +4741,8 @@ function renderStandards(){
     ? DB.assignments.filter(a=>a.classId===classId)
     : DB.assignments;
   const students=classId
-    ? DB.students.filter(s=>DB.classes.find(c=>c.id===classId)?.studentIds.includes(s.id)&&s.grade===stdActiveGrade)
-    : DB.students.filter(s=>s.grade===stdActiveGrade);
+    ? activeStudents().filter(s=>DB.classes.find(c=>c.id===classId)?.studentIds.includes(s.id)&&s.grade===stdActiveGrade)
+    : activeStudents().filter(s=>s.grade===stdActiveGrade);
 
   // stdData[section][stdi] = {covered:bool, scores:[1-4,...]}
   const stdData={};
@@ -4551,7 +4875,7 @@ function renderWeekDocs(){
   // Same "viewing someone else's room" guard as the rest of Lesson Plans —
   // admin can see/open packet links for any room, but Add/Remove is only
   // available for their own room (or for a teacher, always their own room).
-  const viewingOwnRoom=DB.role!=='admin'||!!(DB.myClassId&&classId===DB.myClassId);
+  const viewingOwnRoom=(DB.role!=='admin'||!!(DB.myClassId&&classId===DB.myClassId))&&!lockedTriForDate(wsStr)&&!rotationSubjects(classId);
 
   let html=`<div class="week-docs-section">
     <div class="week-docs-title">
@@ -4593,6 +4917,7 @@ function renderWeekDocs(){
 }
 
 function handleWeekDocLink(classId,wsStr,slotKey){
+  if(lockBlocked(lockedTriForDate(wsStr)))return;
   const urlInput=document.getElementById('doc-url-'+slotKey);
   const titleInput=document.getElementById('doc-title-'+slotKey);
   const url=(urlInput?.value||'').trim();
@@ -4608,6 +4933,7 @@ function handleWeekDocLink(classId,wsStr,slotKey){
 }
 
 function removeWeekDoc(classId,wsStr,slotKey){
+  if(lockBlocked(lockedTriForDate(wsStr)))return;
   patchLessonWeek(classId,wsStr,lw=>{if(lw.docs)delete lw.docs[slotKey];},'week document link');
   renderWeekDocs();
   toast('Link removed');
@@ -4655,6 +4981,7 @@ function doCopyBlock(blockId){
   const destWeek=document.getElementById('copy-week').value;
   const destDay=parseInt(document.getElementById('copy-day').value);
   if(destWeek===b.weekStart&&destDay===b.dayIndex){toast('Choose a different day or week');return;}
+  if(lockBlocked(lockedTriForDate(destWeek)))return;
   _cloneBlockTo(b,destWeek,destDay);
   closeModal();renderLessonPlan();toast('Activity copied to '+DAYS[destDay]);
 }
@@ -4662,7 +4989,8 @@ function doCopyBlock(blockId){
 // Copy every activity on one day to another day (same or different week).
 function openCopyDayModal(dayIdx){
   const classId=getCtxClass();const wsStr=isoLocal(lpCurrentWeek);
-  const blocks=DB.lessonBlocks.filter(b=>b.classId===classId&&b.weekStart===wsStr&&b.dayIndex===dayIdx);
+  const _rs=rotationSubjects(classId);
+  const blocks=DB.lessonBlocks.filter(b=>b.classId===classId&&b.weekStart===wsStr&&b.dayIndex===dayIdx&&(!_rs||_rs.includes(b.subject)));
   if(!blocks.length){toast('Nothing to copy on '+DAYS[dayIdx]);return;}
   const nextDay=(dayIdx+1)%5;
   const dayOpts=DAYS.map((d,i)=>`<option value="${i}"${i===nextDay?' selected':''}>${d}</option>`).join('');
@@ -4683,7 +5011,9 @@ function doCopyDay(dayIdx){
   const destWeek=document.getElementById('copy-week').value;
   const destDay=parseInt(document.getElementById('copy-day').value);
   if(destWeek===wsStr&&destDay===dayIdx){toast('Choose a different day or week');return;}
-  const blocks=DB.lessonBlocks.filter(b=>b.classId===classId&&b.weekStart===wsStr&&b.dayIndex===dayIdx);
+  if(lockBlocked(lockedTriForDate(destWeek)))return;
+  const _rs=rotationSubjects(classId);
+  const blocks=DB.lessonBlocks.filter(b=>b.classId===classId&&b.weekStart===wsStr&&b.dayIndex===dayIdx&&(!_rs||_rs.includes(b.subject)));
   blocks.forEach(b=>_cloneBlockTo(b,destWeek,destDay));
   closeModal();renderLessonPlan();
   toast(`Copied ${blocks.length} activit${blocks.length===1?'y':'ies'} to ${DAYS[destDay]}`+(destWeek!==wsStr?' (week of '+fmtShort(parseLocal(destWeek))+')':''));
@@ -4830,12 +5160,13 @@ function renderAttendance(){
       badge.textContent='✓ Submitted — you can still make changes; they save automatically';badge.style.background='#f0ece7';badge.style.color='#5C3317';
     } else {badge.textContent='Not submitted yet';badge.style.background='#E8D5C0';badge.style.color='#5C3317';}
   }
-  if(submitBtn){ submitBtn.disabled=false; submitBtn.style.display=att.submitted?'none':''; }
+  const attLocked=lockedTriForDate(dateStr);
+  if(submitBtn){ submitBtn.disabled=false; submitBtn.style.display=(att.submitted||attLocked)?'none':''; }
   const cls=DB.classes.find(c=>c.id===classId);
   const grid=document.getElementById('att-grid');
   if(!grid) return;
   if(!cls){ grid.innerHTML='<div class="empty-state">Select a class above</div>'; return; }
-  const students=DB.students.filter(s=>cls.studentIds.includes(s.id));
+  const students=DB.students.filter(s=>cls.studentIds.includes(s.id)&&activeOn(s,dateStr));
   if(!students.length){ grid.innerHTML='<div class="empty-state">No students in this class</div>'; return; }
 
   // Summary bar
@@ -4852,7 +5183,7 @@ function renderAttendance(){
       <span class="att-summary-chip att-A">✗ Absent: ${aCount}</span>
       <span class="att-summary-chip att-T">~ Tardy: ${tCount}</span>
       ${nCount?`<span class="att-summary-chip" style="background:#f5f5f5;color:var(--bpi-ink-3)">? Not marked: ${nCount}</span>`:''}
-      <button class="btn btn-secondary btn-sm" onclick="markAllPresent('${classId}','${dateStr}')" style="margin-left:auto">Mark All Present</button>
+      ${attLocked?'':`<button class="btn btn-secondary btn-sm" onclick="markAllPresent('${classId}','${dateStr}')" style="margin-left:auto">Mark All Present</button>`}
     </div>
   </div>
   <div class="card" style="padding:0">
@@ -4864,21 +5195,23 @@ function renderAttendance(){
     const rec=recs[s.id]||{status:'',note:''};
     const statuses=['P','A','T'];
     const labels={P:'Present',A:'Absent',T:'Tardy'};
-    const btns=statuses.map(st=>`<button class="att-radio-btn ${rec.status===st?st:''}" onclick="setAttStatus('${classId}','${dateStr}','${s.id}','${st}')" title="${labels[st]}">${st}</button>`).join('');
+    const btns=statuses.map(st=>`<button class="att-radio-btn ${rec.status===st?st:''}" onclick="setAttStatus('${classId}','${dateStr}','${s.id}','${st}')" title="${labels[st]}"${attLocked?' disabled':''}>${st}</button>`).join('');
     html+=`<tr>
-      <td><strong>${escH(s.name)}</strong>${s.group?` <span class="chip-group-${s.group}" style="font-size:.6rem">${s.group.charAt(0).toUpperCase()+s.group.slice(1)}</span>`:''}</td>
+      <td><strong>${escH(lf(s))}</strong>${s.group?` <span class="chip-group-${s.group}" style="font-size:.6rem">${s.group.charAt(0).toUpperCase()+s.group.slice(1)}</span>`:''}</td>
       <td><span class="chip chip-grade">${escH(s.grade)}</span></td>
       <td><div class="att-radio-group">${btns}</div></td>
-      <td><input class="att-note-input" id="att-note-${s.id}" value="${escH(rec.note||'')}" placeholder="Add note…" onchange="setAttNote('${classId}','${dateStr}','${s.id}',this.value)"></td>
+      <td><input class="att-note-input" id="att-note-${s.id}" value="${escH(rec.note||'')}" placeholder="Add note…"${attLocked?' disabled':''} onchange="setAttNote('${classId}','${dateStr}','${s.id}',this.value)"></td>
     </tr>`;
   });
   html+=`</tbody></table></div>`;
+  if(attLocked) html=lockBanner(attLocked,'Attendance for this day')+html;
   grid.innerHTML=html;
 }
 // Attendance stays editable after it's submitted (teachers correct late
 // arrivals, mis-taps, etc.). Each change re-reads the sheet and changes only
 // that student, so a teacher and an admin editing the same day don't clash.
 function setAttStatus(classId,dateStr,studentId,status){
+  if(lockBlocked(lockedTriForDate(dateStr)))return;
   patchAttendance(classId,dateStr,att=>{
     if(!att.records[studentId]) att.records[studentId]={status:'',note:''};
     att.records[studentId].status=status;
@@ -4886,15 +5219,17 @@ function setAttStatus(classId,dateStr,studentId,status){
   renderAttendance();
 }
 function setAttNote(classId,dateStr,studentId,note){
+  if(lockBlocked(lockedTriForDate(dateStr)))return;
   patchAttendance(classId,dateStr,att=>{
     if(!att.records[studentId]) att.records[studentId]={status:'',note:''};
     att.records[studentId].note=note;
   },'attendance note');
 }
 function markAllPresent(classId,dateStr){
+  if(lockBlocked(lockedTriForDate(dateStr)))return;
   const cls=DB.classes.find(c=>c.id===classId);
   if(!cls) return;
-  const ids=DB.students.filter(s=>cls.studentIds.includes(s.id)).map(s=>s.id);
+  const ids=DB.students.filter(s=>cls.studentIds.includes(s.id)&&activeOn(s,dateStr)).map(s=>s.id);
   // Only fills in students who haven't been marked yet — never overwrites an
   // Absent/Tardy someone already recorded.
   patchAttendance(classId,dateStr,att=>{
@@ -4909,9 +5244,10 @@ function submitAttendance(){
   const classId=getCtxClass();
   if(!classId){toast('Select a room first');return;}
   const dateStr=isoLocal(attCurrentDate);
+  if(lockBlocked(lockedTriForDate(dateStr)))return;
   const cls=DB.classes.find(c=>c.id===classId);
   const att=getAtt(classId,dateStr);
-  const unmarked=cls?DB.students.filter(s=>cls.studentIds.includes(s.id)&&!att.records[s.id]?.status).length:0;
+  const unmarked=cls?DB.students.filter(s=>cls.studentIds.includes(s.id)&&activeOn(s,dateStr)&&!att.records[s.id]?.status).length:0;
   if(unmarked&&!confirm(unmarked+' student'+(unmarked===1?' is':'s are')+' not marked yet. Submit anyway?'))return;
   patchAttendance(classId,dateStr,a=>{a.submitted=true;},'attendance');
   renderAttendance();
@@ -4933,7 +5269,7 @@ function renderTeacherDashboard(){
   const classId=getCtxClass();
   const cls=DB.classes.find(c=>c.id===classId);
   const isTeacher=DB.role==='teacher';
-  const students=cls?DB.students.filter(s=>cls.studentIds.includes(s.id)):DB.students;
+  const students=cls?activeStudents().filter(s=>cls.studentIds.includes(s.id)):activeStudents();
   const assignments=cls?DB.assignments.filter(a=>a.classId===classId):DB.assignments;
 
   // Stats
@@ -5088,8 +5424,8 @@ function renderProfiles(){
   const classId=getCtxClass();
   const cls=DB.classes.find(c=>c.id===classId);
   const q=(document.getElementById('profile-search')?.value||'').toLowerCase();
-  let students=cls?DB.students.filter(s=>cls.studentIds.includes(s.id)):DB.students;
-  if(q) students=students.filter(s=>s.name.toLowerCase().includes(q)||s.grade.toLowerCase().includes(q));
+  let students=cls?activeStudents().filter(s=>cls.studentIds.includes(s.id)):activeStudents();
+  if(q) students=students.filter(s=>(s.name+' '+lf(s)).toLowerCase().includes(q)||s.grade.toLowerCase().includes(q));
   const wrap=document.getElementById('profile-list');
   if(!wrap) return;
   if(!students.length){wrap.innerHTML='<div class="empty-state">No students found</div>';return;}
@@ -5102,7 +5438,7 @@ function renderProfiles(){
       <div class="profile-header" onclick="toggleProfile('pb_${s.id}',this)">
         <div class="profile-avatar">${initials}</div>
         <div style="flex:1">
-          <div class="profile-name">${escH(s.name)} <span class="chip chip-grade">${escH(s.grade)}</span> ${grpChip}</div>
+          <div class="profile-name">${escH(lf(s))} <span class="chip chip-grade">${escH(s.grade)}</span> ${grpChip}</div>
           <div class="profile-meta">${enrolled}</div>
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
@@ -5144,7 +5480,7 @@ function buildProfileBody(student, classId){
   const avg=_avgOrNull(student.id,graded);
 
   // Missing assignments
-  const missing=assignments.filter(a=>{const g=a.grades?.[student.id];return !g||g.status==='M';});
+  const missing=assignments.filter(a=>{const g=a.grades?.[student.id];return _appliesTo(a,student)&&(!g||g.status==='M');});
 
   // Standards mastery
   const stdScores={};
@@ -5190,7 +5526,7 @@ function buildProfileBody(student, classId){
   <div class="profile-section"><div class="profile-section-title">Intervention Notes</div>
     <textarea class="profile-note-area" placeholder="Intervention notes…" onchange="saveProfileNote('${student.id}','interventionNotes',this.value)">${escH(prof.interventionNotes)}</textarea>
   </div>
-  <div class="profile-section"><div class="profile-section-title">Teacher Comments</div>
+  <div class="profile-section"><div class="profile-section-title">Teacher Notes <span style="font-weight:400;text-transform:none;letter-spacing:0">(not printed — report comments are on the Reports tab)</span></div>
     <textarea class="profile-note-area" placeholder="Teacher comments…" onchange="saveProfileNote('${student.id}','teacherComments',this.value)">${escH(prof.teacherComments)}</textarea>
   </div>
   <div class="profile-section"><div class="profile-section-title">Parent Communication Notes</div>
@@ -5249,7 +5585,7 @@ function renderReportBody(){
   if(activeReportTab==='progress'){ renderProgressInto(body); return; }
 
   if(!cls){body.innerHTML='<div class="empty-state">Select a class above</div>';return;}
-  const students=DB.students.filter(s=>cls.studentIds.includes(s.id));
+  const students=DB.students.filter(s=>cls.studentIds.includes(s.id)&&enrolledInTri(s,trimester));
   const assignments=DB.assignments.filter(a=>a.classId===classId);
 
   if(activeReportTab==='mastery'){
@@ -5265,11 +5601,11 @@ function renderReportBody(){
         a.standardRefs.forEach(r=>{const k=`${r.section}||${r.stdIndex}`;(stdScores[k]=stdScores[k]||{key:`${escH(r.grade)}||${r.section}||${r.stdIndex}`,scores:[]}).scores.push(score);});
       });
       const entries=Object.entries(stdScores);
-      if(!entries.length) return`<div class="card" style="margin-bottom:10px"><strong>${escH(s.name)}</strong> — no standards data</div>`;
+      if(!entries.length) return`<div class="card" style="margin-bottom:10px"><strong>${escH(lf(s))}</strong> — no standards data</div>`;
       const mastered=entries.filter(([,v])=>v.scores.reduce((a,b)=>a+b,0)/v.scores.length>=3).length;
       return`<div class="card" style="margin-bottom:12px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="font-weight:700;font-size:.9rem;color:var(--bpi-bistre)">${escH(s.name)} <span class="chip chip-grade">${escH(s.grade)}</span></div>
+          <div style="font-weight:700;font-size:.9rem;color:var(--bpi-bistre)">${escH(lf(s))} <span class="chip chip-grade">${escH(s.grade)}</span></div>
           <span style="font-size:.78rem;font-weight:700;color:#5C3317">${mastered}/${entries.length} mastered</span>
         </div>
         ${entries.map(([sec,v])=>{const avg=v.scores.reduce((a,b)=>a+b,0)/v.scores.length;const score=Math.round(avg);return`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--bpi-rule);font-size:.78rem"><span style="flex:1">${sec}</span><span class="badge badge-${score}">${score}</span></div>`;}).join('')}
@@ -5280,9 +5616,9 @@ function renderReportBody(){
     // Missing assignment report
     let html='';
     students.forEach(s=>{
-      const missing=assignments.filter(a=>{const g=a.grades?.[s.id];return !g||g.status==='M'||g.earned==null;});
+      const missing=assignments.filter(a=>{const g=a.grades?.[s.id];return _appliesTo(a,s)&&(!g||g.status==='M'||g.earned==null);});
       if(!missing.length) return;
-      html+=`<div class="card" style="margin-bottom:10px"><div style="font-weight:700;margin-bottom:8px;color:var(--bpi-bistre)">${escH(s.name)} — ${missing.length} missing</div>
+      html+=`<div class="card" style="margin-bottom:10px"><div style="font-weight:700;margin-bottom:8px;color:var(--bpi-bistre)">${escH(lf(s))} — ${missing.length} missing</div>
         ${missing.map(a=>`<div style="display:flex;gap:8px;padding:4px 0;font-size:.8rem;border-bottom:1px solid var(--bpi-rule)"><span style="flex:1">${escH(a.title)}</span><span style="color:var(--bpi-ink-3)">${escH(a.subject)}</span><span style="color:var(--bpi-ink-3)">${a.date}</span></div>`).join('')}
       </div>`;
     });
@@ -5326,11 +5662,11 @@ function renderReportBody(){
         const graded=assignments.filter(a=>{const g=a.grades?.[s.id];return g&&g.earned!=null&&g.status!=='M'&&g.status!=='E';});
         const avg=_avgOrNull(s.id,graded);
         const score=avg!=null?(avg>=85?4:avg>=75?3:avg>=65?2:1):null;
-        const missing=assignments.filter(a=>{const g=a.grades?.[s.id];return !g||g.status==='M';}).length;
+        const missing=assignments.filter(a=>{const g=a.grades?.[s.id];return _appliesTo(a,s)&&(!g||g.status==='M');}).length;
         let abs=0;
         Object.values(DB.attendance).forEach(att=>{if(att.records?.[s.id]?.status==='A')abs++;});
         return`<tr style="border-bottom:1px solid var(--bpi-rule)">
-          <td style="padding:7px 10px;font-weight:600">${escH(s.name)}</td>
+          <td style="padding:7px 10px;font-weight:600">${escH(lf(s))}</td>
           <td style="padding:7px 10px"><span class="chip chip-grade">${escH(s.grade)}</span></td>
           <td style="padding:7px 10px;text-align:center;font-weight:700;color:${avg!=null?(avg>=85?'#5C3317':avg>=75?'#6B3A1F':avg>=65?'#A5704C':'#C49A6C'):'var(--bpi-ink-3)'}">${avg!=null?avg+'%':'—'}</td>
           <td style="padding:7px 10px;text-align:center">${score!=null?`<span class="badge badge-${score}">${score}</span>`:'—'}</td>
@@ -5354,7 +5690,7 @@ function renderAdminDashboard(){
   if(!wrap)return;
 
   // ── Stat cards ──────────────────────────────────────────────
-  const totalStudents=DB.students.length;
+  const totalStudents=activeStudents().length;
   const today=isoLocal(new Date());
 
   // Attendance summary across all classes today
@@ -5362,7 +5698,7 @@ function renderAdminDashboard(){
   DB.classes.forEach(c=>{
     const att=DB.attendance[c.id+'||'+today];
     if(att&&att.submitted){
-      c.studentIds.forEach(sid=>{
+      idsActiveOn(c,today).forEach(sid=>{
         const rec=att.records[sid];
         attTotal++;
         if(rec?.status==='A')attA++;
@@ -5376,14 +5712,14 @@ function renderAdminDashboard(){
   // Missing grades count
   let missingGrades=0;
   DB.assignments.forEach(a=>{
-    DB.classes.find(c=>c.id===a.classId)?.studentIds.forEach(sid=>{
+    idsActiveOn(DB.classes.find(c=>c.id===a.classId),a.date).forEach(sid=>{
       const g=a.grades?.[sid];
       if(!g||g.earned==null)missingGrades++;
     });
   });
 
   // Students below grade level (avg < 65%)
-  const belowGL=DB.students.filter(s=>{
+  const belowGL=activeStudents().filter(s=>{
     const cls=DB.classes.find(c=>c.studentIds.includes(s.id));
     if(!cls)return false;
     const asns=DB.assignments.filter(a=>a.classId===cls.id);
@@ -5453,7 +5789,7 @@ function _adminMissingPanel(){
     const cls=DB.classes.find(c=>c.id===a.classId);if(!cls)return;
     const t=DB.teachers.find(t=>t.id===cls.teacherId);
     const tName=t?t.name:'Unknown';
-    cls.studentIds.forEach(sid=>{
+    idsActiveOn(cls,a.date).forEach(sid=>{
       const g=a.grades?.[sid];
       if(!g||g.earned==null)byTeacher[tName]=(byTeacher[tName]||0)+1;
     });
@@ -5523,7 +5859,7 @@ function _adminStdMasteryPanel(){
 }
 
 function _adminBelowGLPanel(){
-  const below=DB.students.filter(s=>{
+  const below=activeStudents().filter(s=>{
     const cls=DB.classes.find(c=>c.studentIds.includes(s.id));
     if(!cls)return false;
     const asns=DB.assignments.filter(a=>a.classId===cls.id);
@@ -5538,7 +5874,7 @@ function _adminBelowGLPanel(){
     const graded=asns.filter(a=>{const g=a.grades?.[s.id];return g&&g.earned!=null&&g.status!=='M'&&g.status!=='E';});
     const avg=_avgOrNull(s.id,graded);
     return`<div class="deadline-row">
-      <span style="flex:1;font-size:.8rem;font-weight:600">${escH(s.name)}</span>
+      <span style="flex:1;font-size:.8rem;font-weight:600">${escH(lf(s))}</span>
       <span class="chip chip-grade">${escH(s.grade)}</span>
       <span style="font-weight:700;font-size:.84rem;color:#A5704C;margin-left:6px">${avg!=null?avg+'%':'—'}</span>
       <span class="badge badge-1" style="margin-left:6px">1</span>
@@ -5587,7 +5923,7 @@ function renderCompliance(){
     const weekEnd=parseLocal(ws);weekEnd.setDate(weekEnd.getDate()+4);
     const weekEndStr=isoLocal(weekEnd);
     const weekAsns=DB.assignments.filter(a=>a.classId===cls.id&&a.date>=ws&&a.date<=weekEndStr);
-    const gradesEntered=weekAsns.every(a=>cls.studentIds.every(sid=>a.grades?.[sid]?.earned!=null));
+    const gradesEntered=weekAsns.every(a=>idsActiveOn(cls,a.date).every(sid=>a.grades?.[sid]?.earned!=null));
 
     // Attendance
     let attDays=0,attDone=0;
@@ -5595,7 +5931,7 @@ function renderCompliance(){
 
     // Missing assignments
     const totalMissing=DB.assignments.filter(a=>a.classId===cls.id).reduce((n,a)=>{
-      return n+cls.studentIds.filter(sid=>{const g=a.grades?.[sid];return !g||g.earned==null;}).length;
+      return n+idsActiveOn(cls,a.date).filter(sid=>{const g=a.grades?.[sid];return !g||g.earned==null;}).length;
     },0);
 
     const flags=[];
@@ -5687,7 +6023,7 @@ function _complianceAlerts(){
       }
     }
     // Missing many grades
-    const missing=DB.assignments.filter(a=>a.classId===cls.id).reduce((n,a)=>n+cls.studentIds.filter(sid=>{const g=a.grades?.[sid];return !g||g.earned==null;}).length,0);
+    const missing=DB.assignments.filter(a=>a.classId===cls.id).reduce((n,a)=>n+idsActiveOn(cls,a.date).filter(sid=>{const g=a.grades?.[sid];return !g||g.earned==null;}).length,0);
     if(missing>20)alerts.push({level:'error',msg:`${tName}: ${missing} ungraded assignments`});
   });
 
@@ -5708,11 +6044,11 @@ function exportCompliance(){
     const lpDone=['pending','approved'].includes(lw.status)?'Yes':'No';
     const weekEnd=parseLocal(ws);weekEnd.setDate(weekEnd.getDate()+4);
     const weekAsns=DB.assignments.filter(a=>a.classId===cls.id&&a.date>=ws&&a.date<=isoLocal(weekEnd));
-    const gradesEntered=weekAsns.every(a=>cls.studentIds.every(sid=>a.grades?.[sid]?.earned!=null))?'Yes':'No';
+    const gradesEntered=weekAsns.every(a=>idsActiveOn(cls,a.date).every(sid=>a.grades?.[sid]?.earned!=null))?'Yes':'No';
     let attDays=0,attDone=0;
     for(let i=0;i<5;i++){const d=parseLocal(ws);d.setDate(d.getDate()+i);const ds=isoLocal(d);if(ds<=today){attDays++;if(DB.attendance[cls.id+'||'+ds]?.submitted)attDone++;}}
-    const missing=DB.assignments.filter(a=>a.classId===cls.id).reduce((n,a)=>n+cls.studentIds.filter(sid=>{const g=a.grades?.[sid];return !g||g.earned==null;}).length,0);
-    csv+=`"${t?escH(t.name):''}","${escH(cls.name)}",${lpDone},${gradesEntered},${attDone}/${attDays},${missing}\n`;
+    const missing=DB.assignments.filter(a=>a.classId===cls.id).reduce((n,a)=>n+idsActiveOn(cls,a.date).filter(sid=>{const g=a.grades?.[sid];return !g||g.earned==null;}).length,0);
+    csv+=`${csvQ(t?t.name:'')},${csvQ(cls.name)},${lpDone},${gradesEntered},${attDone}/${attDays},${missing}\n`;
   });
   const blob=new Blob([csv],{type:'text/csv'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`compliance_${ws}.csv`;a.click();
@@ -5731,7 +6067,7 @@ function renderOversight(){
   // Build filter UI
   const teachers=[{id:'',name:'All Teachers'},...DB.teachers];
   const grades=['','K','1st','2nd','3rd','PK3','VPK'];
-  const subjects=['','Circle Time','Phonics/Handwriting','Reading/Language Arts','Math','Project Based Learning','Science','Social Studies'];
+  const subjects=['','Circle Time','Reading/Language Arts','Math','Project Based Learning'];
 
   wrap.innerHTML=`
   <div class="card no-print" style="margin-bottom:16px">
@@ -5764,9 +6100,9 @@ function renderOversight(){
   if(_goSubject) asns=asns.filter(a=>a.subject===_goSubject);
 
   // Filter students
-  let students=DB.students;
+  let students=activeStudents();
   if(_goGrade) students=students.filter(s=>s.grade===_goGrade);
-  if(_goSearch) students=students.filter(s=>s.name.toLowerCase().includes(_goSearch.toLowerCase()));
+  if(_goSearch) students=students.filter(s=>(s.name+' '+lf(s)).toLowerCase().includes(_goSearch.toLowerCase()));
 
   if(!asns.length||!students.length){
     wrap.innerHTML+=`<div class="card"><div class="empty-state">No data matches current filters</div></div>`;return;
@@ -5792,7 +6128,7 @@ function renderOversight(){
     const score=avg!=null?(avg>=85?4:avg>=75?3:avg>=65?2:1):null;
     const flagRow=avg!=null&&avg<65;
     tableHtml+=`<tr style="border-bottom:1px solid var(--bpi-rule)${flagRow?' background:#FFF8F3':''}${si%2===0?' background:var(--bpi-warm)':''}">
-      <td style="padding:6px 10px;font-weight:600;white-space:nowrap">${escH(s.name)} <span class="chip chip-grade" style="font-size:.58rem">${escH(s.grade)}</span>${flagRow?'<span style="color:#A5704C;margin-left:4px" title="Below grade level">⚠</span>':''}</td>
+      <td style="padding:6px 10px;font-weight:600;white-space:nowrap">${escH(lf(s))} <span class="chip chip-grade" style="font-size:.58rem">${escH(s.grade)}</span>${flagRow?'<span style="color:#A5704C;margin-left:4px" title="Below grade level">⚠</span>':''}</td>
       <td style="padding:6px 8px;text-align:center;font-weight:700;color:${avg!=null?(avg>=85?'#5C3317':avg>=75?'#6B3A1F':avg>=65?'#A5704C':'#C49A6C'):'var(--bpi-ink-3)'}">${avg!=null?avg+'%':'—'}</td>
       <td style="padding:6px 8px;text-align:center">${score!=null?`<span class="badge badge-${score}">${score}</span>`:'—'}</td>
       ${visAsns.map(a=>{
@@ -5823,7 +6159,7 @@ function exportOversight(){
   DB.students.forEach(s=>{
     const cls=DB.classes.find(c=>c.studentIds.includes(s.id));if(!cls)return;
     if(_goGrade&&s.grade!==_goGrade)return;
-    if(_goSearch&&!s.name.toLowerCase().includes(_goSearch.toLowerCase()))return;
+    if(_goSearch&&!(s.name+' '+lf(s)).toLowerCase().includes(_goSearch.toLowerCase()))return;
     const t=DB.teachers.find(t=>t.id===cls.teacherId);
     let asns=DB.assignments.filter(a=>a.classId===cls.id);
     if(_goTeacher&&cls.teacherId!==_goTeacher)return;
@@ -5832,7 +6168,7 @@ function exportOversight(){
       const g=a.grades?.[s.id];
       const pct=g&&g.earned!=null&&a.totalPoints?Math.round(g.earned/a.totalPoints*100):'';
       const score=pct!==''?(pct>=85?4:pct>=75?3:pct>=65?2:1):'';
-      csv+=`"${escH(s.name)}",${escH(s.grade)},"${escH(cls.name)}","${t?escH(t.name):''}","${escH(a.title)}",${a.date},${escH(a.subject)},${g?.earned??''},${a.totalPoints},${pct}%,${score},${g?.status||''}\n`;
+      csv+=`${csvQ(lf(s))},${csvQ(s.grade)},${csvQ(cls.name)},${csvQ(t?t.name:'')},${csvQ(a.title)},${a.date},${csvQ(a.subject)},${g?.earned??''},${a.totalPoints},${pct}%,${score},${g?.status||''}\n`;
     });
   });
   const blob=new Blob([csv],{type:'text/csv'});
@@ -5873,7 +6209,7 @@ function renderStandardsReport(){
     // Build std scores aggregated per class
     const classes=DB.classes.filter(c=>DB.students.some(s=>s.grade===_srGrade&&c.studentIds.includes(s.id)));
     classes.forEach(cls=>{
-      const students=DB.students.filter(s=>s.grade===_srGrade&&cls.studentIds.includes(s.id));
+      const students=activeStudents().filter(s=>s.grade===_srGrade&&cls.studentIds.includes(s.id));
       const asns=DB.assignments.filter(a=>a.classId===cls.id);
       let html=`<div class="card" style="margin-bottom:16px"><div class="card-title">${escH(cls.name)} — Standards Mastery (Grade ${_srGrade})</div>`;
       let hasData=false;
@@ -5904,7 +6240,7 @@ function renderStandardsReport(){
     if(!classes.length)wrap.innerHTML+=`<div class="card"><div class="empty-state">No classes found for grade ${_srGrade}</div></div>`;
 
   } else if(_srView==='student'){
-    const students=DB.students.filter(s=>s.grade===_srGrade);
+    const students=activeStudents().filter(s=>s.grade===_srGrade);
     if(!students.length){wrap.innerHTML+=`<div class="card"><div class="empty-state">No students in grade ${_srGrade}</div></div>`;return;}
     students.forEach(s=>{
       const cls=DB.classes.find(c=>c.studentIds.includes(s.id));if(!cls)return;
@@ -5921,7 +6257,7 @@ function renderStandardsReport(){
       const mastered=entries.filter(([,v])=>v.scores.reduce((a,b)=>a+b,0)/v.scores.length>=3).length;
       let html=`<div class="card" style="margin-bottom:12px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div style="font-weight:700;font-size:.88rem">${escH(s.name)} <span class="chip chip-grade">${escH(s.grade)}</span>${s.group?`<span class="chip-group-${s.group}" style="margin-left:4px">${s.group}</span>`:''}</div>
+          <div style="font-weight:700;font-size:.88rem">${escH(lf(s))} <span class="chip chip-grade">${escH(s.grade)}</span>${s.group?`<span class="chip-group-${s.group}" style="margin-left:4px">${s.group}</span>`:''}</div>
           <span style="font-size:.75rem;font-weight:700;color:#5C3317">${mastered}/${entries.length} mastered</span>
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px">`;
@@ -5967,12 +6303,12 @@ function _renderArBody(){
   const trimester=getCtxTrimester();
 
   if(_arTab==='intervention'){
-    const at_risk=DB.students.filter(s=>{
+    const at_risk=activeStudents().filter(s=>{
       const c2=DB.classes.find(c=>c.studentIds.includes(s.id));if(!c2)return false;
       const asns=DB.assignments.filter(a=>a.classId===c2.id);
       const graded=asns.filter(a=>{const g=a.grades?.[s.id];return g&&g.earned!=null&&g.status!=='M'&&g.status!=='E';});
       const avg=calcGrade(s.id,graded).pct;
-      const missing=asns.filter(a=>{const g=a.grades?.[s.id];return !g||g.status==='M';}).length;
+      const missing=asns.filter(a=>{const g=a.grades?.[s.id];return _appliesTo(a,s)&&(!g||g.status==='M');}).length;
       let abs=0;Object.values(DB.attendance).forEach(att=>{if(att.records?.[s.id]?.status==='A')abs++;});
       return(avg!=null&&avg<65)||missing>5||abs>8;
     });
@@ -5983,7 +6319,7 @@ function _renderArBody(){
       const asns=c2?DB.assignments.filter(a=>a.classId===c2.id):[];
       const graded=asns.filter(a=>{const g=a.grades?.[s.id];return g&&g.earned!=null&&g.status!=='M'&&g.status!=='E';});
       const avg=_avgOrNull(s.id,graded);
-      const missing=asns.filter(a=>{const g=a.grades?.[s.id];return !g||g.status==='M';}).length;
+      const missing=asns.filter(a=>{const g=a.grades?.[s.id];return _appliesTo(a,s)&&(!g||g.status==='M');}).length;
       let abs=0;Object.values(DB.attendance).forEach(att=>{if(att.records?.[s.id]?.status==='A')abs++;});
       const reasons=[];
       if(avg!=null&&avg<65)reasons.push(`Avg ${avg}% (below grade level)`);
@@ -5991,7 +6327,7 @@ function _renderArBody(){
       if(abs>8)reasons.push(`${abs} absences`);
       return`<div class="card" style="margin-bottom:14px;border-left:3px solid #A5704C">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div><span style="font-weight:700;font-size:.9rem">${escH(s.name)}</span> <span class="chip chip-grade">${escH(s.grade)}</span></div>
+          <div><span style="font-weight:700;font-size:.9rem">${escH(lf(s))}</span> <span class="chip chip-grade">${escH(s.grade)}</span></div>
           <div style="display:flex;gap:6px">${reasons.map(r=>`<span class="att-summary-chip" style="background:#FEF3CD;color:#856404">${r}</span>`).join('')}</div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
@@ -6023,8 +6359,8 @@ function renderAdminProfiles(){
   if(!wrap)return;
   const search=(document.getElementById('admin-profile-search')?.value||'').toLowerCase();
   const gradeF=document.getElementById('admin-profile-grade-filter')?.value||'';
-  let students=DB.students;
-  if(search)students=students.filter(s=>s.name.toLowerCase().includes(search));
+  let students=activeStudents();
+  if(search)students=students.filter(s=>(s.name+' '+lf(s)).toLowerCase().includes(search));
   if(gradeF)students=students.filter(s=>s.grade===gradeF);
 
   wrap.innerHTML=students.map(s=>{
@@ -6034,7 +6370,7 @@ function renderAdminProfiles(){
     const graded=asns.filter(a=>{const g=a.grades?.[s.id];return g&&g.earned!=null&&g.status!=='M'&&g.status!=='E';});
     const avg=_avgOrNull(s.id,graded);
     const score=avg!=null?(avg>=85?4:avg>=75?3:avg>=65?2:1):null;
-    const missing=asns.filter(a=>{const g=a.grades?.[s.id];return !g||g.status==='M';}).length;
+    const missing=asns.filter(a=>{const g=a.grades?.[s.id];return _appliesTo(a,s)&&(!g||g.status==='M');}).length;
     let abs=0,tard=0;
     Object.values(DB.attendance).forEach(att=>{
       if(att.records?.[s.id]?.status==='A')abs++;
@@ -6046,7 +6382,7 @@ function renderAdminProfiles(){
         <div style="display:flex;align-items:center;gap:10px;flex:1">
           <div style="width:36px;height:36px;border-radius:50%;background:var(--bpi-bistre);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0">${s.name.charAt(0)}</div>
           <div>
-            <div style="font-weight:700;font-size:.9rem">${escH(s.name)} ${flag?'<span style="color:#A5704C" title="Needs attention">⚠</span>':''}</div>
+            <div style="font-weight:700;font-size:.9rem">${escH(lf(s))} ${flag?'<span style="color:#A5704C" title="Needs attention">⚠</span>':''}</div>
             <div style="font-size:.72rem;color:var(--bpi-ink-3)">${escH(s.grade)} · ${cls?escH(cls.name):'No class'}${s.group?` · <span class="chip-group-${s.group}">${s.group}</span>`:''}</div>
           </div>
         </div>
@@ -6199,7 +6535,12 @@ function renderNavCtx() {
   var tri = getCtxTrimester();
   document.querySelectorAll('.inst-nav-ctx').forEach(function(slot) {
     var html = '';
-    if (DB.roomLocked) {
+    var mine = DB.roomLocked ? myRoomIds() : [];
+    if (DB.roomLocked && mine.length > 1) {
+      html += '<label class="ctx-lbl">Room</label><select class="ctx-room-select" onchange="instSetRoom(this.value)">' +
+        mine.map(function(id){ var c=DB.classes.find(function(x){return x.id===id;}); var rs=rotationSubjects(id);
+          return '<option value="'+escH(id)+'"'+(id===classId?' selected':'')+'>'+escH(c?c.name:id)+(rs?' — '+escH(rs.join(', ')):'')+'</option>'; }).join('') + '</select>';
+    } else if (DB.roomLocked) {
       html += '<span class="ctx-room-label">' + (cls ? 'Room: ' + escH(cls.name) : 'No room linked — contact your administrator') + '</span>';
     } else {
       html += '<label class="ctx-lbl">Room</label><select class="ctx-room-select" onchange="instSetRoom(this.value)">' +
