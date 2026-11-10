@@ -3376,7 +3376,7 @@ function onClassChange(){renderDashboard();}
      remaining weights are scaled up, so one ungraded category doesn't drag
      a student down.
    • Missing (M) and Excused (E) are not counted — same rule as before. */
-const GRADE_SUBJECTS=['Reading/Language Arts','Math','Circle Time','Project Based Learning','Social Skills'];
+const GRADE_SUBJECTS=['Reading/Language Arts','Math','Circle Time','Project Based Learning'];
 const CATEGORIES={classwork:'Classwork',homework:'Homework',assessment:'Assessment',project:'Project'};
 
 function _gradeCounts(g){ return !!(g && g.earned!=null && g.status!=='M' && g.status!=='E'); }
@@ -3446,7 +3446,7 @@ function calcStandardLevels(student, assignments){
     if(!a.totalPoints||!_appliesTo(a,student)) return;
     const g=a.grades&&a.grades[student.id]; if(!_gradeCounts(g)) return;
     const lvl=stdLevelFromPct(g.earned/a.totalPoints*100);
-    (a.standardRefs||[]).filter(r=>r.grade===student.grade).forEach(r=>{ const k=r.section+'||'+r.stdIndex; (acc[k]=acc[k]||[]).push(lvl); });
+    (a.standardRefs||[]).filter(r=>r.grade===student.grade&&!isBehaviorSection(r.section)).forEach(r=>{ const k=r.section+'||'+r.stdIndex; (acc[k]=acc[k]||[]).push(lvl); });
   });
   const out={}; Object.keys(acc).forEach(k=>{ out[k]=acc[k].reduce((x,y)=>x+y,0)/acc[k].length; });
   return out;
@@ -4373,7 +4373,16 @@ function openStudentStdModal(studentId,classId){
    calculated. Comments are kept per trimester (student_profiles.
    trimester_comments) and edited right on the Reports tab. */
 function ratingKey(studentId, tri, stdKey){ return studentId+'|'+tri+'|'+stdKey; }
-function isRatableSection(section){ return /^Math Foundations$|^Social\/Emotional$|^Mathematics|^Social Skills/i.test(section||''); }
+// Every standard can be set by the teacher (2026-11-10 update).
+function isRatableSection(section){ return !!section; }
+/* Behavior sections (Social Skills & Work Habits; PK Social/Emotional) are
+   marked E/S/N/U by the teacher instead of a 1–4 score, are never calculated
+   from grades, and don't count toward the Standards Average. Stored in
+   standard_ratings.level as E=4, S=3, N=2, U=1. */
+function isBehaviorSection(section){ return /^Social Skills|^Social\/Emotional$/i.test(section||''); }
+const BEHAVIOR_MARKS={4:'E',3:'S',2:'N',1:'U'};
+const BEHAVIOR_LABELS={E:'Excellent',S:'Satisfactory',N:'Needs Improvement',U:'Unsatisfactory'};
+function renderMarkBadge(level){ const m=BEHAVIOR_MARKS[Math.round(level)]; return m?`<span class="badge badge-${Math.round(level)}" title="${BEHAVIOR_LABELS[m]}">${m}</span>`:''; }
 function getRating(studentId, tri, stdKey){ const r=DB.standardRatings[ratingKey(studentId,tri,stdKey)]; return r?r.level:null; }
 // calcStandardLevels + teacher-set scores for a student in trimester n
 function standardLevelsFor(student, assignments, n){
@@ -4439,20 +4448,22 @@ function openProgressEditor(studentId){
   const secs=STANDARDS[st.grade]||{};
   let rows='';
   Object.keys(secs).filter(isRatableSection).forEach(section=>{
-    rows+=`<div class="rc-section-header" style="margin-top:10px">${escH(section)}</div>`;
+    rows+=`<div class="rc-section-header" style="margin-top:10px">${escH(section)}${isBehaviorSection(section)?' <span style="font-weight:400;opacity:.8">— E / S / N / U</span>':''}</div>`;
     secs[section].forEach((std,i)=>{
       const key=st.grade+'||'+section+'||'+i; const cur=getRating(st.id,tri,key); const c=calc[section+'||'+i];
-      const opts=`<option value="">${c!=null?'Calculated ('+Math.round(c)+')':'— Not scored'}</option>`+[4,3,2,1].map(n=>`<option value="${n}" ${cur===n?'selected':''}>${n} — ${['','Beginning','Developing','Proficient','Exemplary'][n]}</option>`).join('');
+      const opts=isBehaviorSection(section)
+        ? `<option value="">— Not marked</option>`+[4,3,2,1].map(n=>`<option value="${n}" ${cur===n?'selected':''}>${BEHAVIOR_MARKS[n]} — ${BEHAVIOR_LABELS[BEHAVIOR_MARKS[n]]}</option>`).join('')
+        : `<option value="">${c!=null?'Calculated ('+Math.round(c)+')':'— Not scored'}</option>`+[4,3,2,1].map(n=>`<option value="${n}" ${cur===n?'selected':''}>${n} — ${['','Beginning','Developing','Proficient','Exemplary'][n]}</option>`).join('');
       rows+=`<div class="rc-row"><span class="rc-code">${escH(stdCode(section,i))}</span><span class="rc-std">${escH(std)}</span><select style="width:170px!important" ${locked?'disabled':''} onchange="saveRating('${st.id}',${tri},'${escH(key).replace(/'/g,"\\'")}',this.value)">${opts}</select></div>`;
     });
   });
-  if(!rows) rows='<div class="empty-state">No Foundational Math or Social-Emotional standards for this grade.</div>';
+  if(!rows) rows='<div class="empty-state">No standards are set up for this grade.</div>';
   showModal(`<div class="modal-title">${escH(lf(st))} · T${tri} Progress Report</div>
     ${locked?`<div class="alert alert-info">🔒 Trimester ${tri} is locked — view only.</div>`:''}
     <label>T${tri} Comment</label>${triCommentBox(st,tri,5)}
     <div style="font-size:.74rem;color:var(--bpi-ink-3);margin:4px 0 14px">Saves automatically. Shows on this student's progress report and report card.</div>
-    <label>Foundational Math &amp; Social-Emotional Scores</label>
-    <div style="font-size:.74rem;color:var(--bpi-ink-3);margin-bottom:4px">Pick a score to set it yourself, or leave it on "Calculated" to use the score from graded work.</div>
+    <label>Standards Scores &amp; Behavior Marks</label>
+    <div style="font-size:.74rem;color:var(--bpi-ink-3);margin-bottom:4px">Pick a score to set it yourself, or leave it on "Calculated" to use the score from graded work. Behavior (social skills) is marked E / S / N / U by you — it isn't calculated from grades.</div>
     ${rows}
     <div class="modal-footer"><button class="btn btn-primary" onclick="closeModal();rerenderActivePage()">Done</button></div>`,'large');
 }
@@ -4468,7 +4479,7 @@ function _rcAttendance(student, classId, n){
   });
   return {p,a,t};
 }
-function _stdAvgOf(levels){ const v=Object.values(levels); return v.length?v.reduce((x,y)=>x+y,0)/v.length:null; }
+function _stdAvgOf(levels){ const v=Object.keys(levels).filter(k=>!isBehaviorSection(k.split('||')[0])).map(k=>levels[k]); return v.length?v.reduce((x,y)=>x+y,0)/v.length:null; }
 
 function buildReportCard(student, teacher, cls, trimester){
   const grade=student.grade; const secs=STANDARDS[grade]||{};
@@ -4493,7 +4504,8 @@ function buildReportCard(student, teacher, cls, trimester){
     stdHtml+=`<div class="rc-section-header">${escH(section)}</div>`;
     stdHtml+=secs[section].map((std,stdi)=>{
       const k=section+'||'+stdi;
-      const scores=tris.map(n=>{const v=levels[n][k];return`<span class="rc-score-cell">${v!=null?renderScoreBadge(Math.round(v)):'<span class="rc-blank">–</span>'}</span>`;}).join('');
+      const beh=isBehaviorSection(section);
+      const scores=tris.map(n=>{const v=levels[n][k];return`<span class="rc-score-cell">${v!=null?(beh?renderMarkBadge(v):renderScoreBadge(Math.round(v))):'<span class="rc-blank">–</span>'}</span>`;}).join('');
       return`<div class="rc-row"><span class="rc-code">${escH(stdCode(section,stdi))}</span><span class="rc-std">${escH(std)}</span><div class="rc-scores">${scores}</div></div>`;
     }).join('');
   });
@@ -4514,7 +4526,7 @@ function buildReportCard(student, teacher, cls, trimester){
       <table class="rc-table"><thead><tr><th>Summary</th><th>T1</th><th>T2</th><th>T3</th></tr></thead><tbody>${summaryRows}</tbody></table>
       <table class="rc-table"><thead><tr><th>Subject</th><th>T1</th><th>T2</th><th>T3</th></tr></thead><tbody>${subjectRows}</tbody></table>
     </div>
-    <div class="rc-key"><strong>Standards levels:</strong> ${renderScoreBadge(4)} Exemplary &nbsp; ${renderScoreBadge(3)} Proficient &nbsp; ${renderScoreBadge(2)} Developing &nbsp; ${renderScoreBadge(1)} Beginning &nbsp;·&nbsp; <strong>Grades:</strong> ${(DB.gradingScale||[]).slice().sort((a,b)=>b.min-a.min).map(g=>`${escH(g.letter)} ${g.min}+`).join(', ')}</div>
+    <div class="rc-key"><strong>Behavior:</strong> E Excellent · S Satisfactory · N Needs Improvement · U Unsatisfactory &nbsp;·&nbsp; <strong>Standards levels:</strong> ${renderScoreBadge(4)} Exemplary &nbsp; ${renderScoreBadge(3)} Proficient &nbsp; ${renderScoreBadge(2)} Developing &nbsp; ${renderScoreBadge(1)} Beginning &nbsp;·&nbsp; <strong>Grades:</strong> ${(DB.gradingScale||[]).slice().sort((a,b)=>b.min-a.min).map(g=>`${escH(g.letter)} ${g.min}+`).join(', ')}</div>
     <div class="rc-std-head"><span>Standard</span><span class="rc-scores"><span class="rc-score-cell">T1</span><span class="rc-score-cell">T2</span><span class="rc-score-cell">T3</span></span></div>
     ${stdHtml}
     <div class="rc-bottom">
@@ -4522,7 +4534,7 @@ function buildReportCard(student, teacher, cls, trimester){
       <div class="rc-att"><div class="rc-label">T${trimester} Attendance</div><div>Present: <strong>${att.p}</strong></div><div>Absent: <strong>${att.a}</strong></div><div>Tardy: <strong>${att.t}</strong></div></div>
     </div>
     <div class="rc-sign"><div>Teacher Signature ____________________</div><div>Parent Signature ____________________</div><div>Date __________</div></div>
-    <div class="no-print" style="margin-top:12px;display:flex;justify-content:flex-end"><button class="btn btn-accent btn-sm" onclick="printReportCards('${escH(student.id)}')">🖨 Print this report card</button></div>
+    <div class="no-print" style="margin-top:12px;display:flex;justify-content:flex-end"><button class="btn btn-outline btn-sm" style="margin-right:8px" onclick="openProgressEditor('${escH(student.id)}')">${isTriLocked(trimester)?'View scores':'Edit scores &amp; behavior'}</button><button class="btn btn-accent btn-sm" onclick="printReportCards('${escH(student.id)}')">🖨 Print this report card</button></div>
   </div>`;
 }
 
