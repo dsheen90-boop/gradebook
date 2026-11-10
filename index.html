@@ -3902,14 +3902,18 @@ function renderLPStatusBar(){
     return;
   }
 
-  // Teacher view
+  // Teacher view. An admin who also teaches this room (their login email is
+  // linked to it in Roster › Teachers) gets the teacher controls PLUS the
+  // ability to approve their own plan — there's no one above them to do it.
+  const selfApprove=DB.role==='admin'
+    ?`<button class="btn btn-sm" style="background:var(--intent-success);color:#fff;margin-left:8px" onclick="setLPStatus('approved')">Approve My Plan</button>`:'';
   if(lw.status==='draft'||lw.status==='revisions'){
-    const msg=lw.status==='revisions'?'↩️ <strong>Revisions requested.</strong> Update your plan and resubmit for review.':'✏️ <strong>Draft.</strong> When your plan is ready, submit it for review.';
-    bar.innerHTML=`<div class="lp-status-bar ${lw.status}" style="justify-content:space-between"><span>${msg}</span><button class="btn btn-primary btn-sm" onclick="setLPStatus('pending')">Submit for Review</button></div>`;
+    const msg=lw.status==='revisions'?'↩️ <strong>Revisions requested.</strong> Update your plan and resubmit for review.':(DB.role==='admin'?'✏️ <strong>Draft.</strong> When your plan is ready, approve it.':'✏️ <strong>Draft.</strong> When your plan is ready, submit it for review.');
+    bar.innerHTML=`<div class="lp-status-bar ${lw.status}" style="justify-content:space-between"><span>${msg}</span><div style="display:flex">${DB.role==='admin'?'':`<button class="btn btn-primary btn-sm" onclick="setLPStatus('pending')">Submit for Review</button>`}${selfApprove}</div></div>`;
   } else if(lw.status==='pending'){
-    bar.innerHTML=`<div class="lp-status-bar pending"><span>⏳ <strong>Pending Review</strong> — your plan has been submitted and is awaiting admin review.</span><button class="btn btn-sm btn-secondary" style="margin-left:auto" onclick="setLPStatus('draft')">Withdraw</button></div>`;
+    bar.innerHTML=`<div class="lp-status-bar pending"><span>⏳ <strong>Pending Review</strong> — your plan has been submitted and is awaiting admin review.</span><div style="display:flex;margin-left:auto"><button class="btn btn-sm btn-secondary" onclick="setLPStatus('draft')">Withdraw</button>${selfApprove}</div></div>`;
   } else if(lw.status==='approved'){
-    bar.innerHTML=`<div class="lp-status-bar approved"><span>✅ <strong>Approved!</strong> This lesson plan has been reviewed and approved.</span></div>`;
+    bar.innerHTML=`<div class="lp-status-bar approved"><span>✅ <strong>Approved!</strong> This lesson plan has been reviewed and approved.</span>${DB.role==='admin'?`<button class="btn btn-sm btn-secondary" style="margin-left:auto" onclick="setLPStatus('draft')">Reopen</button>`:''}</div>`;
   }
 }
 
