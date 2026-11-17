@@ -1875,7 +1875,8 @@
 .rc-row:last-child{border-bottom:none}
 .rc-std{flex:1;padding-right:10px;line-height:1.4}
 .rc-scores{display:flex;gap:6px}
-.rc-score-cell{width:30px;text-align:center}
+.rc-score-cell{width:38px;text-align:center}
+.rc-score-cell .badge-na{font-size:.6rem;padding:1px 4px}
 .score-input{width:56px!important;text-align:center}
 .grade-input{width:60px!important;text-align:center}
 
@@ -2087,8 +2088,14 @@
 .rc-letter{font-weight:800;font-size:.9rem}
 .rc-sub{font-weight:400;font-size:.66rem;color:var(--bpi-ink-3)}
 .rc-blank{color:var(--bpi-bistre-20)}
-.rc-key{font-size:.7rem;color:var(--bpi-ink-2);border:1px solid var(--bpi-rule);border-radius:var(--radius-md);padding:6px 10px;margin-bottom:8px}
-.rc-key .badge{font-size:.62rem;padding:1px 6px}
+.rc-key{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px;font-size:.78rem;line-height:1.35;color:var(--bpi-ink-2);border:1.5px solid var(--bpi-bistre);border-radius:var(--radius-md);padding:12px 16px;margin:4px 0 14px;background:var(--bpi-cream)}
+.rc-key-title{font-weight:800;font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--bpi-bistre);border-bottom:1px solid var(--bpi-rule);padding-bottom:4px;margin-bottom:6px}
+.rc-key-row{display:flex;align-items:flex-start;gap:10px;margin:5px 0}
+.rc-key-row>.badge{flex:0 0 auto;min-width:30px;text-align:center;font-size:.72rem;padding:2px 6px}
+.rc-key-foot{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 28px;border-top:1px solid var(--bpi-rule);padding-top:6px}
+.rc-key-foot .rc-key-row{margin:0}
+#view-inst .badge-na{background:#fff;color:var(--bpi-ink-2);border:1px solid var(--bpi-rule-strong)}
+@media (max-width:640px){.rc-key{grid-template-columns:1fr}}
 .rc-std-head{display:flex;justify-content:space-between;font-size:.68rem;font-weight:700;color:var(--bpi-ink-3);padding:0 12px 3px}
 .rc-code{width:58px;flex-shrink:0;font-size:.68rem;font-weight:700;color:var(--bpi-brown-sugar)}
 .rc-bottom{display:grid;grid-template-columns:1fr 170px;gap:12px;margin-top:14px}
@@ -2113,7 +2120,7 @@
   body.printing-rc .rc-print-skip{display:none!important}
   body.printing-rc .rc-row{padding:2px 8px;font-size:.68rem}
   body.printing-rc .rc-section-header{padding:3px 8px;font-size:.66rem;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .rc-table thead th,.badge,.rc-section-header,.rc-info{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .rc-key,.rc-table thead th,.badge,.rc-section-header,.rc-info{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 </style>
 
@@ -4386,6 +4393,9 @@ function isRatableSection(section){ return !!section; }
 function isBehaviorSection(section){ return /^Social Skills|^Social\/Emotional$/i.test(section||''); }
 const BEHAVIOR_MARKS={4:'E',3:'S',2:'N',1:'U'};
 const BEHAVIOR_LABELS={E:'Excellent',S:'Satisfactory',N:'Needs Improvement',U:'Unsatisfactory'};
+// N/A (not assessed this trimester) is stored as level 0.
+const NA_LEVEL=0;
+function renderNABadge(){ return '<span class="badge badge-na" title="Not assessed this trimester">N/A</span>'; }
 function renderMarkBadge(level){ const m=BEHAVIOR_MARKS[Math.round(level)]; return m?`<span class="badge badge-${Math.round(level)}" title="${BEHAVIOR_LABELS[m]}">${m}</span>`:''; }
 function getRating(studentId, tri, stdKey){ const r=DB.standardRatings[ratingKey(studentId,tri,stdKey)]; return r?r.level:null; }
 // calcStandardLevels + teacher-set scores for a student in trimester n
@@ -4399,7 +4409,7 @@ function saveRating(studentId, tri, stdKey, level){
   if(lockBlocked(isTriLocked(tri)?tri:0)) return;
   if(!SCHEMA.standardRatings){ alert('Teacher-set scores need the database update (migration_2026-11-10.sql) to be run first.'); return; }
   const k=ratingKey(studentId,tri,stdKey);
-  if(level){ DB.standardRatings[k]={level:+level, by:DB.myName||''};
+  if(level!==''&&level!=null){ DB.standardRatings[k]={level:+level, by:DB.myName||''};
     sbUpsert('standard_ratings',{ student_id:studentId, trimester:tri, std_key:stdKey, level:+level, updated_by:DB.myName||null },'score');
   } else { delete DB.standardRatings[k];
     sbDelete('standard_ratings',{ student_id:studentId, trimester:tri, std_key:stdKey },'score');
@@ -4458,7 +4468,8 @@ function openProgressEditor(studentId){
       const opts=isBehaviorSection(section)
         ? `<option value="">— Not marked</option>`+[4,3,2,1].map(n=>`<option value="${n}" ${cur===n?'selected':''}>${BEHAVIOR_MARKS[n]} — ${BEHAVIOR_LABELS[BEHAVIOR_MARKS[n]]}</option>`).join('')
         : `<option value="">${c!=null?'Calculated ('+Math.round(c)+')':'— Not scored'}</option>`+[4,3,2,1].map(n=>`<option value="${n}" ${cur===n?'selected':''}>${n} — ${['','Beginning','Developing','Proficient','Exemplary'][n]}</option>`).join('');
-      rows+=`<div class="rc-row"><span class="rc-code">${escH(stdCode(section,i))}</span><span class="rc-std">${escH(std)}</span><select style="width:170px!important" ${locked?'disabled':''} onchange="saveRating('${st.id}',${tri},'${escH(key).replace(/'/g,"\\'")}',this.value)">${opts}</select></div>`;
+      const naOpt=`<option value="0" ${cur===NA_LEVEL?'selected':''}>N/A — Not assessed this trimester</option>`;
+      rows+=`<div class="rc-row"><span class="rc-code">${escH(stdCode(section,i))}</span><span class="rc-std">${escH(std)}</span><select style="width:170px!important" ${locked?'disabled':''} onchange="saveRating('${st.id}',${tri},'${escH(key).replace(/'/g,"\\'")}',this.value)">${opts}${naOpt}</select></div>`;
     });
   });
   if(!rows) rows='<div class="empty-state">No standards are set up for this grade.</div>';
@@ -4467,7 +4478,7 @@ function openProgressEditor(studentId){
     <label>T${tri} Comment</label>${triCommentBox(st,tri,5)}
     <div style="font-size:.74rem;color:var(--bpi-ink-3);margin:4px 0 14px">Saves automatically. Shows on this student's progress report and report card.</div>
     <label>Standards Scores &amp; Behavior Marks</label>
-    <div style="font-size:.74rem;color:var(--bpi-ink-3);margin-bottom:4px">Pick a score to set it yourself, or leave it on "Calculated" to use the score from graded work. Behavior (social skills) is marked E / S / N / U by you — it isn't calculated from grades.</div>
+    <div style="font-size:.74rem;color:var(--bpi-ink-3);margin-bottom:4px">Pick a score to set it yourself, or leave it on "Calculated" to use the score from graded work. Behavior (social skills) is marked E / S / N / U by you — it isn't calculated from grades. Choose N/A for a skill that wasn't assessed this trimester.</div>
     ${rows}
     <div class="modal-footer"><button class="btn btn-primary" onclick="closeModal();rerenderActivePage()">Done</button></div>`,'large');
 }
@@ -4483,8 +4494,29 @@ function _rcAttendance(student, classId, n){
   });
   return {p,a,t};
 }
-function _stdAvgOf(levels){ const v=Object.keys(levels).filter(k=>!isBehaviorSection(k.split('||')[0])).map(k=>levels[k]); return v.length?v.reduce((x,y)=>x+y,0)/v.length:null; }
+function _stdAvgOf(levels){ const v=Object.keys(levels).filter(k=>!isBehaviorSection(k.split('||')[0])&&levels[k]!==NA_LEVEL).map(k=>levels[k]); return v.length?v.reduce((x,y)=>x+y,0)/v.length:null; }
 
+// The key printed at the top of every report card.
+function reportCardKey(){
+  const lvl=[[4,'Exemplary','Consistently exceeds the grade-level standard; applies the skill independently and with depth.'],
+             [3,'Proficient','Meets the grade-level standard; applies the skill independently and accurately.'],
+             [2,'Developing','Approaching the standard; applies the skill with some support or with errors.'],
+             [1,'Beginning','Not yet meeting the standard; needs significant support to apply the skill.']];
+  const beh=[['E',4,'Excellent','Consistently demonstrates this behavior.'],
+             ['S',3,'Satisfactory','Usually demonstrates this behavior.'],
+             ['N',2,'Needs Improvement','Sometimes demonstrates this behavior; working toward consistency.'],
+             ['U',1,'Unsatisfactory','Rarely demonstrates this behavior.']];
+  return `<div class="rc-key">
+    <div class="rc-key-col"><div class="rc-key-title">Academic Standards</div>
+      ${lvl.map(([n,t,d])=>`<div class="rc-key-row">${renderScoreBadge(n)}<div><strong>${t}</strong> — ${d}</div></div>`).join('')}
+    </div>
+    <div class="rc-key-col"><div class="rc-key-title">Social Skills &amp; Work Habits</div>
+      ${beh.map(([m,n,t,d])=>`<div class="rc-key-row"><span class="badge badge-${n}">${m}</span><div><strong>${t}</strong> — ${d}</div></div>`).join('')}
+    </div>
+    <div class="rc-key-foot"><span class="rc-key-row">${renderNABadge()}<span><strong>Not Assessed</strong> — this skill was not taught or assessed this trimester.</span></span>
+      <span class="rc-key-row"><span class="rc-blank" style="font-weight:700;width:30px;text-align:center">–</span><span><strong>Not Yet Scored</strong> — no score has been recorded yet.</span></span></div>
+  </div>`;
+}
 function buildReportCard(student, teacher, cls, trimester){
   const grade=student.grade; const secs=STANDARDS[grade]||{};
   const tris=[1,2,3];
@@ -4495,21 +4527,13 @@ function buildReportCard(student, teacher, cls, trimester){
     levels[n]=n<=trimester?standardLevelsFor(student,asnBy[n],n):{};
     stdAvg[n]=_stdAvgOf(levels[n]);
   });
-  const cell=(v,fmt)=>v==null?'<span class="rc-blank">–</span>':fmt(v);
-  const summaryRows=`
-    <tr><th>Overall Percentage</th>${tris.map(n=>`<td>${cell(overall[n],v=>Math.round(v)+'%')}</td>`).join('')}</tr>
-    <tr><th>Letter Grade</th>${tris.map(n=>`<td class="rc-letter">${cell(overall[n],v=>letterFor(v))}</td>`).join('')}</tr>
-    <tr><th>Standards Average <span class="rc-sub">(1–4)</span></th>${tris.map(n=>`<td>${cell(stdAvg[n],v=>v.toFixed(1))}</td>`).join('')}</tr>`;
-  const allSubjects=subjectsIn([].concat(asnBy[1],asnBy[2],asnBy[3]));
-  const subjectRows=allSubjects.map(sj=>`<tr><th>${escH(sj)}</th>${tris.map(n=>{const list=asnBy[n].filter(a=>a.subject===sj);const p=list.length?calcGrade(student.id,list).pct:null;return`<td>${cell(p,v=>`${Math.round(v)}% <strong>${letterFor(v)}</strong>`)}</td>`;}).join('')}</tr>`).join('')
-    ||`<tr><td colspan="4" class="rc-blank" style="text-align:center">No graded work yet</td></tr>`;
   let stdHtml='';
   Object.keys(secs).forEach(section=>{
     stdHtml+=`<div class="rc-section-header">${escH(section)}</div>`;
     stdHtml+=secs[section].map((std,stdi)=>{
       const k=section+'||'+stdi;
       const beh=isBehaviorSection(section);
-      const scores=tris.map(n=>{const v=levels[n][k];return`<span class="rc-score-cell">${v!=null?(beh?renderMarkBadge(v):renderScoreBadge(Math.round(v))):'<span class="rc-blank">–</span>'}</span>`;}).join('');
+      const scores=tris.map(n=>{const v=levels[n][k];return`<span class="rc-score-cell">${v==null?'<span class="rc-blank">–</span>':v===NA_LEVEL?renderNABadge():(beh?renderMarkBadge(v):renderScoreBadge(Math.round(v)))}</span>`;}).join('');
       return`<div class="rc-row"><span class="rc-code">${escH(stdCode(section,stdi))}</span><span class="rc-std">${escH(std)}</span><div class="rc-scores">${scores}</div></div>`;
     }).join('');
   });
@@ -4526,11 +4550,7 @@ function buildReportCard(student, teacher, cls, trimester){
       <div class="rc-title">Report Card${sy?' &middot; '+escH(sy):''} &middot; Trimester ${trimester}</div>
     </div>
     <div class="rc-info"><div><strong>Student:</strong> ${escH(lf(student))}</div><div><strong>Teacher:</strong> ${escH(teacher?.name||'–')}</div><div><strong>Grade:</strong> ${escH(grade)}</div><div><strong>Room:</strong> ${escH(cls.name)}</div>${student.withdrawnOn?`<div><strong>Withdrawn:</strong> ${fmtDateUS(student.withdrawnOn)}</div>`:''}</div>
-    <div class="rc-two">
-      <table class="rc-table"><thead><tr><th>Summary</th><th>T1</th><th>T2</th><th>T3</th></tr></thead><tbody>${summaryRows}</tbody></table>
-      <table class="rc-table"><thead><tr><th>Subject</th><th>T1</th><th>T2</th><th>T3</th></tr></thead><tbody>${subjectRows}</tbody></table>
-    </div>
-    <div class="rc-key"><strong>Behavior:</strong> E Excellent · S Satisfactory · N Needs Improvement · U Unsatisfactory &nbsp;·&nbsp; <strong>Standards levels:</strong> ${renderScoreBadge(4)} Exemplary &nbsp; ${renderScoreBadge(3)} Proficient &nbsp; ${renderScoreBadge(2)} Developing &nbsp; ${renderScoreBadge(1)} Beginning &nbsp;·&nbsp; <strong>Grades:</strong> ${(DB.gradingScale||[]).slice().sort((a,b)=>b.min-a.min).map(g=>`${escH(g.letter)} ${g.min}+`).join(', ')}</div>
+    ${reportCardKey()}
     <div class="rc-std-head"><span>Standard</span><span class="rc-scores"><span class="rc-score-cell">T1</span><span class="rc-score-cell">T2</span><span class="rc-score-cell">T3</span></span></div>
     ${stdHtml}
     <div class="rc-bottom">
