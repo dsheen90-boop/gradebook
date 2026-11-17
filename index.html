@@ -4497,15 +4497,17 @@ function _rcAttendance(student, classId, n){
 function _stdAvgOf(levels){ const v=Object.keys(levels).filter(k=>!isBehaviorSection(k.split('||')[0])&&levels[k]!==NA_LEVEL).map(k=>levels[k]); return v.length?v.reduce((x,y)=>x+y,0)/v.length:null; }
 
 // The key printed at the top of every report card.
-function reportCardKey(){
-  const lvl=[[4,'Exemplary','Consistently exceeds the grade-level standard; applies the skill independently and with depth.'],
+// Key wording — used on screen, in print and in the downloaded PDF.
+const RC_KEY_LEVELS=[[4,'Exemplary','Consistently exceeds the grade-level standard; applies the skill independently and with depth.'],
              [3,'Proficient','Meets the grade-level standard; applies the skill independently and accurately.'],
              [2,'Developing','Approaching the standard; applies the skill with some support or with errors.'],
              [1,'Beginning','Not yet meeting the standard; needs significant support to apply the skill.']];
-  const beh=[['E',4,'Excellent','Consistently demonstrates this behavior.'],
+const RC_KEY_BEHAVIOR=[['E',4,'Excellent','Consistently demonstrates this behavior.'],
              ['S',3,'Satisfactory','Usually demonstrates this behavior.'],
              ['N',2,'Needs Improvement','Sometimes demonstrates this behavior; working toward consistency.'],
              ['U',1,'Unsatisfactory','Rarely demonstrates this behavior.']];
+function reportCardKey(){
+  const lvl=RC_KEY_LEVELS, beh=RC_KEY_BEHAVIOR;
   return `<div class="rc-key">
     <div class="rc-key-col"><div class="rc-key-title">Academic Standards</div>
       ${lvl.map(([n,t,d])=>`<div class="rc-key-row">${renderScoreBadge(n)}<div><strong>${t}</strong> — ${d}</div></div>`).join('')}
@@ -4558,7 +4560,7 @@ function buildReportCard(student, teacher, cls, trimester){
       <div class="rc-att"><div class="rc-label">T${trimester} Attendance</div><div>Present: <strong>${att.p}</strong></div><div>Absent: <strong>${att.a}</strong></div><div>Tardy: <strong>${att.t}</strong></div></div>
     </div>
     <div class="rc-sign"><div>Teacher Signature ____________________</div><div>Parent Signature ____________________</div><div>Date __________</div></div>
-    <div class="no-print" style="margin-top:12px;display:flex;justify-content:flex-end"><button class="btn btn-outline btn-sm" style="margin-right:8px" onclick="openProgressEditor('${escH(student.id)}')">${isTriLocked(trimester)?'View scores':'Edit scores &amp; behavior'}</button><button class="btn btn-accent btn-sm" onclick="printReportCards('${escH(student.id)}')">🖨 Print this report card</button></div>
+    <div class="no-print" style="margin-top:12px;display:flex;justify-content:flex-end"><button class="btn btn-outline btn-sm" style="margin-right:8px" onclick="openProgressEditor('${escH(student.id)}')">${isTriLocked(trimester)?'View scores':'Edit scores &amp; behavior'}</button><button class="btn btn-outline btn-sm" style="margin-right:8px" onclick="downloadReportCardPdf('${escH(student.id)}')">⬇ Download PDF</button><button class="btn btn-accent btn-sm" onclick="printReportCards('${escH(student.id)}')">🖨 Print this report card</button></div>
   </div>`;
 }
 
@@ -4569,8 +4571,276 @@ function renderReportCardsInto(body){
   const teacher=DB.teachers.find(t=>t.id===cls.teacherId);
   const students=DB.students.filter(s=>cls.studentIds.includes(s.id)&&enrolledInTri(s,trimester)).sort((a,b)=>byLastName(a,b));
   if(!students.length){ body.innerHTML='<div class="empty-state">No students in this room.</div>'; return; }
-  body.innerHTML=`<div class="toolbar no-print" style="margin-bottom:12px"><span style="font-size:.8rem;color:var(--bpi-ink-2)">${students.length} report cards · ${escH(cls.name)} · Trimester ${trimester}</span><button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="printReportCards()">🖨 Print all</button></div>`
+  body.innerHTML=`<div class="toolbar no-print" style="margin-bottom:12px"><span style="font-size:.8rem;color:var(--bpi-ink-2)">${students.length} report cards · ${escH(cls.name)} · Trimester ${trimester}</span><button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="openReportCardExport()">⬇ Download Grade Level (.zip)</button><button class="btn btn-primary btn-sm" style="margin-left:8px" onclick="printReportCards()">🖨 Print all</button></div>`
     + students.map(s=>buildReportCard(s,teacher,cls,trimester)).join('');
+}
+
+/* ═══ REPORT CARD PDF DOWNLOAD (2026-11-17) ═══
+   Builds real PDF files in the browser (no outside library): one report card,
+   or every report card for a grade level in one PDF, one student per page
+   (long standards lists continue onto a second page). Uses the same data and
+   layout as the on-screen/printed card. */
+const _RCPDF_W={"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584,761,556,0,222,556,333,1000,556,556,333,1000,667,333,1000,0,611,0,0,222,222,333,333,350,556,1000,333,1000,500,333,944,0,500,667,278,333,556,556,556,556,260,556,333,737,370,556,584,333,737,333,400,584,333,333,333,556,537,278,333,333,365,556,834,834,834,611,667,667,667,667,667,667,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,500,556,556,556,556,278,278,278,278,556,556,556,556,556,556,556,584,611,556,556,556,556,500,556,500],"Helvetica-Bold":[278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584,761,556,0,278,556,500,1000,556,556,333,1000,667,333,1000,0,611,0,0,278,278,500,500,350,556,1000,333,1000,556,333,944,0,500,667,278,333,556,556,556,556,280,556,333,737,370,556,584,333,737,333,400,584,333,333,333,611,556,278,333,333,365,556,834,834,834,611,722,722,722,722,722,722,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,556,556,556,556,556,278,278,278,278,611,611,611,611,611,611,611,584,611,611,611,611,611,556,611,556],"Times-Bold":[250,333,555,500,500,1000,833,278,333,333,500,570,250,333,250,278,500,500,500,500,500,500,500,500,500,500,333,333,570,570,570,500,930,722,667,722,722,667,611,778,778,389,500,778,667,944,722,778,611,778,722,556,667,722,722,1000,722,722,667,333,278,333,581,500,333,500,556,444,556,444,333,500,556,278,333,556,278,833,556,500,556,556,444,389,333,556,500,722,500,500,444,394,220,394,520,761,500,0,333,500,500,1000,500,500,333,1000,556,333,1000,0,667,0,0,333,333,500,500,350,500,1000,333,1000,389,333,722,0,444,722,250,333,500,500,500,500,220,500,333,747,300,500,570,333,747,333,400,570,300,300,333,556,540,250,333,300,330,500,750,750,750,500,722,722,722,722,722,722,1000,722,667,667,667,667,389,389,389,389,722,722,778,778,778,778,778,570,778,722,722,722,722,722,611,556,500,500,500,500,500,500,722,444,444,444,444,444,278,278,278,278,500,556,500,500,500,500,500,570,500,556,556,556,556,500,556,500]};
+const _RCPDF_CP1252={'€':128,'‚':130,'ƒ':131,'„':132,'…':133,'†':134,'‡':135,'ˆ':136,'‰':137,'Š':138,'‹':139,'Œ':140,'Ž':142,'‘':145,'’':146,'“':147,'”':148,'•':149,'–':150,'—':151,'˜':152,'™':153,'š':154,'›':155,'œ':156,'ž':158,'Ÿ':159};
+function _pdfCodes(str){
+  const out=[]; for(const ch of String(str==null?'':str).normalize('NFC')){
+    const c=ch.codePointAt(0);
+    if(c===9||c===10||c===13||c===160) out.push(32);
+    else if(c>=32&&c<127) out.push(c);
+    else if(c>=161&&c<=255) out.push(c);
+    else if(_RCPDF_CP1252[ch]) out.push(_RCPDF_CP1252[ch]);
+    else out.push(63);
+  } return out;
+}
+function _pdfWidth(str,font,size){ const w=_RCPDF_W[font]; let t=0; _pdfCodes(str).forEach(c=>{ t+=w[c-32]||556; }); return t*size/1000; }
+function _pdfWrap(str,font,size,maxW){
+  const lines=[];
+  String(str==null?'':str).split(/\r?\n/).forEach(par=>{
+    const words=par.split(/ +/); let line='';
+    words.forEach(w=>{
+      const test=line?line+' '+w:w;
+      if(_pdfWidth(test,font,size)<=maxW||!line){
+        if(!line&&_pdfWidth(w,font,size)>maxW){ // break a very long word
+          let part=''; for(const ch of w){ if(_pdfWidth(part+ch,font,size)>maxW&&part){ lines.push(part); part=ch; } else part+=ch; } line=part;
+        } else line=test;
+      } else { lines.push(line); line=w; }
+    });
+    lines.push(line);
+  });
+  return lines;
+}
+function _pdfColor(hex){ const h=hex.replace('#',''); return [0,2,4].map(i=>(parseInt(h.substr(i,2),16)/255).toFixed(3)).join(' '); }
+class _RCPdf{
+  constructor(){ this.W=612; this.H=792; this.pages=[]; this.fonts={'Helvetica':'F1','Helvetica-Bold':'F2','Times-Bold':'F3'}; }
+  addPage(){ this.cur=[]; this.pages.push(this.cur); return this.pages.length-1; }
+  _str(s){ return '('+_pdfCodes(s).map(c=>c===40||c===41||c===92?'\\'+String.fromCharCode(c):(c<32||c>126)?'\\'+c.toString(8).padStart(3,'0'):String.fromCharCode(c)).join('')+')'; }
+  rect(x,y,w,h,o){ o=o||{}; const c=this.cur; c.push('q');
+    if(o.fill) c.push(_pdfColor(o.fill)+' rg'); if(o.stroke) c.push(_pdfColor(o.stroke)+' RG',(o.lw||0.75)+' w');
+    c.push([x,this.H-y-h,w,h].map(n=>n.toFixed(2)).join(' ')+' re', o.fill&&o.stroke?'B':o.fill?'f':'S','Q'); }
+  line(x1,y1,x2,y2,color,lw){ this.cur.push('q',_pdfColor(color||'#000000')+' RG',(lw||0.75)+' w',x1.toFixed(2)+' '+(this.H-y1).toFixed(2)+' m',x2.toFixed(2)+' '+(this.H-y2).toFixed(2)+' l','S','Q'); }
+  // y = baseline measured from the top of the page
+  text(x,y,s,o){ o=o||{}; const font=o.font||'Helvetica', size=o.size||9;
+    let tx=x; if(o.align==='center') tx=x-_pdfWidth(s,font,size)/2; else if(o.align==='right') tx=x-_pdfWidth(s,font,size);
+    this.cur.push('BT','/'+this.fonts[font]+' '+size+' Tf',_pdfColor(o.color||'#221509')+' rg',tx.toFixed(2)+' '+(this.H-y).toFixed(2)+' Td',this._str(s)+' Tj','ET'); }
+  toBytes(){
+    const objs=[]; const add=s=>{ objs.push(s); return objs.length; };
+    const fontIds=Object.keys(this.fonts).map(f=>add('<< /Type /Font /Subtype /Type1 /BaseFont /'+f+' /Encoding /WinAnsiEncoding >>'));
+    const pagesId=add(''); const kids=[];
+    this.pages.forEach(p=>{ const body=p.join('\n'); const cid=add('<< /Length '+body.length+' >>\nstream\n'+body+'\nendstream');
+      kids.push(add('<< /Type /Page /Parent '+pagesId+' 0 R /MediaBox [0 0 '+this.W+' '+this.H+'] /Resources << /Font << '+Object.values(this.fonts).map((n,i)=>'/'+n+' '+fontIds[i]+' 0 R').join(' ')+' >> >> /Contents '+cid+' 0 R >>')); });
+    objs[pagesId-1]='<< /Type /Pages /Kids ['+kids.map(k=>k+' 0 R').join(' ')+'] /Count '+kids.length+' >>';
+    const catId=add('<< /Type /Catalog /Pages '+pagesId+' 0 R >>');
+    let out='%PDF-1.4\n'; const offs=[];
+    objs.forEach((o,i)=>{ offs.push(out.length); out+=(i+1)+' 0 obj\n'+o+'\nendobj\n'; });
+    const xref=out.length;
+    out+='xref\n0 '+(objs.length+1)+'\n0000000000 65535 f \n'+offs.map(o=>String(o).padStart(10,'0')+' 00000 n \n').join('');
+    out+='trailer\n<< /Size '+(objs.length+1)+' /Root '+catId+' 0 R >>\nstartxref\n'+xref+'\n%%EOF';
+    const bytes=new Uint8Array(out.length); for(let i=0;i<out.length;i++) bytes[i]=out.charCodeAt(i)&255;
+    return bytes;
+  }
+  toBlob(){ return new Blob([this.toBytes()],{type:'application/pdf'}); }
+}
+const _RC_C={bistre:'#3F2B1D',sugar:'#A5704C',gold:'#E09900',ink:'#221509',ink2:'#5a4838',ink3:'#8a7565',rule:'#e3d9ce',ruleStrong:'#c6b49e',b05:'#f7f3ef',b10:'#ece5de',cream:'#FAF6F0',
+  badge:{4:['#3B1F0A','#FFFFFF'],3:['#6B3A1F','#FFFFFF'],2:['#C49A6C','#FFFFFF'],1:['#E8D5C0','#5C3317']}};
+function _rcPdfBadge(pdf,cx,cy,label,level){
+  const w=label.length>1?24:16, h=12, x=cx-w/2, y=cy-h/2;
+  if(level===NA_LEVEL){ pdf.rect(x,y,w,h,{fill:'#FFFFFF',stroke:_RC_C.ruleStrong,lw:0.6}); pdf.text(cx,y+8.6,label,{font:'Helvetica-Bold',size:6.8,color:_RC_C.ink2,align:'center'}); return; }
+  const [bg,fg]=_RC_C.badge[level]||_RC_C.badge[1];
+  pdf.rect(x,y,w,h,{fill:bg}); pdf.text(cx,y+8.8,label,{font:'Helvetica-Bold',size:7.5,color:fg,align:'center'});
+}
+// Draw one student's report card starting on a new page.
+function _rcPdfStudent(pdf, student, teacher, cls, trimester){
+  const M=40, R=pdf.W-M, CW=R-M, BOTTOM=pdf.H-44;
+  const grade=student.grade, secs=STANDARDS[grade]||{}, tris=[1,2,3];
+  const asnBy={}, levels={}, stdAvg={}, overall={};
+  tris.forEach(n=>{ asnBy[n]=n<=trimester?_rcTriAsns(cls.id,n):[]; levels[n]=n<=trimester?standardLevelsFor(student,asnBy[n],n):{}; stdAvg[n]=_stdAvgOf(levels[n]); overall[n]=n<=trimester?calcGrade(student.id,asnBy[n]).pct:null; });
+  const own=getTriComment(student.id,trimester);
+  const comment=own.trim()?own:generateComment((student.firstName||student.name), stdAvg[trimester]!=null?stdAvg[trimester]:(overall[trimester]!=null?stdLevelFromPct(overall[trimester]):0), trimester);
+  const att=_rcAttendance(student,cls.id,trimester);
+  const sy=schoolYearLabel();
+  const first=pdf.addPage(); let y;
+  const colX=[R-90,R-60,R-30].map(x=>x+15); // T1..T3 centres
+  const textX=M+52, textW=colX[0]-15-textX-8;
+  const stdHead=()=>{ pdf.text(M+6,y+9,'Standard',{font:'Helvetica-Bold',size:7.5,color:_RC_C.ink3}); tris.forEach((n,i)=>pdf.text(colX[i],y+9,'T'+n,{font:'Helvetica-Bold',size:7.5,color:_RC_C.ink3,align:'center'})); y+=14; };
+  const newPage=()=>{ pdf.addPage(); y=M;
+    pdf.text(M,y+9,lf(student)+' · Report Card · Trimester '+trimester+(sy?' · '+sy:'')+' (continued)',{font:'Helvetica-Bold',size:8.5,color:_RC_C.bistre});
+    pdf.line(M,y+14,R,y+14,_RC_C.gold,1); y+=22; stdHead(); };
+  // Header
+  y=M;
+  pdf.text(pdf.W/2,y+14,'Brownsville Preparatory Institute',{font:'Times-Bold',size:16,color:_RC_C.bistre,align:'center'});
+  pdf.text(pdf.W/2,y+27,'1401 Old Bainbridge Rd, Tallahassee FL 32303 · (850) 412-9390',{size:7.5,color:_RC_C.ink3,align:'center'});
+  pdf.text(pdf.W/2,y+42,'Report Card'+(sy?' · '+sy:'')+' · Trimester '+trimester,{font:'Times-Bold',size:11.5,color:_RC_C.sugar,align:'center'});
+  pdf.line(M,y+52,R,y+52,_RC_C.gold,1.5); y+=62;
+  // Student info bar
+  const info=[['Student',lf(student)],['Teacher',teacher?teacher.name:'–'],['Grade',grade],['Room',cls.name]];
+  if(student.withdrawnOn) info.push(['Withdrawn',fmtDateUS(student.withdrawnOn)]);
+  let fs=8.5; const iw=()=>info.map(([l,v])=>_pdfWidth(l+': ','Helvetica-Bold',fs)+_pdfWidth(v,'Helvetica',fs));
+  while(fs>6.5&&iw().reduce((a,b)=>a+b,0)>CW-24-12*(info.length-1)) fs-=0.5;
+  const widths=iw(), gap=(CW-24-widths.reduce((a,b)=>a+b,0))/Math.max(1,info.length-1);
+  pdf.rect(M,y,CW,22,{fill:_RC_C.b05,stroke:_RC_C.rule,lw:0.6});
+  let ix=M+12; info.forEach(([l,v],i)=>{ pdf.text(ix,y+14.5,l+': ',{font:'Helvetica-Bold',size:fs}); pdf.text(ix+_pdfWidth(l+': ','Helvetica-Bold',fs),y+14.5,v,{size:fs}); ix+=widths[i]+gap; });
+  y+=32;
+  // Key
+  const kx=M+12, kColW=(CW-24-20)/2, kTextW=kColW-30;
+  const keyRows=(list,isBeh)=>list.map(r=>({badge:isBeh?r[0]:String(r[0]), level:isBeh?r[1]:r[0], lines:_pdfWrap((isBeh?r[2]:r[1])+' — '+(isBeh?r[3]:r[2]),'Helvetica',7.8,kTextW), bold:isBeh?r[2]:r[1]}));
+  const L=keyRows(RC_KEY_LEVELS,false), B=keyRows(RC_KEY_BEHAVIOR,true);
+  const colH=list=>list.reduce((h,r)=>h+Math.max(14,r.lines.length*9.6+3),0);
+  const keyH=12+16+Math.max(colH(L),colH(B))+8+30;
+  pdf.rect(M,y,CW,keyH,{fill:_RC_C.cream,stroke:_RC_C.bistre,lw:1});
+  const drawCol=(x,title,rows)=>{ let yy=y+16; pdf.text(x,yy,title,{font:'Helvetica-Bold',size:7.8,color:_RC_C.bistre}); pdf.line(x,yy+4,x+kColW,yy+4,_RC_C.rule,0.6); yy+=14;
+    rows.forEach(r=>{ _rcPdfBadge(pdf,x+10,yy+4,r.badge,r.level);
+      r.lines.forEach((ln,i)=>{ if(i===0&&ln.indexOf(r.bold)===0){ pdf.text(x+26,yy+7,r.bold,{font:'Helvetica-Bold',size:7.8}); pdf.text(x+26+_pdfWidth(r.bold,'Helvetica-Bold',7.8),yy+7,ln.slice(r.bold.length),{size:7.8,color:_RC_C.ink2}); } else pdf.text(x+26,yy+7+i*9.6,ln,{size:7.8,color:_RC_C.ink2}); });
+      yy+=Math.max(14,r.lines.length*9.6+3); }); };
+  drawCol(kx,'ACADEMIC STANDARDS',L); drawCol(kx+kColW+20,'SOCIAL SKILLS & WORK HABITS',B);
+  let fy=y+keyH-28; pdf.line(kx,fy-4,R-12,fy-4,_RC_C.rule,0.6);
+  _rcPdfBadge(pdf,kx+10,fy+5,'N/A',NA_LEVEL); pdf.text(kx+26,fy+8,'Not Assessed',{font:'Helvetica-Bold',size:7.8}); pdf.text(kx+26+_pdfWidth('Not Assessed','Helvetica-Bold',7.8),fy+8,' — this skill was not taught or assessed this trimester.',{size:7.8,color:_RC_C.ink2});
+  pdf.text(kx+10,fy+20,'–',{font:'Helvetica-Bold',size:8,color:_RC_C.ruleStrong,align:'center'}); pdf.text(kx+26,fy+20,'Not Yet Scored',{font:'Helvetica-Bold',size:7.8}); pdf.text(kx+26+_pdfWidth('Not Yet Scored','Helvetica-Bold',7.8),fy+20,' — no score has been recorded yet.',{size:7.8,color:_RC_C.ink2});
+  y+=keyH+12;
+  // Standards
+  stdHead();
+  const secNames=Object.keys(secs);
+  if(!secNames.length){ pdf.text(M+6,y+10,'No standards are set up for grade '+grade+'.',{size:8.5,color:_RC_C.ink2}); y+=18; }
+  secNames.forEach(section=>{
+    const rows=secs[section].map((std,i)=>({code:stdCode(section,i), lines:_pdfWrap(std,'Helvetica',8,textW), k:section+'||'+i}));
+    const rowH=r=>Math.max(15,r.lines.length*9.5+5);
+    if(y+16+(rows[0]?rowH(rows[0]):0)>BOTTOM) newPage();
+    pdf.rect(M,y,CW,15,{fill:_RC_C.bistre}); pdf.text(M+8,y+10.5,section,{font:'Helvetica-Bold',size:8,color:'#FFFFFF'}); y+=15;
+    const beh=isBehaviorSection(section);
+    rows.forEach(r=>{
+      const h=rowH(r); if(y+h>BOTTOM) newPage();
+      pdf.text(M+6,y+10.5,r.code,{font:'Helvetica-Bold',size:7,color:_RC_C.sugar});
+      r.lines.forEach((ln,i)=>pdf.text(textX,y+10.5+i*9.5,ln,{size:8}));
+      tris.forEach((n,i)=>{ const v=levels[n][r.k]; const cy=y+h/2;
+        if(v==null) pdf.text(colX[i],cy+3,'–',{size:8,color:_RC_C.ruleStrong,align:'center'});
+        else if(v===NA_LEVEL) _rcPdfBadge(pdf,colX[i],cy,'N/A',NA_LEVEL);
+        else { const lv=Math.round(v); _rcPdfBadge(pdf,colX[i],cy,beh?(BEHAVIOR_MARKS[lv]||''):String(lv),lv); } });
+      pdf.line(M,y+h,R,y+h,_RC_C.b10,0.5); y+=h;
+    });
+  });
+  // Comments + attendance
+  const cW=CW*0.68-6, aW=CW-cW-12;
+  const cLines=_pdfWrap(comment,'Helvetica',8.5,cW-16);
+  const boxH=Math.max(64,20+cLines.length*11+8);
+  if(y+14+boxH+40>BOTTOM){ newPage(); } else y+=14;
+  pdf.text(M,y+8,'T'+trimester+' COMMENTS',{font:'Helvetica-Bold',size:7.5,color:_RC_C.bistre});
+  pdf.text(M+cW+12,y+8,'T'+trimester+' ATTENDANCE',{font:'Helvetica-Bold',size:7.5,color:_RC_C.bistre}); y+=13;
+  pdf.rect(M,y,cW,boxH,{stroke:_RC_C.rule,lw:0.6}); cLines.forEach((ln,i)=>pdf.text(M+8,y+14+i*11,ln,{size:8.5}));
+  pdf.rect(M+cW+12,y,aW,boxH,{stroke:_RC_C.rule,lw:0.6});
+  [['Present',att.p],['Absent',att.a],['Tardy',att.t]].forEach(([l,v],i)=>{ pdf.text(M+cW+22,y+16+i*14,l+':',{size:8.5}); pdf.text(M+cW+12+aW-10,y+16+i*14,String(v),{font:'Helvetica-Bold',size:8.5,align:'right'}); });
+  y+=boxH+30;
+  pdf.text(M,y,'Teacher Signature ______________________',{size:8.5,color:_RC_C.ink2});
+  pdf.text(M+CW*0.42,y,'Parent Signature ______________________',{size:8.5,color:_RC_C.ink2});
+  pdf.text(R,y,'Date ____________',{size:8.5,color:_RC_C.ink2,align:'right'});
+  // Page numbers for this student
+  const total=pdf.pages.length-first;
+  for(let i=first;i<pdf.pages.length;i++){ pdf.cur=pdf.pages[i];
+    pdf.text(M,pdf.H-24,lf(student)+' · T'+trimester,{size:7,color:_RC_C.ink3});
+    if(total>1) pdf.text(R,pdf.H-24,'Page '+(i-first+1)+' of '+total,{size:7,color:_RC_C.ink3,align:'right'}); }
+}
+/* Minimal ZIP writer (files stored uncompressed — PDFs are already compact).
+   files: [{name, bytes:Uint8Array}] → Blob */
+const _CRC_TABLE=(()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1; t[n]=c>>>0; } return t; })();
+function _crc32(b){ let c=0xFFFFFFFF; for(let i=0;i<b.length;i++) c=_CRC_TABLE[(c^b[i])&255]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
+function _makeZip(files){
+  const enc=new TextEncoder(), parts=[], central=[]; let offset=0;
+  const d=new Date(), dosTime=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1), dosDate=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();
+  files.forEach(f=>{
+    const name=enc.encode(f.name), crc=_crc32(f.bytes), size=f.bytes.length;
+    const lh=new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true); lh.setUint16(4,20,true); lh.setUint16(6,0x0800,true); lh.setUint16(8,0,true);
+    lh.setUint16(10,dosTime,true); lh.setUint16(12,dosDate,true); lh.setUint32(14,crc,true); lh.setUint32(18,size,true); lh.setUint32(22,size,true);
+    lh.setUint16(26,name.length,true); lh.setUint16(28,0,true);
+    parts.push(new Uint8Array(lh.buffer),name,f.bytes);
+    const ch=new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true); ch.setUint16(4,20,true); ch.setUint16(6,20,true); ch.setUint16(8,0x0800,true); ch.setUint16(10,0,true);
+    ch.setUint16(12,dosTime,true); ch.setUint16(14,dosDate,true); ch.setUint32(16,crc,true); ch.setUint32(20,size,true); ch.setUint32(24,size,true);
+    ch.setUint16(28,name.length,true); ch.setUint32(42,offset,true);
+    central.push(new Uint8Array(ch.buffer),name);
+    offset+=30+name.length+size;
+  });
+  const cdSize=central.reduce((a,b)=>a+b.length,0);
+  const end=new DataView(new ArrayBuffer(22));
+  end.setUint32(0,0x06054b50,true); end.setUint16(8,files.length,true); end.setUint16(10,files.length,true); end.setUint32(12,cdSize,true); end.setUint32(16,offset,true);
+  return new Blob([...parts,...central,new Uint8Array(end.buffer)],{type:'application/zip'});
+}
+function _rcSafeName(s){ return String(s).replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,' ').trim(); }
+function _rcDownload(blob,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },4000); }
+// Save any comment still being typed before building the file.
+function _rcFlushComments(){
+  document.querySelectorAll('textarea.tri-comment').forEach(ta=>{ const k=ta.dataset.sid+ta.dataset.tri;
+    if(_commentTimers[k]){ clearTimeout(_commentTimers[k]); delete _commentTimers[k]; saveTriComment(ta.dataset.sid,+ta.dataset.tri,ta.value); } });
+}
+// The room each student's report card belongs to.
+function _rcClassFor(student, preferId){
+  const pref=DB.classes.find(c=>c.id===preferId&&c.studentIds.includes(student.id));
+  return pref||DB.classes.find(c=>c.studentIds.includes(student.id)&&c.teacherId)||DB.classes.find(c=>c.studentIds.includes(student.id));
+}
+function _rcBuildPdf(students, trimester, preferClassId){
+  const pdf=new _RCPdf(); let n=0;
+  students.forEach(s=>{ const cls=_rcClassFor(s,preferClassId); if(!cls) return; _rcPdfStudent(pdf,s,DB.teachers.find(t=>t.id===cls.teacherId),cls,trimester); n++; });
+  return n?pdf.toBlob():null;
+}
+function downloadReportCardPdf(studentId){
+  _rcFlushComments();
+  const s=DB.students.find(x=>x.id===studentId); if(!s) return;
+  const tri=getCtxTrimester();
+  const blob=_rcBuildPdf([s],tri,getCtxClass()); if(!blob) return;
+  _rcDownload(blob,_rcSafeName(lf(s)+' - T'+tri+' Report Card')+'.pdf'); toast('Report card downloaded');
+}
+// Students for a grade-level export. scope: 'room' (current room) or 'school' (admins).
+function _rcGradeStudents(grade, scope){
+  const tri=getCtxTrimester(); const cls=DB.classes.find(c=>c.id===getCtxClass());
+  const pool=scope==='school'?DB.students.filter(s=>DB.classes.some(c=>c.studentIds.includes(s.id))):DB.students.filter(s=>cls&&cls.studentIds.includes(s.id));
+  return pool.filter(s=>s.grade===grade&&enrolledInTri(s,tri)).sort(byLastName);
+}
+function openReportCardExport(){
+  const cls=DB.classes.find(c=>c.id===getCtxClass()); if(!cls) return;
+  const tri=getCtxTrimester(); const isAdmin=DB.role==='admin';
+  const roomGrades=[...new Set(DB.students.filter(s=>cls.studentIds.includes(s.id)&&enrolledInTri(s,tri)).map(s=>s.grade))];
+  const allGrades=isAdmin?[...new Set(DB.students.filter(s=>DB.classes.some(c=>c.studentIds.includes(s.id))).map(s=>s.grade))]:roomGrades;
+  const order=['PK3','VPK','K','1st','2nd','3rd','4th','5th'];
+  const sortG=a=>a.sort((x,y)=>(order.indexOf(x)+1||99)-(order.indexOf(y)+1||99)||String(x).localeCompare(y));
+  sortG(roomGrades); sortG(allGrades);
+  showModal(`<div class="modal-title">Download Report Cards · Trimester ${tri}</div>
+    <div class="alert alert-info">Downloads a .zip file with a separate PDF report card for every student in the grade level, named by student (Last, First), ready to save, email or print.</div>
+    <div class="form-row${isAdmin?' cols-2':''}">
+      ${isAdmin?`<div><label>Students from</label><select id="rcx-scope" onchange="refreshReportCardExport()"><option value="room">This room (${escH(cls.name)})</option><option value="school">All rooms</option></select></div>`:''}
+      <div><label>Grade level</label><select id="rcx-grade" onchange="refreshReportCardExport()" data-room="${escH(roomGrades.join('|'))}" data-all="${escH(allGrades.join('|'))}"></select></div>
+    </div>
+    <div id="rcx-count" style="font-size:.8rem;color:var(--bpi-ink-2)"></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="rcx-go" onclick="runReportCardExport()">⬇ Download .zip</button></div>`);
+  refreshReportCardExport(true);
+}
+function refreshReportCardExport(first){
+  const scopeEl=document.getElementById('rcx-scope'); const scope=scopeEl?scopeEl.value:'room';
+  const gEl=document.getElementById('rcx-grade'); if(!gEl) return;
+  const grades=(scope==='school'?gEl.dataset.all:gEl.dataset.room).split('|').filter(Boolean);
+  const prev=gEl.value;
+  if(first||[...gEl.options].map(o=>o.value).join('|')!==grades.join('|')) gEl.innerHTML=grades.map(g=>`<option value="${escH(g)}">${escH(g==='K'?'Kindergarten':g)}</option>`).join('');
+  if(grades.includes(prev)) gEl.value=prev;
+  const list=gEl.value?_rcGradeStudents(gEl.value,scope):[];
+  const rooms=new Set(list.map(s=>(_rcClassFor(s,getCtxClass())||{}).id)).size;
+  document.getElementById('rcx-count').innerHTML=list.length?`<strong>${list.length}</strong> report card${list.length===1?'':'s'}${scope==='school'?` from ${rooms} room${rooms===1?'':'s'}`:''}.`:'No students in this grade level.';
+  document.getElementById('rcx-go').disabled=!list.length;
+}
+function runReportCardExport(){
+  _rcFlushComments();
+  const scopeEl=document.getElementById('rcx-scope'); const scope=scopeEl?scopeEl.value:'room';
+  const grade=document.getElementById('rcx-grade').value; const tri=getCtxTrimester();
+  const list=_rcGradeStudents(grade,scope); if(!list.length) return;
+  const btn=document.getElementById('rcx-go'); btn.disabled=true; btn.textContent='Creating files…';
+  setTimeout(()=>{
+    // One PDF per student, bundled in a .zip
+    const files=[], used={};
+    list.forEach(s=>{ const cls=_rcClassFor(s,getCtxClass()); if(!cls) return;
+      const pdf=new _RCPdf(); _rcPdfStudent(pdf,s,DB.teachers.find(t=>t.id===cls.teacherId),cls,tri);
+      let base=_rcSafeName(lf(s)+' - T'+tri+' Report Card'); if(used[base]){ used[base]++; base+=' ('+used[base]+')'; } else used[base]=1;
+      files.push({name:base+'.pdf', bytes:pdf.toBytes()}); });
+    const cls=DB.classes.find(c=>c.id===getCtxClass());
+    const where=scope==='school'?'All Rooms':(cls?cls.name:'');
+    if(files.length) _rcDownload(_makeZip(files),_rcSafeName('Report Cards - '+(grade==='K'?'Kindergarten':grade)+' - '+where+' - T'+tri)+'.zip');
+    closeModal(); toast(files.length+' report card'+(files.length===1?'':'s')+' downloaded');
+  },30);
 }
 
 // Print one report card (studentId) or all of them, one per page.
